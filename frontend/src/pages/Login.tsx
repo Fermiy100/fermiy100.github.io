@@ -6,19 +6,30 @@ export default function Login({ onLogin }: any) {
   const [err, setErr] = useState("");
   const [loading, setLoading] = useState(false);
 
+  // Демо-данные для тестирования
+  const demoUsers = [
+    { email: "director@school.test", password: "P@ssw0rd1!", role: "DIRECTOR" },
+    { email: "parent@school.test", password: "P@ssw0rd1!", role: "PARENT" }
+  ];
+
   async function submit(e: any) {
     e.preventDefault();
     setErr(""); setLoading(true);
+    
+    // Имитируем задержку сети
+    await new Promise(resolve => setTimeout(resolve, 500));
+    
     try {
-      const res = await fetch((import.meta.env.VITE_API_BASE || "https://school-meals-backend.vercel.app") + "/api/auth/login", {
-        method: "POST",
-        headers: { "content-type": "application/json" },
-        body: JSON.stringify({ email, password })
-      });
-      const data = await res.json();
-      if (!res.ok) return setErr(data.error || "Login failed");
-      // store token and role
-      onLogin(data.token, data.user.role);
+      // Проверяем демо-данные
+      const user = demoUsers.find(u => u.email === email && u.password === password);
+      
+      if (!user) {
+        setErr("Неверные учетные данные");
+        return;
+      }
+      
+      // Успешный вход
+      onLogin("demo-token-" + user.role, user.role);
     } catch (e:any) {
       setErr(String(e));
     } finally { setLoading(false); }

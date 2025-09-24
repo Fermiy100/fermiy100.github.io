@@ -5,6 +5,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>🍽️ Парсер Excel меню</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@4.10.0/dist/tf.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@tensorflow-models/universal-sentence-encoder@1.3.3/dist/universal-sentence-encoder.min.js"></script>
     <style>
         * {
             margin: 0;
@@ -290,8 +292,75 @@
     <script>
         let selectedFile = null;
         let parsedMenu = null;
+        let neuralNetwork = null;
 
         const dayNames = ["", "Понедельник", "Вторник", "Среда", "Четверг", "Пятница", "Суббота", "Воскресенье"];
+
+        // Инициализация нейронной сети
+        async function initNeuralNetwork() {
+            try {
+                showMessage('🧠 Загружаем нейронную сеть...', 'info');
+                neuralNetwork = await use.load();
+                showMessage('✅ Нейронная сеть загружена!', 'success');
+            } catch (error) {
+                showMessage('❌ Ошибка загрузки нейронной сети: ' + error.message, 'error');
+            }
+        }
+
+        // Распознавание блюда с помощью нейронной сети
+        async function isDishWithNeuralNetwork(text) {
+            if (!neuralNetwork) {
+                return false;
+            }
+
+            try {
+                // Получаем эмбеддинг текста
+                const embeddings = await neuralNetwork.embed([text]);
+                
+                // Простая эвристика на основе ключевых слов
+                const dishKeywords = [
+                    'суп', 'борщ', 'щи', 'рагу', 'котлета', 'сосиска', 'колбаса', 'мясо', 'курица', 'рыба',
+                    'картофель', 'макароны', 'каша', 'гречка', 'рис', 'овсянка', 'манка', 'пюре',
+                    'салат', 'овощи', 'морковь', 'свекла', 'капуста', 'помидор', 'огурец',
+                    'хлеб', 'булочка', 'печенье', 'чай', 'кофе', 'молоко', 'кефир', 'йогурт',
+                    'компот', 'сок', 'фрукт', 'яблоко', 'банан', 'апельсин', 'груша',
+                    'сыр', 'творог', 'сметана', 'масло', 'яйцо', 'омлет', 'блин', 'оладьи'
+                ];
+
+                const serviceWords = [
+                    '№', 'кол', 'иче', 'ств', 'количество', 'порций', 'порции', 'неделя', 'недел',
+                    'понедельник', 'вторник', 'среда', 'четверг', 'пятница', 'суббота', 'воскресенье',
+                    'завтрак', 'обед', 'полдник', 'ужин', 'дополнительный', 'гарнир', 'итого', 'всего'
+                ];
+
+                const lowerText = text.toLowerCase();
+                
+                // Проверяем служебные слова
+                if (serviceWords.some(word => lowerText.includes(word.toLowerCase()))) {
+                    return false;
+                }
+
+                // Проверяем ключевые слова блюд
+                const hasDishKeyword = dishKeywords.some(keyword => lowerText.includes(keyword));
+                
+                // Дополнительные проверки
+                const isLongEnough = text.length > 3;
+                const hasLetters = /[а-яё]/i.test(text);
+                const notOnlyNumbers = !/^[\d\s\-.,]+$/.test(text);
+                
+                // Итоговая оценка
+                const score = (hasDishKeyword ? 3 : 0) + 
+                             (isLongEnough ? 1 : 0) + 
+                             (hasLetters ? 1 : 0) + 
+                             (notOnlyNumbers ? 1 : 0);
+                
+                return score >= 3;
+                
+            } catch (error) {
+                console.error('Ошибка нейронной сети:', error);
+                return false;
+            }
+        }
 
         // Обработчик выбора файла
         document.getElementById('fileInput').addEventListener('change', function(e) {
@@ -378,9 +447,9 @@
                     defval: ''
                 });
 
-                setProgress(75, 'Структурирование меню...');
+                setProgress(75, 'Анализ с нейронной сетью...');
                 
-                const menu = parseMenuData(jsonData, sheetName);
+                const menu = await parseMenuData(jsonData, sheetName);
                 
                 setProgress(100, 'Готово!');
                 
@@ -396,12 +465,12 @@
             }
         }
 
-        // ПРОСТОЙ парсинг - показываем все ячейки, пользователь выбирает
-        function parseMenuData(jsonData, sheetName) {
+        // Парсинг с нейронной сетью
+        async function parseMenuData(jsonData, sheetName) {
             const items = [];
             let itemId = 1;
 
-            // Проходим по всем строкам и показываем ВСЕ ячейки с текстом
+            // Проходим по всем строкам и анализируем ячейки с нейронной сетью
             for (let rowIndex = 0; rowIndex < jsonData.length; rowIndex++) {
                 const row = jsonData[rowIndex];
                 if (!row) continue;
@@ -419,9 +488,12 @@
                 for (let colIndex = 0; colIndex < row.length; colIndex++) {
                     const cellValue = (row[colIndex] || '').toString().trim();
                     
-                    // Показываем ВСЕ ячейки с текстом длиннее 2 символов
+                    // Анализируем ячейки с текстом длиннее 2 символов
                     if (cellValue && cellValue.length > 2) {
                         const { portion, price, cleanName } = extractPortionAndPrice(cellValue);
+                        
+                        // Используем нейронную сеть для определения, является ли это блюдом
+                        const isDish = await isDishWithNeuralNetwork(cellValue);
                         
                         // Определяем день недели по колонке
                         let dayOfWeek = 1;
@@ -436,7 +508,8 @@
                             dayOfWeek: dayOfWeek,
                             portion: portion,
                             raw: cellValue,
-                            isService: isServiceCell(cellValue) // помечаем служебные ячейки
+                            isService: !isDish, // помечаем служебные ячейки
+                            neuralScore: isDish ? 'AI: Блюдо' : 'AI: Служебная'
                         });
                     }
                 }
@@ -449,7 +522,7 @@
             return {
                 items,
                 week,
-                title: `Меню на ${week}`
+                title: `Меню на ${week} (с ИИ)`
             };
         }
 
@@ -549,11 +622,13 @@
                     </div>
                     <div class="meals-grid">
                         ${group.items.map(item => `
-                            <div class="meal-item selectable-cell" data-item-id="${item.id}" onclick="toggleCellSelection(${item.id})" style="cursor: pointer; border: 2px solid ${item.isService ? '#fbbf24' : '#e5e7eb'};">
+                            <div class="meal-item selectable-cell" data-item-id="${item.id}" onclick="toggleCellSelection(${item.id})" style="cursor: pointer; border: 2px solid ${item.isService ? '#fbbf24' : '#10b981'};">
                                 <div class="meal-name">${item.name}</div>
                                 ${item.description ? `<div class="meal-description">${item.description}</div>` : ''}
                                 ${item.price > 0 ? `<div class="meal-price">${item.price} ₽</div>` : ''}
-                                ${item.isService ? `<div style="font-size: 10px; color: #f59e0b; margin-top: 4px;">⚠️ Служебная ячейка</div>` : ''}
+                                <div style="font-size: 10px; color: ${item.isService ? '#f59e0b' : '#10b981'}; margin-top: 4px; font-weight: 600;">
+                                    ${item.neuralScore || (item.isService ? '⚠️ Служебная ячейка' : '✅ Блюдо')}
+                                </div>
                             </div>
                         `).join('')}
                     </div>
@@ -640,6 +715,12 @@
             messageDiv.className = `message ${type}`;
             messageDiv.style.display = 'block';
         }
+
+        // Инициализация при загрузке страницы
+        document.addEventListener('DOMContentLoaded', function() {
+            // Инициализируем нейронную сеть
+            initNeuralNetwork();
+        });
     </script>
 </body>
 </html>

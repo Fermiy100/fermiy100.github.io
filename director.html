@@ -535,57 +535,75 @@
             }
         }
 
-        // Парсинг данных меню с умным анализом
+        // Парсинг данных меню с радикально новым подходом
         function parseMenuData(jsonData, sheetName) {
             const items = [];
             let itemId = 1;
 
-            // Словарь блюд для распознавания
-            const dishKeywords = [
-                'суп', 'борщ', 'щи', 'рагу', 'котлета', 'сосиска', 'колбаса', 'мясо', 'курица', 'рыба',
-                'картофель', 'макароны', 'каша', 'гречка', 'рис', 'овсянка', 'манка', 'пюре',
-                'салат', 'овощи', 'морковь', 'свекла', 'капуста', 'помидор', 'огурец',
-                'хлеб', 'булочка', 'печенье', 'конфета', 'чай', 'кофе', 'молоко', 'кефир', 'йогурт',
-                'компот', 'сок', 'фрукт', 'яблоко', 'банан', 'апельсин', 'груша',
-                'сыр', 'творог', 'сметана', 'масло', 'яйцо', 'омлет', 'блин', 'оладьи'
+            // Строгий список ТОЛЬКО реальных блюд
+            const realDishes = [
+                // Супы
+                'суп', 'борщ', 'щи', 'рагу', 'бульон', 'солянка', 'харчо', 'лапша',
+                // Мясные блюда
+                'котлета', 'сосиска', 'колбаса', 'мясо', 'курица', 'рыба', 'фарш', 'гуляш', 'шницель',
+                // Гарниры
+                'картофель', 'макароны', 'каша', 'гречка', 'рис', 'овсянка', 'манка', 'пюре', 'вермишель',
+                // Овощи и салаты
+                'салат', 'овощи', 'морковь', 'свекла', 'капуста', 'помидор', 'огурец', 'лук', 'чеснок',
+                // Хлебобулочные
+                'хлеб', 'булочка', 'печенье', 'кекс', 'пирожок', 'ватрушка',
+                // Напитки
+                'чай', 'кофе', 'молоко', 'кефир', 'йогурт', 'компот', 'сок', 'морс', 'кисель',
+                // Фрукты
+                'фрукт', 'яблоко', 'банан', 'апельсин', 'груша', 'мандарин', 'виноград',
+                // Молочные продукты
+                'сыр', 'творог', 'сметана', 'масло', 'йогурт', 'ряженка',
+                // Яйца и блинчики
+                'яйцо', 'омлет', 'блин', 'оладьи', 'сырник'
             ];
 
-            // Служебные слова
-            const serviceWords = [
+            // Строгий список служебных слов для исключения
+            const excludeWords = [
                 '№', 'кол', 'иче', 'ств', 'количество', 'порций', 'порции', 'неделя', 'недел',
                 'понедельник', 'вторник', 'среда', 'четверг', 'пятница', 'суббота', 'воскресенье',
-                'завтрак', 'обед', 'полдник', 'ужин', 'дополнительный', 'гарнир', 'итого', 'всего'
+                'завтрак', 'обед', 'полдник', 'ужин', 'дополнительный', 'гарнир', 'итого', 'всего',
+                'день', 'порция', 'грамм', 'г', 'шт', 'мл', 'л', 'кг', 'руб', '₽', 'р.'
             ];
 
-            // Анализируем структуру таблицы
-            const tableAnalysis = analyzeTableStructure(jsonData);
-            
-            // Проходим по всем строкам
+            // Проходим по всем строкам и ищем ТОЛЬКО реальные блюда
             for (let rowIndex = 0; rowIndex < jsonData.length; rowIndex++) {
                 const row = jsonData[rowIndex];
                 if (!row) continue;
 
-                // Определяем тип питания для этой строки
-                let currentMealType = detectMealTypeForRow(row, tableAnalysis);
+                // Определяем тип питания по первой ячейке строки
+                let mealType = 'обед';
+                const firstCell = (row[0] || '').toString().trim().toLowerCase();
+                if (firstCell.includes('завтрак')) mealType = 'завтрак';
+                else if (firstCell.includes('обед')) mealType = 'обед';
+                else if (firstCell.includes('полдник')) mealType = 'полдник';
+                else if (firstCell.includes('ужин')) mealType = 'ужин';
+                else if (firstCell.includes('дополнительный')) mealType = 'дополнительный гарнир';
 
                 // Обрабатываем ячейки в строке
                 for (let colIndex = 0; colIndex < row.length; colIndex++) {
                     const cellValue = (row[colIndex] || '').toString().trim();
                     
-                    if (cellValue && cellValue.length > 2) {
-                        // Проверяем, является ли это блюдом
-                        if (isDishName(cellValue, dishKeywords, serviceWords)) {
+                    if (cellValue && cellValue.length > 3) {
+                        // СТРОГАЯ проверка: содержит ли ячейка реальное блюдо
+                        if (isRealDish(cellValue, realDishes, excludeWords)) {
                             const { portion, price, cleanName } = extractPortionAndPrice(cellValue);
                             
-                            if (cleanName && cleanName.length > 2) {
-                                const dayOfWeek = getDayOfWeekFromColumn(colIndex, tableAnalysis);
+                            if (cleanName && cleanName.length > 3) {
+                                // Определяем день недели по колонке
+                                let dayOfWeek = 1;
+                                if (colIndex >= 1) dayOfWeek = Math.min(colIndex, 5);
                                 
                                 items.push({
                                     id: itemId++,
                                     name: cleanName,
                                     description: portion || undefined,
                                     price: price || 0,
-                                    mealType: currentMealType,
+                                    mealType: mealType,
                                     dayOfWeek: dayOfWeek,
                                     portion: portion,
                                     raw: cellValue
@@ -608,98 +626,51 @@
             };
         }
 
-        // Анализ структуры таблицы
-        function analyzeTableStructure(jsonData) {
-            const analysis = {
-                headerRows: [],
-                dayColumns: {},
-                mealTypes: []
-            };
 
-            // Ищем заголовки дней недели
-            for (let rowIndex = 0; rowIndex < Math.min(5, jsonData.length); rowIndex++) {
-                const row = jsonData[rowIndex];
-                if (!row) continue;
-
-                for (let colIndex = 0; colIndex < row.length; colIndex++) {
-                    const cellValue = (row[colIndex] || '').toString().trim().toLowerCase();
-                    
-                    if (cellValue.includes('понедельник')) analysis.dayColumns[colIndex] = 1;
-                    else if (cellValue.includes('вторник')) analysis.dayColumns[colIndex] = 2;
-                    else if (cellValue.includes('среда')) analysis.dayColumns[colIndex] = 3;
-                    else if (cellValue.includes('четверг')) analysis.dayColumns[colIndex] = 4;
-                    else if (cellValue.includes('пятница')) analysis.dayColumns[colIndex] = 5;
-                }
-            }
-
-            return analysis;
-        }
-
-        // Определение типа питания для строки
-        function detectMealTypeForRow(row, analysis) {
-            const firstCell = (row[0] || '').toString().trim().toLowerCase();
-            
-            if (firstCell.includes('завтрак')) return 'завтрак';
-            if (firstCell.includes('обед')) return 'обед';
-            if (firstCell.includes('полдник')) return 'полдник';
-            if (firstCell.includes('ужин')) return 'ужин';
-            if (firstCell.includes('дополнительный')) return 'дополнительный гарнир';
-            
-            return 'обед'; // по умолчанию
-        }
-
-        // Проверка, является ли текст названием блюда (умный алгоритм)
-        function isDishName(text, dishKeywords, serviceWords) {
+        // СТРОГАЯ проверка: является ли текст реальным блюдом
+        function isRealDish(text, realDishes, excludeWords) {
             const lowerText = text.toLowerCase();
             
-            // Проверяем служебные слова
-            if (serviceWords.some(word => lowerText.includes(word.toLowerCase()))) {
+            // 1. СТРОГО исключаем служебные слова
+            if (excludeWords.some(word => lowerText.includes(word.toLowerCase()))) {
                 return false;
             }
-
-            // Проверяем, содержит ли текст ключевые слова блюд
-            const hasDishKeyword = dishKeywords.some(keyword => lowerText.includes(keyword));
             
-            // Проверяем длину и структуру
-            const isLongEnough = text.length > 3;
-            const hasLetters = /[а-яё]/i.test(text);
-            const notOnlyNumbers = !/^[\d\s\-.,]+$/.test(text);
-            
-            // Проверяем, что это не просто служебная информация
-            const notServiceInfo = !lowerText.match(/^(неделя|день|порция|количество|итого|всего)/);
-            
-            // Дополнительные проверки для более точного распознавания
-            const hasFoodPattern = /(суп|борщ|щи|рагу|котлета|сосиска|колбаса|мясо|курица|рыба|картофель|макароны|каша|гречка|рис|овсянка|манка|пюре|салат|овощи|хлеб|булочка|печенье|чай|кофе|молоко|кефир|йогурт|компот|сок|фрукт|сыр|творог|сметана|масло|яйцо|омлет|блин|оладьи)/i.test(text);
-            
-            // Проверяем, что это не просто числа или служебная информация
-            const notServicePattern = !/^(неделя|день|порция|количество|итого|всего|№|кол|иче|ств)/i.test(text);
-            
-            // Проверяем, что текст содержит буквы и не является только символами
-            const hasMeaningfulContent = /[а-яё]{2,}/i.test(text) && !/^[\d\s\-.,№]+$/.test(text);
-            
-            // Итоговая оценка
-            const score = (hasDishKeyword ? 3 : 0) + 
-                         (hasFoodPattern ? 2 : 0) + 
-                         (isLongEnough ? 1 : 0) + 
-                         (hasLetters ? 1 : 0) + 
-                         (notOnlyNumbers ? 1 : 0) + 
-                         (notServiceInfo ? 1 : 0) + 
-                         (notServicePattern ? 1 : 0) + 
-                         (hasMeaningfulContent ? 1 : 0);
-            
-            // Если набрали достаточно баллов, считаем это блюдом
-            return score >= 4;
-        }
-
-        // Определение дня недели по колонке
-        function getDayOfWeekFromColumn(colIndex, analysis) {
-            if (analysis.dayColumns[colIndex]) {
-                return analysis.dayColumns[colIndex];
+            // 2. СТРОГО проверяем: содержит ли текст хотя бы одно реальное блюдо
+            const hasRealDish = realDishes.some(dish => lowerText.includes(dish.toLowerCase()));
+            if (!hasRealDish) {
+                return false;
             }
             
-            // Если не найдено в анализе, используем простую логику
-            return Math.min(Math.max(1, colIndex), 5);
+            // 3. Проверяем, что это не только служебная информация
+            if (lowerText.match(/^(неделя|день|порция|количество|итого|всего|№|кол|иче|ств|завтрак|обед|полдник|ужин)/)) {
+                return false;
+            }
+            
+            // 4. Проверяем, что текст содержит достаточно букв
+            if (!/[а-яё]{3,}/i.test(text)) {
+                return false;
+            }
+            
+            // 5. Проверяем, что это не только числа и символы
+            if (/^[\d\s\-.,№]+$/.test(text)) {
+                return false;
+            }
+            
+            // 6. Дополнительная проверка: текст должен содержать осмысленное название блюда
+            const meaningfulWords = text.split(/\s+/).filter(word => 
+                word.length > 2 && /[а-яё]/i.test(word) && 
+                !excludeWords.some(exclude => word.toLowerCase().includes(exclude.toLowerCase()))
+            );
+            
+            if (meaningfulWords.length === 0) {
+                return false;
+            }
+            
+            // Если прошли все проверки - это реальное блюдо
+            return true;
         }
+
 
         // Функция для извлечения порции и цены
         function extractPortionAndPrice(text) {

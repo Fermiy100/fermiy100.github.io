@@ -541,6 +541,13 @@
             let currentMealType = 'обед';
             let itemId = 1;
 
+            // Список служебных слов, которые нужно игнорировать
+            const skipWords = [
+                '№', 'кол', 'иче', 'ств', 'количество', 'порций', 'порции', 'неделя', 'недел',
+                'понедельник', 'вторник', 'среда', 'четверг', 'пятница', 'суббота', 'воскресенье',
+                'завтрак', 'обед', 'полдник', 'ужин', 'дополнительный', 'гарнир'
+            ];
+
             // Проходим по всем строкам
             for (let rowIndex = 0; rowIndex < jsonData.length; rowIndex++) {
                 const row = jsonData[rowIndex];
@@ -563,15 +570,24 @@
                     const cellValue = (row[colIndex] || '').toString().trim();
                     
                     if (cellValue && cellValue.length > 2 && !cellValue.match(/^\d+$/)) {
-                        // Пропускаем служебные ячейки
-                        if (cellValue.includes('№') || cellValue.includes('кол') || 
-                            cellValue.includes('иче') || cellValue.includes('ств')) {
+                        // Проверяем, не является ли это служебной ячейкой
+                        const isServiceCell = skipWords.some(word => 
+                            cellValue.toLowerCase().includes(word.toLowerCase())
+                        );
+                        
+                        if (isServiceCell) {
+                            continue;
+                        }
+
+                        // Проверяем, что это не просто число или короткий текст
+                        if (cellValue.length < 3 || cellValue.match(/^[\d\s\-.,]+$/)) {
                             continue;
                         }
 
                         const { portion, price, cleanName } = extractPortionAndPrice(cellValue);
                         
-                        if (cleanName && cleanName.length > 1) {
+                        // Дополнительная проверка на реальное блюдо
+                        if (cleanName && cleanName.length > 2 && !isServiceCell) {
                             const dayOfWeek = getDayOfWeek(colIndex, row.length);
                             
                             items.push({
@@ -621,8 +637,11 @@
                 cleanName = cleanName.replace(priceMatch[0], '').trim();
             }
 
-            // Очищаем лишние символы
-            cleanName = cleanName.replace(/[,\-–—]/g, '').trim();
+            // Очищаем лишние символы и пробелы
+            cleanName = cleanName.replace(/[,\-–—\s]+/g, ' ').trim();
+            
+            // Убираем лишние пробелы
+            cleanName = cleanName.replace(/\s+/g, ' ');
 
             return { portion, price, cleanName };
         }

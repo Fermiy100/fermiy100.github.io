@@ -1,0 +1,694 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>👨‍👩‍👧‍👦 Родитель - Школьное питание</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            color: #333;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+            color: white;
+        }
+
+        .header h1 {
+            font-size: 2.5rem;
+            margin-bottom: 10px;
+            text-shadow: 0 2px 4px rgba(0,0,0,0.3);
+        }
+
+        .nav-buttons {
+            display: flex;
+            gap: 15px;
+            justify-content: center;
+            margin-bottom: 30px;
+        }
+
+        .nav-btn {
+            background: rgba(255, 255, 255, 0.2);
+            color: white;
+            padding: 10px 20px;
+            border: 2px solid rgba(255, 255, 255, 0.3);
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-decoration: none;
+            font-weight: 600;
+        }
+
+        .nav-btn:hover {
+            background: rgba(255, 255, 255, 0.3);
+            border-color: rgba(255, 255, 255, 0.5);
+        }
+
+        .card {
+            background: white;
+            border-radius: 16px;
+            padding: 30px;
+            margin-bottom: 20px;
+            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+        }
+
+        .parent-info {
+            background: #f0f9ff;
+            border: 1px solid #0ea5e9;
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 20px;
+        }
+
+        .parent-form {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+
+        .form-group {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .form-group label {
+            font-weight: 600;
+            margin-bottom: 5px;
+            color: #374151;
+        }
+
+        .form-group input {
+            padding: 10px;
+            border: 2px solid #e5e7eb;
+            border-radius: 8px;
+            font-size: 16px;
+            transition: border-color 0.3s ease;
+        }
+
+        .form-group input:focus {
+            outline: none;
+            border-color: #3b82f6;
+        }
+
+        .btn {
+            background: #1f2937;
+            color: white;
+            padding: 12px 24px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: 600;
+            transition: background-color 0.2s ease;
+        }
+
+        .btn:hover {
+            background: #374151;
+        }
+
+        .btn:disabled {
+            background: #9ca3af;
+            cursor: not-allowed;
+        }
+
+        .btn-primary {
+            background: #3b82f6;
+        }
+
+        .btn-primary:hover {
+            background: #2563eb;
+        }
+
+        .btn-success {
+            background: #10b981;
+        }
+
+        .btn-success:hover {
+            background: #059669;
+        }
+
+        .message {
+            padding: 12px;
+            border-radius: 8px;
+            margin: 15px 0;
+            font-size: 14px;
+        }
+
+        .message.success {
+            background: #d1fae5;
+            color: #065f46;
+        }
+
+        .message.error {
+            background: #fee2e2;
+            color: #991b1b;
+        }
+
+        .message.info {
+            background: #fef3c7;
+            color: #92400e;
+        }
+
+        .menu-section {
+            margin-top: 20px;
+        }
+
+        .menu-grid {
+            display: grid;
+            gap: 20px;
+        }
+
+        .day-section {
+            border: 1px solid #e5e7eb;
+            border-radius: 12px;
+            padding: 20px;
+            background: #f9fafb;
+        }
+
+        .day-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 16px;
+            padding-bottom: 12px;
+            border-bottom: 2px solid #e5e7eb;
+        }
+
+        .day-title {
+            font-size: 18px;
+            font-weight: 600;
+            color: #374151;
+        }
+
+        .meal-count {
+            font-size: 14px;
+            color: #6b7280;
+        }
+
+        .meals-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 12px;
+        }
+
+        .meal-item {
+            padding: 12px;
+            background: white;
+            border-radius: 8px;
+            border: 2px solid #e5e7eb;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .meal-item:hover {
+            border-color: #3b82f6;
+            background: #f0f9ff;
+        }
+
+        .meal-item.selected {
+            border-color: #10b981;
+            background: #f0fdf4;
+        }
+
+        .meal-name {
+            font-weight: 600;
+            font-size: 14px;
+            margin-bottom: 4px;
+        }
+
+        .meal-description {
+            font-size: 12px;
+            color: #6b7280;
+            margin-bottom: 4px;
+        }
+
+        .meal-price {
+            font-size: 12px;
+            color: #059669;
+            font-weight: 600;
+        }
+
+        .order-summary {
+            background: #f0f9ff;
+            border: 1px solid #0ea5e9;
+            border-radius: 12px;
+            padding: 20px;
+            margin-top: 20px;
+        }
+
+        .order-summary h3 {
+            margin-bottom: 15px;
+            color: #1e40af;
+        }
+
+        .selected-items {
+            margin-bottom: 15px;
+        }
+
+        .selected-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 8px 0;
+            border-bottom: 1px solid #e5e7eb;
+        }
+
+        .selected-item:last-child {
+            border-bottom: none;
+        }
+
+        .total-price {
+            font-size: 18px;
+            font-weight: 700;
+            color: #1e40af;
+            text-align: right;
+            margin-top: 10px;
+            padding-top: 10px;
+            border-top: 2px solid #0ea5e9;
+        }
+
+        .no-menu {
+            text-align: center;
+            color: #6b7280;
+            padding: 40px;
+            background: #f9fafb;
+            border-radius: 12px;
+            border: 2px dashed #d1d5db;
+        }
+
+        .loading {
+            text-align: center;
+            color: #6b7280;
+            padding: 40px;
+        }
+
+        .tabs {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+            border-bottom: 2px solid #e5e7eb;
+        }
+
+        .tab {
+            padding: 12px 24px;
+            background: #f3f4f6;
+            border: none;
+            border-radius: 8px 8px 0 0;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.3s ease;
+        }
+
+        .tab.active {
+            background: #667eea;
+            color: white;
+        }
+
+        .tab-content {
+            display: none;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>👨‍👩‍👧‍👦 Панель родителя</h1>
+            <p>Выберите питание для вашего ребенка</p>
+        </div>
+
+        <div class="nav-buttons">
+            <a href="index.html" class="nav-btn">🏠 Главная</a>
+            <a href="director.html" class="nav-btn">👨‍💼 Директор</a>
+            <a href="parser.html" class="nav-btn">📊 Парсер Excel</a>
+        </div>
+
+        <div class="card">
+            <div class="tabs">
+                <button class="tab active" onclick="switchTab('info')">👤 Информация</button>
+                <button class="tab" onclick="switchTab('menu')">🍽️ Выбор меню</button>
+                <button class="tab" onclick="switchTab('orders')">📋 Мои заказы</button>
+            </div>
+
+            <!-- Информация о родителе -->
+            <div id="info-tab" class="tab-content active">
+                <h3 style="margin-bottom: 20px;">👤 Информация о родителе</h3>
+                
+                <div class="parent-info">
+                    <h4 style="margin-bottom: 15px; color: #1e40af;">Введите ваши данные</h4>
+                    <div class="parent-form">
+                        <div class="form-group">
+                            <label for="parentName">Ваше имя:</label>
+                            <input type="text" id="parentName" placeholder="Иванов Иван Иванович">
+                        </div>
+                        <div class="form-group">
+                            <label for="childName">Имя ребенка:</label>
+                            <input type="text" id="childName" placeholder="Иванов Петр">
+                        </div>
+                        <div class="form-group">
+                            <label for="parentPhone">Телефон:</label>
+                            <input type="tel" id="parentPhone" placeholder="+7 (999) 123-45-67">
+                        </div>
+                        <div class="form-group">
+                            <label for="parentEmail">Email:</label>
+                            <input type="email" id="parentEmail" placeholder="parent@example.com">
+                        </div>
+                    </div>
+                    <button class="btn btn-primary" onclick="saveParentInfo()">💾 Сохранить данные</button>
+                </div>
+
+                <div id="parentMessage"></div>
+            </div>
+
+            <!-- Выбор меню -->
+            <div id="menu-tab" class="tab-content">
+                <h3 style="margin-bottom: 20px;">🍽️ Выбор меню</h3>
+                
+                <div id="menuContent">
+                    <div class="loading">
+                        <p>⏳ Загружаем меню...</p>
+                    </div>
+                </div>
+
+                <div id="orderSummary" class="order-summary" style="display: none;">
+                    <h3>📋 Ваш заказ</h3>
+                    <div id="selectedItems" class="selected-items"></div>
+                    <div id="totalPrice" class="total-price"></div>
+                    <button class="btn btn-success" onclick="submitOrder()" style="margin-top: 15px; width: 100%;">
+                        📤 Отправить заказ
+                    </button>
+                </div>
+            </div>
+
+            <!-- Мои заказы -->
+            <div id="orders-tab" class="tab-content">
+                <h3 style="margin-bottom: 20px;">📋 Мои заказы</h3>
+                <div id="myOrders">
+                    <p style="text-align: center; color: #6b7280; padding: 40px;">
+                        Ваши заказы появятся здесь после отправки
+                    </p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let selectedItems = [];
+        let currentMenu = null;
+        let parentInfo = {};
+
+        const dayNames = ["", "Понедельник", "Вторник", "Среда", "Четверг", "Пятница", "Суббота", "Воскресенье"];
+
+        // Переключение вкладок
+        function switchTab(tabName) {
+            // Скрыть все вкладки
+            document.querySelectorAll('.tab-content').forEach(tab => {
+                tab.classList.remove('active');
+            });
+            document.querySelectorAll('.tab').forEach(tab => {
+                tab.classList.remove('active');
+            });
+
+            // Показать выбранную вкладку
+            document.getElementById(tabName + '-tab').classList.add('active');
+            event.target.classList.add('active');
+
+            // Загрузить данные для вкладки
+            if (tabName === 'menu') {
+                loadMenu();
+            } else if (tabName === 'orders') {
+                loadMyOrders();
+            }
+        }
+
+        // Сохранение информации о родителе
+        function saveParentInfo() {
+            const name = document.getElementById('parentName').value.trim();
+            const childName = document.getElementById('childName').value.trim();
+            const phone = document.getElementById('parentPhone').value.trim();
+            const email = document.getElementById('parentEmail').value.trim();
+
+            if (!name || !childName) {
+                showMessage('❌ Пожалуйста, заполните имя родителя и имя ребенка', 'error');
+                return;
+            }
+
+            parentInfo = {
+                name,
+                childName,
+                phone,
+                email,
+                savedAt: new Date().toISOString()
+            };
+
+            localStorage.setItem('parentInfo', JSON.stringify(parentInfo));
+            showMessage('✅ Информация сохранена! Теперь вы можете выбирать меню.', 'success');
+        }
+
+        // Загрузка меню
+        function loadMenu() {
+            const menus = JSON.parse(localStorage.getItem('schoolMenus') || '[]');
+            const menuContent = document.getElementById('menuContent');
+
+            if (menus.length === 0) {
+                menuContent.innerHTML = `
+                    <div class="no-menu">
+                        <h4>📋 Меню пока не загружено</h4>
+                        <p>Директор еще не загрузил меню на эту неделю</p>
+                        <button class="btn" onclick="loadMenu()" style="margin-top: 15px;">🔄 Обновить</button>
+                    </div>
+                `;
+                return;
+            }
+
+            // Берем последнее загруженное меню
+            currentMenu = menus[menus.length - 1];
+            displayMenu(currentMenu);
+        }
+
+        // Отображение меню
+        function displayMenu(menu) {
+            const menuContent = document.getElementById('menuContent');
+            
+            // Группируем блюда по дням и типам питания
+            const groupedMenu = menu.items.reduce((acc, item) => {
+                const key = `${item.dayOfWeek}-${item.mealType}`;
+                if (!acc[key]) {
+                    acc[key] = {
+                        day: dayNames[item.dayOfWeek] || `День ${item.dayOfWeek}`,
+                        mealType: item.mealType,
+                        items: []
+                    };
+                }
+                acc[key].items.push(item);
+                return acc;
+            }, {});
+
+            menuContent.innerHTML = `
+                <div style="margin-bottom: 20px;">
+                    <h4>📋 ${menu.title}</h4>
+                    <p style="color: #6b7280; margin-top: 5px;">Всего блюд: ${menu.items.length}</p>
+                </div>
+                <div class="menu-grid">
+                    ${Object.values(groupedMenu).map(group => `
+                        <div class="day-section">
+                            <div class="day-header">
+                                <div class="day-title">${group.day} — ${group.mealType}</div>
+                                <div class="meal-count">${group.items.length} блюд</div>
+                            </div>
+                            <div class="meals-grid">
+                                ${group.items.map(item => `
+                                    <div class="meal-item" onclick="toggleMeal(${item.id})" data-item-id="${item.id}">
+                                        <div class="meal-name">${item.name}</div>
+                                        ${item.description ? `<div class="meal-description">${item.description}</div>` : ''}
+                                        ${item.price > 0 ? `<div class="meal-price">${item.price} ₽</div>` : ''}
+                                    </div>
+                                `).join('')}
+                            </div>
+                        </div>
+                    `).join('')}
+                </div>
+            `;
+        }
+
+        // Переключение выбора блюда
+        function toggleMeal(itemId) {
+            const item = currentMenu.items.find(i => i.id === itemId);
+            if (!item) return;
+
+            const existingIndex = selectedItems.findIndex(i => i.id === itemId);
+            
+            if (existingIndex >= 0) {
+                // Убираем из выбора
+                selectedItems.splice(existingIndex, 1);
+                document.querySelector(`[data-item-id="${itemId}"]`).classList.remove('selected');
+            } else {
+                // Добавляем в выбор
+                selectedItems.push(item);
+                document.querySelector(`[data-item-id="${itemId}"]`).classList.add('selected');
+            }
+
+            updateOrderSummary();
+        }
+
+        // Обновление сводки заказа
+        function updateOrderSummary() {
+            const orderSummary = document.getElementById('orderSummary');
+            const selectedItemsDiv = document.getElementById('selectedItems');
+            const totalPriceDiv = document.getElementById('totalPrice');
+
+            if (selectedItems.length === 0) {
+                orderSummary.style.display = 'none';
+                return;
+            }
+
+            orderSummary.style.display = 'block';
+
+            selectedItemsDiv.innerHTML = selectedItems.map(item => `
+                <div class="selected-item">
+                    <div>
+                        <strong>${item.name}</strong><br>
+                        <small>${dayNames[item.dayOfWeek]} - ${item.mealType}</small>
+                    </div>
+                    <div>
+                        ${item.price > 0 ? `${item.price} ₽` : 'Бесплатно'}
+                    </div>
+                </div>
+            `).join('');
+
+            const totalPrice = selectedItems.reduce((sum, item) => sum + (item.price || 0), 0);
+            totalPriceDiv.textContent = `Итого: ${totalPrice} ₽`;
+        }
+
+        // Отправка заказа
+        function submitOrder() {
+            if (selectedItems.length === 0) {
+                showMessage('❌ Выберите хотя бы одно блюдо', 'error');
+                return;
+            }
+
+            const parentInfo = JSON.parse(localStorage.getItem('parentInfo') || '{}');
+            if (!parentInfo.name) {
+                showMessage('❌ Сначала заполните информацию о родителе', 'error');
+                switchTab('info');
+                return;
+            }
+
+            const order = {
+                id: Date.now(),
+                parentName: parentInfo.name,
+                childName: parentInfo.childName,
+                items: selectedItems,
+                totalPrice: selectedItems.reduce((sum, item) => sum + (item.price || 0), 0),
+                date: new Date().toISOString(),
+                status: 'pending'
+            };
+
+            // Сохраняем заказ
+            const orders = JSON.parse(localStorage.getItem('parentOrders') || '[]');
+            orders.push(order);
+            localStorage.setItem('parentOrders', JSON.stringify(orders));
+
+            // Обновляем статистику
+            updateStats();
+
+            showMessage(`✅ Заказ успешно отправлен! Выбрано ${selectedItems.length} блюд на сумму ${order.totalPrice} ₽`, 'success');
+
+            // Очищаем выбор
+            selectedItems = [];
+            document.querySelectorAll('.meal-item').forEach(item => {
+                item.classList.remove('selected');
+            });
+            updateOrderSummary();
+        }
+
+        // Загрузка моих заказов
+        function loadMyOrders() {
+            const parentInfo = JSON.parse(localStorage.getItem('parentInfo') || '{}');
+            const allOrders = JSON.parse(localStorage.getItem('parentOrders') || '[]');
+            const myOrders = allOrders.filter(order => order.parentName === parentInfo.name);
+            const myOrdersDiv = document.getElementById('myOrders');
+
+            if (myOrders.length === 0) {
+                myOrdersDiv.innerHTML = '<p style="text-align: center; color: #6b7280; padding: 40px;">У вас пока нет заказов</p>';
+                return;
+            }
+
+            myOrdersDiv.innerHTML = myOrders.map(order => `
+                <div class="card" style="margin-bottom: 15px;">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
+                        <h4>Заказ #${order.id}</h4>
+                        <div style="font-size: 14px; color: #6b7280;">
+                            ${new Date(order.date).toLocaleDateString('ru-RU')}
+                        </div>
+                    </div>
+                    <div style="margin-bottom: 10px;">
+                        <strong>Ребенок:</strong> ${order.childName}
+                    </div>
+                    <div style="margin-bottom: 10px;">
+                        <strong>Блюда:</strong><br>
+                        ${order.items.map(item => `• ${item.name} (${dayNames[item.dayOfWeek]} - ${item.mealType})`).join('<br>')}
+                    </div>
+                    <div style="text-align: right; font-weight: 600; color: #059669;">
+                        Сумма: ${order.totalPrice} ₽
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        // Обновление статистики
+        function updateStats() {
+            const orders = JSON.parse(localStorage.getItem('parentOrders') || '[]');
+            const stats = JSON.parse(localStorage.getItem('schoolMealsStats') || '{}');
+            
+            stats.totalOrders = orders.length;
+            stats.activeParents = new Set(orders.map(order => order.parentName)).size;
+            
+            localStorage.setItem('schoolMealsStats', JSON.stringify(stats));
+        }
+
+        // Показать сообщение
+        function showMessage(text, type) {
+            const messageDiv = document.getElementById('parentMessage');
+            messageDiv.textContent = text;
+            messageDiv.className = `message ${type}`;
+            messageDiv.style.display = 'block';
+            
+            setTimeout(() => {
+                messageDiv.style.display = 'none';
+            }, 5000);
+        }
+
+        // Инициализация при загрузке страницы
+        document.addEventListener('DOMContentLoaded', function() {
+            const savedParentInfo = JSON.parse(localStorage.getItem('parentInfo') || '{}');
+            if (savedParentInfo.name) {
+                document.getElementById('parentName').value = savedParentInfo.name;
+                document.getElementById('childName').value = savedParentInfo.childName;
+                document.getElementById('parentPhone').value = savedParentInfo.phone || '';
+                document.getElementById('parentEmail').value = savedParentInfo.email || '';
+            }
+        });
+    </script>
+</body>
+</html>

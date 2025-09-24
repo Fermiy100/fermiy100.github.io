@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>🍽️ Парсер Excel меню</title>
+    <title>🍽️ Школьное питание - Главная</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
     <style>
         * {
@@ -27,551 +27,275 @@
 
         .header {
             text-align: center;
-            margin-bottom: 30px;
+            margin-bottom: 40px;
             color: white;
         }
 
         .header h1 {
-            font-size: 2.5rem;
+            font-size: 3rem;
             margin-bottom: 10px;
             text-shadow: 0 2px 4px rgba(0,0,0,0.3);
         }
 
-        .card {
-            background: white;
-            border-radius: 16px;
-            padding: 30px;
-            margin-bottom: 20px;
-            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+        .header p {
+            font-size: 1.2rem;
+            opacity: 0.9;
         }
 
-        .upload-section {
-            border: 2px dashed #d1d5db;
-            border-radius: 12px;
+        .navigation {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 30px;
+            margin-bottom: 40px;
+        }
+
+        .nav-card {
+            background: white;
+            border-radius: 20px;
             padding: 40px;
             text-align: center;
-            background: #f9fafb;
-            transition: all 0.3s ease;
-        }
-
-        .upload-section:hover {
-            border-color: #3b82f6;
-            background: #f0f9ff;
-        }
-
-        .file-input {
-            display: none;
-        }
-
-        .upload-btn {
-            background: #1f2937;
-            color: white;
-            padding: 12px 24px;
-            border: none;
-            border-radius: 8px;
+            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
             cursor: pointer;
-            font-size: 16px;
-            font-weight: 600;
-            transition: background-color 0.2s ease;
         }
 
-        .upload-btn:hover {
-            background: #374151;
+        .nav-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 25px 30px -5px rgba(0, 0, 0, 0.15), 0 15px 15px -5px rgba(0, 0, 0, 0.08);
         }
 
-        .upload-btn:disabled {
-            background: #9ca3af;
-            cursor: not-allowed;
-        }
-
-        .progress-bar {
-            width: 100%;
-            height: 8px;
-            background: #e5e7eb;
-            border-radius: 4px;
-            overflow: hidden;
-            margin: 15px 0;
-        }
-
-        .progress-fill {
-            height: 100%;
-            background: #10b981;
-            transition: width 0.3s ease;
-        }
-
-        .message {
-            padding: 12px;
-            border-radius: 8px;
-            margin: 15px 0;
-            font-size: 14px;
-        }
-
-        .message.success {
-            background: #d1fae5;
-            color: #065f46;
-        }
-
-        .message.error {
-            background: #fee2e2;
-            color: #991b1b;
-        }
-
-        .menu-grid {
-            display: grid;
-            gap: 20px;
-        }
-
-        .day-section {
-            border: 1px solid #e5e7eb;
-            border-radius: 12px;
-            padding: 20px;
-            background: #f9fafb;
-        }
-
-        .day-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 16px;
-            padding-bottom: 12px;
-            border-bottom: 2px solid #e5e7eb;
-        }
-
-        .day-title {
-            font-size: 18px;
-            font-weight: 600;
+        .nav-card h2 {
+            font-size: 1.8rem;
+            margin-bottom: 15px;
             color: #374151;
         }
 
-        .meal-count {
-            font-size: 14px;
+        .nav-card p {
             color: #6b7280;
+            margin-bottom: 20px;
+            line-height: 1.6;
         }
 
-        .meals-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-            gap: 12px;
+        .nav-btn {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 15px 30px;
+            border: none;
+            border-radius: 12px;
+            font-size: 1.1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-decoration: none;
+            display: inline-block;
         }
 
-        .meal-item {
-            padding: 12px;
+        .nav-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(102, 126, 234, 0.3);
+        }
+
+        .stats-section {
             background: white;
-            border-radius: 8px;
-            border: 1px solid #e5e7eb;
+            border-radius: 20px;
+            padding: 30px;
+            margin-bottom: 30px;
+            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
         }
 
-        .meal-name {
-            font-weight: 600;
-            font-size: 14px;
-            margin-bottom: 4px;
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
         }
 
-        .meal-description {
-            font-size: 12px;
-            color: #6b7280;
-            margin-bottom: 4px;
+        .stat-item {
+            text-align: center;
+            padding: 20px;
+            background: #f8fafc;
+            border-radius: 12px;
         }
 
-        .meal-price {
-            font-size: 12px;
-            color: #059669;
-            font-weight: 600;
-        }
-
-        .preview-section {
-            background: #f9fafb;
-            border: 1px solid #e5e7eb;
-            border-radius: 8px;
-            padding: 12px;
-            max-height: 200px;
-            overflow: auto;
-            font-family: monospace;
-            font-size: 12px;
-        }
-
-        .instructions {
-            background: #f0f9ff;
-            border: 1px solid #0ea5e9;
-        }
-
-        .instructions h4 {
-            color: #1e40af;
-            margin-bottom: 10px;
-        }
-
-        .instructions ul {
-            color: #1e40af;
-            padding-left: 20px;
-        }
-
-        .instructions li {
+        .stat-number {
+            font-size: 2.5rem;
+            font-weight: 700;
+            color: #667eea;
             margin-bottom: 5px;
         }
 
-        .stats {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 20px;
-        }
-
-        .stats h3 {
-            margin: 0;
-        }
-
-        .stats .count {
-            font-size: 14px;
+        .stat-label {
             color: #6b7280;
+            font-size: 0.9rem;
+        }
+
+        .features-section {
+            background: white;
+            border-radius: 20px;
+            padding: 30px;
+            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+        }
+
+        .features-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+        }
+
+        .feature-item {
+            padding: 20px;
+            background: #f8fafc;
+            border-radius: 12px;
+            text-align: center;
+        }
+
+        .feature-icon {
+            font-size: 2rem;
+            margin-bottom: 10px;
+        }
+
+        .feature-title {
+            font-weight: 600;
+            margin-bottom: 8px;
+            color: #374151;
+        }
+
+        .feature-desc {
+            color: #6b7280;
+            font-size: 0.9rem;
+        }
+
+        .footer {
+            text-align: center;
+            color: white;
+            margin-top: 40px;
+            opacity: 0.8;
+        }
+
+        @media (max-width: 768px) {
+            .header h1 {
+                font-size: 2rem;
+            }
+            
+            .navigation {
+                grid-template-columns: 1fr;
+            }
+            
+            .nav-card {
+                padding: 30px 20px;
+            }
         }
     </style>
 </head>
 <body>
     <div class="container">
         <div class="header">
-            <h1>🍽️ Парсер Excel меню</h1>
-            <p>Загрузите файл Excel с меню для автоматического парсинга</p>
+            <h1>🍽️ Школьное питание</h1>
+            <p>Современная система управления питанием в школе</p>
         </div>
 
-        <div class="card">
-            <h3 style="margin-bottom: 20px;">📤 Загрузка файла Excel</h3>
-            
-            <div class="upload-section">
-                <input type="file" id="fileInput" class="file-input" accept=".xlsx,.xls">
-                <button class="upload-btn" onclick="document.getElementById('fileInput').click()">
-                    📁 Выберите файл Excel
-                </button>
-                <p style="margin-top: 10px; color: #6b7280; font-size: 14px;">
-                    Поддерживаются файлы .xlsx и .xls
-                </p>
+        <div class="navigation">
+            <div class="nav-card" onclick="navigateTo('director')">
+                <h2>👨‍💼 Директор</h2>
+                <p>Загружайте меню, просматривайте заказы родителей и управляйте питанием в школе</p>
+                <button class="nav-btn">Управление меню</button>
             </div>
 
-            <div id="progressContainer" style="display: none;">
-                <div class="progress-bar">
-                    <div class="progress-fill" id="progressFill"></div>
+            <div class="nav-card" onclick="navigateTo('parent')">
+                <h2>👨‍👩‍👧‍👦 Родитель</h2>
+                <p>Выбирайте блюда для вашего ребенка, просматривайте меню и делайте заказы</p>
+                <button class="nav-btn">Выбор питания</button>
+            </div>
+
+            <div class="nav-card" onclick="navigateTo('parser')">
+                <h2>📊 Парсер Excel</h2>
+                <p>Загружайте Excel файлы с меню для автоматического распознавания и структурирования</p>
+                <button class="nav-btn">Парсинг меню</button>
+            </div>
+        </div>
+
+        <div class="stats-section">
+            <h3 style="text-align: center; margin-bottom: 20px; color: #374151;">📈 Статистика системы</h3>
+            <div class="stats-grid">
+                <div class="stat-item">
+                    <div class="stat-number" id="totalMenus">0</div>
+                    <div class="stat-label">Загружено меню</div>
                 </div>
-                <div id="progressText" style="text-align: center; font-size: 14px; margin-top: 5px;"></div>
+                <div class="stat-item">
+                    <div class="stat-number" id="totalOrders">0</div>
+                    <div class="stat-label">Заказов родителей</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-number" id="totalDishes">0</div>
+                    <div class="stat-label">Блюд в меню</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-number" id="activeParents">0</div>
+                    <div class="stat-label">Активных родителей</div>
+                </div>
             </div>
-
-            <div id="message"></div>
-
-            <div id="filePreview" style="display: none;">
-                <h4 style="margin-bottom: 10px; color: #374151;">📋 Предварительный просмотр файла:</h4>
-                <div class="preview-section" id="previewContent"></div>
-            </div>
-
-            <button class="upload-btn" id="processBtn" onclick="processFile()" style="margin-top: 20px; display: none;">
-                📤 Обработать файл
-            </button>
         </div>
 
-        <div class="card" id="menuCard" style="display: none;">
-            <div class="stats">
-                <h3 id="menuTitle">📋 Меню</h3>
-                <div class="count" id="menuCount">Всего блюд: 0</div>
+        <div class="features-section">
+            <h3 style="text-align: center; margin-bottom: 20px; color: #374151;">✨ Возможности системы</h3>
+            <div class="features-grid">
+                <div class="feature-item">
+                    <div class="feature-icon">📤</div>
+                    <div class="feature-title">Загрузка меню</div>
+                    <div class="feature-desc">Автоматический парсинг Excel файлов с меню</div>
+                </div>
+                <div class="feature-item">
+                    <div class="feature-icon">🍽️</div>
+                    <div class="feature-title">Выбор блюд</div>
+                    <div class="feature-desc">Удобный интерфейс для выбора питания</div>
+                </div>
+                <div class="feature-item">
+                    <div class="feature-icon">📊</div>
+                    <div class="feature-title">Аналитика</div>
+                    <div class="feature-desc">Статистика заказов и популярности блюд</div>
+                </div>
+                <div class="feature-item">
+                    <div class="feature-icon">💾</div>
+                    <div class="feature-title">Сохранение данных</div>
+                    <div class="feature-desc">Локальное хранение всех данных</div>
+                </div>
             </div>
-
-            <div class="menu-grid" id="menuGrid"></div>
         </div>
 
-        <div class="card instructions">
-            <h4>📝 Инструкция по загрузке меню</h4>
-            <ul>
-                <li>Файл должен быть в формате Excel (.xlsx или .xls)</li>
-                <li>В таблице должны быть указаны дни недели (Понедельник, Вторник и т.д.)</li>
-                <li>Типы питания: Завтрак, Обед, Полдник, Ужин, Дополнительный гарнир</li>
-                <li>Каждое блюдо должно быть в отдельной ячейке</li>
-                <li>Можно указать порцию (например: "200г") и цену (например: "150 руб")</li>
-                <li>Парсер автоматически распознает структуру таблицы</li>
-            </ul>
+        <div class="footer">
+            <p>© 2024 Школьное питание. Все права защищены.</p>
         </div>
     </div>
 
     <script>
-        let selectedFile = null;
-        let parsedMenu = null;
+        // Навигация между страницами
+        function navigateTo(page) {
+            switch(page) {
+                case 'director':
+                    window.location.href = 'director.html';
+                    break;
+                case 'parent':
+                    window.location.href = 'parent.html';
+                    break;
+                case 'parser':
+                    window.location.href = 'parser.html';
+                    break;
+            }
+        }
 
-        const dayNames = ["", "Понедельник", "Вторник", "Среда", "Четверг", "Пятница", "Суббота", "Воскресенье"];
-
-        // Обработчик выбора файла
-        document.getElementById('fileInput').addEventListener('change', function(e) {
-            const file = e.target.files[0];
-            if (!file) return;
-
-            selectedFile = file;
-            showMessage('✅ Файл выбран. Нажмите "Обработать файл" для парсинга.', 'success');
-            document.getElementById('processBtn').style.display = 'block';
+        // Загрузка статистики
+        function loadStats() {
+            const stats = JSON.parse(localStorage.getItem('schoolMealsStats') || '{}');
             
-            // Предварительный просмотр
-            previewFile(file);
+            document.getElementById('totalMenus').textContent = stats.totalMenus || 0;
+            document.getElementById('totalOrders').textContent = stats.totalOrders || 0;
+            document.getElementById('totalDishes').textContent = stats.totalDishes || 0;
+            document.getElementById('activeParents').textContent = stats.activeParents || 0;
+        }
+
+        // Инициализация при загрузке страницы
+        document.addEventListener('DOMContentLoaded', function() {
+            loadStats();
         });
-
-        // Предварительный просмотр файла
-        async function previewFile(file) {
-            try {
-                const data = await readFile(file);
-                const workbook = XLSX.read(data, { type: 'array' });
-                const sheetName = workbook.SheetNames[0];
-                const worksheet = workbook.Sheets[sheetName];
-                const jsonData = XLSX.utils.sheet_to_json(worksheet, { 
-                    header: 1, 
-                    raw: false,
-                    defval: ''
-                });
-
-                const preview = [];
-                const maxRows = Math.min(10, jsonData.length);
-                
-                for (let i = 0; i < maxRows; i++) {
-                    const row = jsonData[i];
-                    if (row) {
-                        preview.push(row.slice(0, 5).join(' | '));
-                    }
-                }
-                
-                document.getElementById('previewContent').innerHTML = preview.map(line => 
-                    `<div>${line}</div>`
-                ).join('');
-                document.getElementById('filePreview').style.display = 'block';
-                
-            } catch (error) {
-                showMessage(`❌ Ошибка чтения файла: ${error.message}`, 'error');
-            }
-        }
-
-        // Чтение файла
-        function readFile(file) {
-            return new Promise((resolve, reject) => {
-                const reader = new FileReader();
-                reader.onload = (e) => resolve(new Uint8Array(e.target.result));
-                reader.onerror = () => reject(new Error('Ошибка чтения файла'));
-                reader.readAsArrayBuffer(file);
-            });
-        }
-
-        // Обработка файла
-        async function processFile() {
-            if (!selectedFile) {
-                showMessage('❌ Выберите файл', 'error');
-                return;
-            }
-
-            showProgress(true);
-            setProgress(0, 'Чтение файла...');
-
-            try {
-                setProgress(25, 'Парсинг Excel...');
-                
-                const data = await readFile(selectedFile);
-                const workbook = XLSX.read(data, { type: 'array' });
-                
-                setProgress(50, 'Обработка данных...');
-                
-                const sheetName = workbook.SheetNames.find(name => 
-                    /недель|меню|питание|заказ/i.test(name)
-                ) || workbook.SheetNames[0];
-                
-                const worksheet = workbook.Sheets[sheetName];
-                const jsonData = XLSX.utils.sheet_to_json(worksheet, { 
-                    header: 1, 
-                    raw: false,
-                    defval: ''
-                });
-
-                setProgress(75, 'Структурирование меню...');
-                
-                const menu = parseMenuData(jsonData, sheetName);
-                
-                setProgress(100, 'Готово!');
-                
-                parsedMenu = menu;
-                displayMenu(menu);
-                
-                showMessage(`✅ Меню успешно загружено! Обработано ${menu.items.length} блюд. ${menu.title}`, 'success');
-                
-            } catch (error) {
-                showMessage(`❌ Ошибка: ${error.message}`, 'error');
-            } finally {
-                showProgress(false);
-            }
-        }
-
-        // Парсинг данных меню
-        function parseMenuData(jsonData, sheetName) {
-            const items = [];
-            let currentMealType = 'обед';
-            let itemId = 1;
-
-            // Проходим по всем строкам
-            for (let rowIndex = 0; rowIndex < jsonData.length; rowIndex++) {
-                const row = jsonData[rowIndex];
-                if (!row) continue;
-
-                // Проверяем, является ли строка заголовком типа питания
-                const firstCell = (row[0] || '').toString().trim();
-                if (firstCell) {
-                    const mealType = getMealType(firstCell);
-                    if (mealType !== 'обед' || firstCell.toLowerCase().includes('завтрак') || 
-                        firstCell.toLowerCase().includes('обед') || firstCell.toLowerCase().includes('полдник') ||
-                        firstCell.toLowerCase().includes('ужин') || firstCell.toLowerCase().includes('дополнительный')) {
-                        currentMealType = mealType;
-                        continue;
-                    }
-                }
-
-                // Обрабатываем строки с блюдами
-                for (let colIndex = 1; colIndex < row.length; colIndex++) {
-                    const cellValue = (row[colIndex] || '').toString().trim();
-                    
-                    if (cellValue && cellValue.length > 2 && !cellValue.match(/^\d+$/)) {
-                        // Пропускаем служебные ячейки
-                        if (cellValue.includes('№') || cellValue.includes('кол') || 
-                            cellValue.includes('иче') || cellValue.includes('ств')) {
-                            continue;
-                        }
-
-                        const { portion, price, cleanName } = extractPortionAndPrice(cellValue);
-                        
-                        if (cleanName && cleanName.length > 1) {
-                            const dayOfWeek = getDayOfWeek(colIndex, row.length);
-                            
-                            items.push({
-                                id: itemId++,
-                                name: cleanName,
-                                description: portion || undefined,
-                                price: price || 0,
-                                mealType: currentMealType,
-                                dayOfWeek: dayOfWeek,
-                                portion: portion,
-                                raw: cellValue
-                            });
-                        }
-                    }
-                }
-            }
-
-            // Извлекаем информацию о неделе
-            const weekMatch = sheetName.match(/(\d+)\s*недел/i);
-            const week = weekMatch ? `Неделя ${weekMatch[1]}` : 'Текущая неделя';
-
-            return {
-                items,
-                week,
-                title: `Меню на ${week}`
-            };
-        }
-
-        // Функция для извлечения порции и цены
-        function extractPortionAndPrice(text) {
-            let portion = '';
-            let price = 0;
-            let cleanName = text;
-
-            // Ищем порцию (г, шт, мл и т.д.)
-            const portionMatch = text.match(/(\d+\s*(г|шт|мл|л|кг|порц|порции?))/i);
-            if (portionMatch) {
-                portion = portionMatch[0];
-                cleanName = cleanName.replace(portion, '').trim();
-            }
-
-            // Ищем цену (руб, ₽, р.)
-            const priceMatch = text.match(/(\d+)\s*(руб|₽|р\.?)/i);
-            if (priceMatch) {
-                price = parseInt(priceMatch[1]);
-                cleanName = cleanName.replace(priceMatch[0], '').trim();
-            }
-
-            // Очищаем лишние символы
-            cleanName = cleanName.replace(/[,\-–—]/g, '').trim();
-
-            return { portion, price, cleanName };
-        }
-
-        // Функция для определения дня недели
-        function getDayOfWeek(columnIndex, totalColumns) {
-            const dayIndex = Math.max(0, columnIndex - 2);
-            return Math.min(dayIndex + 1, 5);
-        }
-
-        // Функция для определения типа питания
-        function getMealType(text) {
-            const lowerText = text.toLowerCase();
-            
-            if (lowerText.includes('завтрак') || lowerText.includes('завтр')) return 'завтрак';
-            if (lowerText.includes('обед')) return 'обед';
-            if (lowerText.includes('полдник') || lowerText.includes('полд')) return 'полдник';
-            if (lowerText.includes('ужин')) return 'ужин';
-            if (lowerText.includes('дополнительный') || lowerText.includes('гарнир')) return 'дополнительно';
-            
-            return 'обед';
-        }
-
-        // Отображение меню
-        function displayMenu(menu) {
-            document.getElementById('menuTitle').textContent = `📋 ${menu.title}`;
-            document.getElementById('menuCount').textContent = `Всего блюд: ${menu.items.length}`;
-            
-            // Группируем блюда по дням и типам питания
-            const groupedMenu = menu.items.reduce((acc, item) => {
-                const key = `${item.dayOfWeek}-${item.mealType}`;
-                if (!acc[key]) {
-                    acc[key] = {
-                        day: dayNames[item.dayOfWeek] || `День ${item.dayOfWeek}`,
-                        mealType: item.mealType,
-                        items: []
-                    };
-                }
-                acc[key].items.push(item);
-                return acc;
-            }, {});
-
-            const menuGrid = document.getElementById('menuGrid');
-            menuGrid.innerHTML = '';
-
-            Object.values(groupedMenu).forEach(group => {
-                const daySection = document.createElement('div');
-                daySection.className = 'day-section';
-                
-                daySection.innerHTML = `
-                    <div class="day-header">
-                        <div class="day-title">${group.day} — ${group.mealType}</div>
-                        <div class="meal-count">${group.items.length} блюд</div>
-                    </div>
-                    <div class="meals-grid">
-                        ${group.items.map(item => `
-                            <div class="meal-item">
-                                <div class="meal-name">${item.name}</div>
-                                ${item.description ? `<div class="meal-description">${item.description}</div>` : ''}
-                                ${item.price > 0 ? `<div class="meal-price">${item.price} ₽</div>` : ''}
-                            </div>
-                        `).join('')}
-                    </div>
-                `;
-                
-                menuGrid.appendChild(daySection);
-            });
-
-            document.getElementById('menuCard').style.display = 'block';
-        }
-
-        // Показать/скрыть прогресс
-        function showProgress(show) {
-            document.getElementById('progressContainer').style.display = show ? 'block' : 'none';
-        }
-
-        // Установить прогресс
-        function setProgress(percent, text) {
-            document.getElementById('progressFill').style.width = `${percent}%`;
-            document.getElementById('progressText').textContent = text;
-        }
-
-        // Показать сообщение
-        function showMessage(text, type) {
-            const messageDiv = document.getElementById('message');
-            messageDiv.textContent = text;
-            messageDiv.className = `message ${type}`;
-            messageDiv.style.display = 'block';
-        }
     </script>
 </body>
 </html>

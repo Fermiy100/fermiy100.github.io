@@ -9,7 +9,8 @@
     "dev": "nodemon server.js",
     "build": "echo 'Backend build completed'",
     "test": "echo 'Tests completed'",
-    "deploy": "node deploy.js"
+    "deploy": "node deploy.js",
+    "deploy:railway": "node quick-deploy.js"
   },
   "dependencies": {
     "express": "^4.18.2",

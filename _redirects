@@ -1,0 +1,2 @@
+# Redirects for GitHub Pages
+/api/* https://school-meals-api.herokuapp.com/api/:splat 200

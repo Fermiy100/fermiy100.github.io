@@ -44,180 +44,102 @@ export default function LoginDemo({ onLogin }: LoginDemoProps) {
   return (
     <div style={{
       minHeight: '100vh',
-      background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+      background: '#fafafa',
       display: 'flex',
       alignItems: 'center',
       justifyContent: 'center',
       padding: '20px'
     }}>
-      <div style={{
-        background: 'white',
-        borderRadius: '16px',
-        padding: '40px',
-        boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04)',
-        width: '100%',
-        maxWidth: '400px'
-      }}>
-        <div style={{ textAlign: 'center', marginBottom: '30px' }}>
-          <h1 style={{ 
-            fontSize: '2rem', 
-            margin: '0 0 10px 0',
-            background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
-            WebkitBackgroundClip: 'text',
-            WebkitTextFillColor: 'transparent',
-            backgroundClip: 'text'
-          }}>
-            🍽️ Школьное питание
-          </h1>
-          <p style={{ color: '#6b7280', margin: 0 }}>
-            Войдите в свой аккаунт
-          </p>
-        </div>
-
-        <form onSubmit={handleLogin}>
-          <div style={{ marginBottom: '20px' }}>
-            <label style={{ 
-              display: 'block', 
-              marginBottom: '8px', 
-              fontWeight: '600',
-              color: '#374151'
-            }}>
-              Email
-            </label>
-            <input
-              type="email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              placeholder="Введите email"
-              required
-              style={{
-                width: '100%',
-                padding: '12px',
-                border: '2px solid #e5e7eb',
-                borderRadius: '8px',
-                fontSize: '16px',
-                boxSizing: 'border-box'
-              }}
-            />
-          </div>
-
-          <div style={{ marginBottom: '20px' }}>
-            <label style={{ 
-              display: 'block', 
-              marginBottom: '8px', 
-              fontWeight: '600',
-              color: '#374151'
-            }}>
-              Пароль
-            </label>
-            <input
-              type="password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              placeholder="Введите пароль"
-              required
-              style={{
-                width: '100%',
-                padding: '12px',
-                border: '2px solid #e5e7eb',
-                borderRadius: '8px',
-                fontSize: '16px',
-                boxSizing: 'border-box'
-              }}
-            />
-          </div>
-
-          {error && (
-            <div style={{
-              padding: '12px',
-              borderRadius: '8px',
-              backgroundColor: '#fee2e2',
-              color: '#991b1b',
-              fontSize: '14px',
-              marginBottom: '20px'
-            }}>
-              {error}
+      <div className="card" style={{ width: '100%', maxWidth: '400px' }}>
+        <div className="card-body">
+          <div className="text-center mb-6">
+            <div className="logo" style={{ fontSize: '32px', marginBottom: '8px' }}>
+              Школьное питание
             </div>
-          )}
-
-          <button
-            type="submit"
-            disabled={loading}
-            style={{
-              width: '100%',
-              background: loading ? '#9ca3af' : 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
-              color: 'white',
-              padding: '12px',
-              border: 'none',
-              borderRadius: '8px',
-              fontSize: '16px',
-              fontWeight: '600',
-              cursor: loading ? 'not-allowed' : 'pointer',
-              marginBottom: '20px'
-            }}
-          >
-            {loading ? '⏳ Вход...' : '🔑 Войти'}
-          </button>
-        </form>
-
-        <div style={{ borderTop: '1px solid #e5e7eb', paddingTop: '20px' }}>
-          <p style={{ 
-            textAlign: 'center', 
-            color: '#6b7280', 
-            fontSize: '14px',
-            margin: '0 0 15px 0'
-          }}>
-            Быстрый вход для тестирования:
-          </p>
-          
-          <div style={{ display: 'flex', gap: '10px', flexDirection: 'column' }}>
-            <button
-              onClick={() => quickLogin('director@school.test')}
-              style={{
-                width: '100%',
-                background: '#1f2937',
-                color: 'white',
-                padding: '10px',
-                border: 'none',
-                borderRadius: '6px',
-                fontSize: '14px',
-                cursor: 'pointer'
-              }}
-            >
-              👨‍💼 Директор школы
-            </button>
-            
-            <button
-              onClick={() => quickLogin('parent@school.test')}
-              style={{
-                width: '100%',
-                background: '#059669',
-                color: 'white',
-                padding: '10px',
-                border: 'none',
-                borderRadius: '6px',
-                fontSize: '14px',
-                cursor: 'pointer'
-              }}
-            >
-              👨‍👩‍👧‍👦 Родитель/Ученик
-            </button>
+            <p className="text-muted">
+              Войдите в свой аккаунт
+            </p>
           </div>
-        </div>
 
-        <div style={{ 
-          marginTop: '20px', 
-          padding: '15px', 
-          backgroundColor: '#f0f9ff',
-          borderRadius: '8px',
-          border: '1px solid #0ea5e9'
-        }}>
-          <h4 style={{ margin: '0 0 10px 0', color: '#1e40af', fontSize: '14px' }}>
-            🔑 Тестовые аккаунты:
-          </h4>
-          <div style={{ fontSize: '12px', color: '#1e40af' }}>
-            <div><strong>Директор:</strong> director@school.test / P@ssw0rd1!</div>
-            <div><strong>Родитель:</strong> parent@school.test / P@ssw0rd1!</div>
+          <form onSubmit={handleLogin}>
+            <div className="form-group">
+              <label className="form-label">Email</label>
+              <input
+                type="email"
+                className="input"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                placeholder="Введите email"
+                required
+              />
+            </div>
+
+            <div className="form-group">
+              <label className="form-label">Пароль</label>
+              <input
+                type="password"
+                className="input"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                placeholder="Введите пароль"
+                required
+              />
+            </div>
+
+            {error && (
+              <div className="alert alert-error">
+                {error}
+              </div>
+            )}
+
+            <button
+              type="submit"
+              disabled={loading}
+              className="btn btn-primary"
+              style={{ width: '100%', marginBottom: '20px' }}
+            >
+              {loading ? (
+                <>
+                  <div className="spinner"></div>
+                  Вход...
+                </>
+              ) : (
+                'Войти'
+              )}
+            </button>
+          </form>
+
+          <div style={{ borderTop: '1px solid #e5e7eb', paddingTop: '20px' }}>
+            <p className="text-center text-muted mb-4">
+              Быстрый вход для тестирования:
+            </p>
+            
+            <div className="grid" style={{ gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
+              <button
+                onClick={() => quickLogin('director@school.test')}
+                className="btn btn-secondary btn-sm"
+              >
+                👨‍💼 Директор
+              </button>
+              
+              <button
+                onClick={() => quickLogin('parent@school.test')}
+                className="btn btn-secondary btn-sm"
+              >
+                👨‍👩‍👧‍👦 Родитель
+              </button>
+            </div>
+          </div>
+
+          <div className="alert alert-info mt-4">
+            <div className="text-center">
+              <strong>🔑 Тестовые аккаунты:</strong>
+              <div className="text-muted" style={{ fontSize: '12px', marginTop: '4px' }}>
+                <div>Директор: director@school.test</div>
+                <div>Родитель: parent@school.test</div>
+                <div>Пароль: P@ssw0rd1!</div>
+              </div>
+            </div>
           </div>
         </div>
       </div>

@@ -1,16 +1,29 @@
 import express from 'express';
 import cors from 'cors';
 import helmet from 'helmet';
-import rateLimit from 'express-rate-limit';
-import bcrypt from 'bcryptjs';
-import jwt from 'jsonwebtoken';
 import sqlite3 from 'sqlite3';
 import multer from 'multer';
-import * as XLSX from 'xlsx';
 import { body, validationResult } from 'express-validator';
 import path from 'path';
 import { fileURLToPath } from 'url';
 import fs from 'fs';
+import MenuParser from './menuParser.js';
+import { 
+  SECURITY_CONFIG, 
+  hashPassword, 
+  verifyPassword, 
+  createToken, 
+  verifyToken,
+  authRateLimit,
+  generalRateLimit,
+  requireRole,
+  requireSchool,
+  sanitizeInput,
+  validateEmail,
+  logSecurityEvent,
+  detectSuspiciousActivity,
+  generateSecurePassword
+} from './security.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -18,22 +31,48 @@ const __dirname = path.dirname(__filename);
 const app = express();
 const PORT = process.env.PORT || 3000;
 
-// Middleware
-app.use(helmet());
+// Middleware безопасности
+app.use(helmet({
+  contentSecurityPolicy: {
+    directives: {
+      defaultSrc: ["'self'"],
+      styleSrc: ["'self'", "'unsafe-inline'"],
+      scriptSrc: ["'self'"],
+      imgSrc: ["'self'", "data:", "https:"],
+    },
+  },
+  hsts: {
+    maxAge: 31536000,
+    includeSubDomains: true,
+    preload: true
+  }
+}));
+
 app.use(cors({
   origin: process.env.FRONTEND_URL || 'https://fermiy100.github.io',
-  credentials: true
+  credentials: true,
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH'],
+  allowedHeaders: ['Content-Type', 'Authorization']
 }));
+
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true }));
 
 // Rate limiting
-const limiter = rateLimit({
-  windowMs: 15 * 60 * 1000, // 15 minutes
-  max: 100, // limit each IP to 100 requests per windowMs
-  message: 'Слишком много запросов с этого IP, попробуйте позже.'
+app.use('/api/', generalRateLimit);
+
+// Middleware для обнаружения подозрительной активности
+app.use((req, res, next) => {
+  if (detectSuspiciousActivity(req)) {
+    logSecurityEvent('SUSPICIOUS_ACTIVITY', { 
+      path: req.path, 
+      method: req.method,
+      body: req.body 
+    }, req);
+    return res.status(400).json({ error: 'Подозрительная активность обнаружена' });
+  }
+  next();
 });
-app.use('/api/', limiter);
 
 // Database setup
 const db = new sqlite3.Database('./database.sqlite');
@@ -112,12 +151,12 @@ db.serialize(() => {
         const schoolId = this.lastID;
         
         // Create default director
-        const directorPassword = bcrypt.hashSync('P@ssw0rd1!', 10);
+        const directorPassword = hashPassword('P@ssw0rd1!');
         db.run(`INSERT INTO users (email, password, name, role, school_id, verified) VALUES (?, ?, ?, ?, ?, ?)`,
           ['director@school.test', directorPassword, 'Анна Петровна Иванова', 'DIRECTOR', schoolId, 1]);
         
         // Create default parent
-        const parentPassword = bcrypt.hashSync('P@ssw0rd1!', 10);
+        const parentPassword = hashPassword('P@ssw0rd1!');
         db.run(`INSERT INTO users (email, password, name, role, school_id, verified) VALUES (?, ?, ?, ?, ?, ?)`,
           ['parent@school.test', parentPassword, 'Мария Сергеевна Сидорова', 'PARENT', schoolId, 1]);
         
@@ -130,25 +169,24 @@ db.serialize(() => {
   });
 });
 
-// JWT Secret
-const JWT_SECRET = process.env.JWT_SECRET || 'your-super-secret-jwt-key-change-in-production';
-
 // Auth middleware
 const authenticateToken = (req, res, next) => {
   const authHeader = req.headers['authorization'];
   const token = authHeader && authHeader.split(' ')[1];
 
   if (!token) {
+    logSecurityEvent('AUTH_FAILED', { reason: 'No token provided' }, req);
     return res.status(401).json({ error: 'Токен доступа не предоставлен' });
   }
 
-  jwt.verify(token, JWT_SECRET, (err, user) => {
-    if (err) {
-      return res.status(403).json({ error: 'Недействительный токен' });
-    }
-    req.user = user;
-    next();
-  });
+  const user = verifyToken(token);
+  if (!user) {
+    logSecurityEvent('AUTH_FAILED', { reason: 'Invalid token' }, req);
+    return res.status(403).json({ error: 'Недействительный токен' });
+  }
+  
+  req.user = user;
+  next();
 };
 
 // File upload configuration
@@ -174,47 +212,56 @@ app.get('/api/health', (req, res) => {
 });
 
 // Auth routes
-app.post('/api/auth/login', [
+app.post('/api/auth/login', authRateLimit, [
   body('email').isEmail().normalizeEmail(),
   body('password').isLength({ min: 6 })
 ], async (req, res) => {
   try {
     const errors = validationResult(req);
     if (!errors.isEmpty()) {
+      logSecurityEvent('LOGIN_FAILED', { reason: 'Validation failed', errors: errors.array() }, req);
       return res.status(400).json({ error: 'Неверные данные', details: errors.array() });
     }
 
     const { email, password } = req.body;
+    const sanitizedEmail = sanitizeInput(email);
 
-    db.get('SELECT * FROM users WHERE email = ?', [email], async (err, user) => {
+    if (!validateEmail(sanitizedEmail)) {
+      logSecurityEvent('LOGIN_FAILED', { reason: 'Invalid email format' }, req);
+      return res.status(400).json({ error: 'Неверный формат email' });
+    }
+
+    db.get('SELECT * FROM users WHERE email = ?', [sanitizedEmail], async (err, user) => {
       if (err) {
         console.error('Database error:', err);
+        logSecurityEvent('LOGIN_ERROR', { reason: 'Database error', error: err.message }, req);
         return res.status(500).json({ error: 'Ошибка сервера' });
       }
 
       if (!user) {
+        logSecurityEvent('LOGIN_FAILED', { reason: 'User not found', email: sanitizedEmail }, req);
         return res.status(401).json({ error: 'Неверный email или пароль' });
       }
 
-      const validPassword = await bcrypt.compare(password, user.password);
+      const validPassword = verifyPassword(password, user.password);
       if (!validPassword) {
+        logSecurityEvent('LOGIN_FAILED', { reason: 'Invalid password', userId: user.id }, req);
         return res.status(401).json({ error: 'Неверный email или пароль' });
       }
 
       if (!user.verified) {
+        logSecurityEvent('LOGIN_FAILED', { reason: 'Account not verified', userId: user.id }, req);
         return res.status(401).json({ error: 'Аккаунт не верифицирован. Обратитесь к администратору.' });
       }
 
-      const token = jwt.sign(
-        { 
-          id: user.id, 
-          email: user.email, 
-          role: user.role, 
-          school_id: user.school_id 
-        },
-        JWT_SECRET,
-        { expiresIn: '24h' }
-      );
+      const token = createToken({
+        id: user.id, 
+        email: user.email, 
+        role: user.role, 
+        school_id: user.school_id 
+      });
+
+      logSecurityEvent('LOGIN_SUCCESS', { userId: user.id, role: user.role }, req);
 
       res.json({
         token,
@@ -230,6 +277,7 @@ app.post('/api/auth/login', [
     });
   } catch (error) {
     console.error('Login error:', error);
+    logSecurityEvent('LOGIN_ERROR', { reason: 'Server error', error: error.message }, req);
     res.status(500).json({ error: 'Ошибка сервера' });
   }
 });
@@ -307,7 +355,7 @@ app.post('/api/users', authenticateToken, [
 
     const { email, name, role } = req.body;
     const schoolId = req.user.school_id;
-    const password = bcrypt.hashSync('TempPassword123!', 10);
+    const password = generateSecurePassword();
 
     db.run(`INSERT INTO users (email, password, name, role, school_id, verified) VALUES (?, ?, ?, ?, ?, ?)`,
       [email, password, name, role, schoolId, 0], function(err) {
@@ -368,13 +416,25 @@ app.post('/api/menu/upload', authenticateToken, upload.single('file'), (req, res
   }
 
   try {
-    const workbook = XLSX.read(req.file.buffer, { type: 'buffer' });
-    const sheetName = workbook.SheetNames[0];
-    const worksheet = workbook.Sheets[sheetName];
-    const jsonData = XLSX.utils.sheet_to_json(worksheet, { header: 1, raw: false, defval: '' });
-
     const schoolId = req.user.school_id;
-    const weekStart = new Date().toISOString().split('T')[0]; // Current week start
+    const weekStart = new Date().toISOString().split('T')[0];
+    
+    // Создаем экземпляр парсера
+    const parser = new MenuParser();
+    
+    // Парсим файл
+    const parsedData = parser.parseExcelFile(req.file.buffer);
+    
+    // Валидируем результат
+    const validation = parser.validateParsedMenu(parsedData);
+    
+    if (!validation.isValid) {
+      return res.status(400).json({ 
+        error: 'Ошибка парсинга меню', 
+        details: validation.errors,
+        warnings: validation.warnings
+      });
+    }
 
     // Clear existing menu for this week
     db.run('DELETE FROM menu_items WHERE school_id = ? AND week_start = ?', 
@@ -384,75 +444,37 @@ app.post('/api/menu/upload', authenticateToken, upload.single('file'), (req, res
         return res.status(500).json({ error: 'Ошибка очистки меню' });
       }
 
-      // Parse and insert new menu items
-      let currentMealType = 'обед';
-      let itemId = 1;
+      // Insert new menu items
       let insertedCount = 0;
+      const stmt = db.prepare(`INSERT INTO menu_items (school_id, name, description, price, meal_type, day_of_week, portion, week_start) VALUES (?, ?, ?, ?, ?, ?, ?, ?)`);
 
-      for (let rowIndex = 0; rowIndex < jsonData.length; rowIndex++) {
-        const row = jsonData[rowIndex];
-        if (!row) continue;
-
-        // Check for meal type header
-        const firstCell = (row[0] || '').toString().trim();
-        if (firstCell) {
-          const mealType = getMealType(firstCell);
-          if (mealType !== 'обед' || firstCell.toLowerCase().includes('завтрак') || 
-              firstCell.toLowerCase().includes('обед') || firstCell.toLowerCase().includes('полдник') ||
-              firstCell.toLowerCase().includes('ужин') || firstCell.toLowerCase().includes('дополнительный')) {
-            currentMealType = mealType;
-            continue;
+      parsedData.items.forEach(item => {
+        stmt.run([schoolId, item.name, item.description, item.price, item.meal_type, item.day_of_week, item.portion, weekStart], (err) => {
+          if (err) {
+            console.error('Error inserting menu item:', err);
+          } else {
+            insertedCount++;
           }
-        }
+        });
+      });
 
-        // Process menu items
-        for (let colIndex = 1; colIndex < row.length; colIndex++) {
-          const cellValue = (row[colIndex] || '').toString().trim();
-          
-          if (cellValue && cellValue.length > 2 && !cellValue.match(/^\d+$/)) {
-            if (cellValue.includes('№') || cellValue.includes('кол') || 
-                cellValue.includes('иче') || cellValue.includes('ств') ||
-                cellValue.includes('порц') || cellValue.includes('количество') ||
-                cellValue.includes('недел') || cellValue.includes('день')) {
-              continue;
-            }
+      stmt.finalize();
 
-            const { portion, price, cleanName } = extractPortionAndPrice(cellValue);
-            
-            if (cleanName && cleanName.length > 1) {
-              const dayOfWeek = getDayOfWeek(colIndex, row.length);
-              
-              if (!cleanName.match(/^\d+$/) && 
-                  !cleanName.includes('недел') && 
-                  !cleanName.includes('день') &&
-                  cleanName.length > 2) {
-                
-                db.run(`INSERT INTO menu_items (school_id, name, description, price, meal_type, day_of_week, portion, week_start) VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
-                  [schoolId, cleanName, portion || null, price || 0, currentMealType, dayOfWeek, portion || null, weekStart], (err) => {
-                  if (err) {
-                    console.error('Error inserting menu item:', err);
-                  } else {
-                    insertedCount++;
-                  }
-                });
-              }
-            }
-          }
-        }
-      }
-
-      // Wait a bit for all inserts to complete
+      // Wait for all inserts to complete
       setTimeout(() => {
         res.json({
           message: `Меню успешно загружено`,
           itemsCount: insertedCount,
-          weekStart: weekStart
+          weekStart: weekStart,
+          warnings: validation.warnings,
+          mealTypes: parsedData.mealTypes,
+          days: parsedData.days
         });
-      }, 1000);
+      }, 500);
     });
   } catch (error) {
     console.error('Menu upload error:', error);
-    res.status(500).json({ error: 'Ошибка обработки файла' });
+    res.status(500).json({ error: `Ошибка обработки файла: ${error.message}` });
   }
 });
 
@@ -472,6 +494,98 @@ app.get('/api/menu', authenticateToken, (req, res) => {
       items,
       weekStart,
       title: `Меню на неделю с ${weekStart}`
+    });
+  });
+});
+
+// Update menu item
+app.put('/api/menu/:id', authenticateToken, [
+  body('name').isLength({ min: 2, max: 200 }),
+  body('price').isNumeric().isFloat({ min: 0 }),
+  body('meal_type').isIn(['завтрак', 'обед', 'полдник', 'ужин', 'дополнительно']),
+  body('day_of_week').isInt({ min: 1, max: 5 })
+], (req, res) => {
+  if (req.user.role !== 'DIRECTOR') {
+    return res.status(403).json({ error: 'Недостаточно прав' });
+  }
+
+  const errors = validationResult(req);
+  if (!errors.isEmpty()) {
+    return res.status(400).json({ error: 'Неверные данные', details: errors.array() });
+  }
+
+  const { name, description, price, meal_type, day_of_week, portion } = req.body;
+  const itemId = req.params.id;
+  const schoolId = req.user.school_id;
+
+  db.run(`UPDATE menu_items SET name = ?, description = ?, price = ?, meal_type = ?, day_of_week = ?, portion = ? WHERE id = ? AND school_id = ?`,
+    [name, description || null, price, meal_type, day_of_week, portion || null, itemId, schoolId], function(err) {
+    if (err) {
+      console.error('Database error:', err);
+      return res.status(500).json({ error: 'Ошибка сервера' });
+    }
+
+    if (this.changes === 0) {
+      return res.status(404).json({ error: 'Элемент меню не найден' });
+    }
+
+    res.json({ message: 'Элемент меню обновлен' });
+  });
+});
+
+// Delete menu item
+app.delete('/api/menu/:id', authenticateToken, (req, res) => {
+  if (req.user.role !== 'DIRECTOR') {
+    return res.status(403).json({ error: 'Недостаточно прав' });
+  }
+
+  const itemId = req.params.id;
+  const schoolId = req.user.school_id;
+
+  db.run(`DELETE FROM menu_items WHERE id = ? AND school_id = ?`, [itemId, schoolId], function(err) {
+    if (err) {
+      console.error('Database error:', err);
+      return res.status(500).json({ error: 'Ошибка сервера' });
+    }
+
+    if (this.changes === 0) {
+      return res.status(404).json({ error: 'Элемент меню не найден' });
+    }
+
+    res.json({ message: 'Элемент меню удален' });
+  });
+});
+
+// Add new menu item
+app.post('/api/menu', authenticateToken, [
+  body('name').isLength({ min: 2, max: 200 }),
+  body('price').isNumeric().isFloat({ min: 0 }),
+  body('meal_type').isIn(['завтрак', 'обед', 'полдник', 'ужин', 'дополнительно']),
+  body('day_of_week').isInt({ min: 1, max: 5 })
+], (req, res) => {
+  if (req.user.role !== 'DIRECTOR') {
+    return res.status(403).json({ error: 'Недостаточно прав' });
+  }
+
+  const errors = validationResult(req);
+  if (!errors.isEmpty()) {
+    return res.status(400).json({ error: 'Неверные данные', details: errors.array() });
+  }
+
+  const { name, description, price, meal_type, day_of_week, portion } = req.body;
+  const schoolId = req.user.school_id;
+  const weekStart = new Date().toISOString().split('T')[0];
+
+  db.run(`INSERT INTO menu_items (school_id, name, description, price, meal_type, day_of_week, portion, week_start) VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
+    [schoolId, name, description || null, price, meal_type, day_of_week, portion || null, weekStart], function(err) {
+    if (err) {
+      console.error('Database error:', err);
+      return res.status(500).json({ error: 'Ошибка сервера' });
+    }
+
+    res.json({ 
+      message: 'Элемент меню добавлен',
+      id: this.lastID
     });
   });
 });
@@ -548,47 +662,7 @@ app.get('/api/orders', authenticateToken, (req, res) => {
 });
 
 // Helper functions
-function getMealType(text) {
-  const lowerText = text.toLowerCase();
-  
-  if (lowerText.includes('завтрак') || lowerText.includes('завтр')) return 'завтрак';
-  if (lowerText.includes('обед')) return 'обед';
-  if (lowerText.includes('полдник') || lowerText.includes('полд')) return 'полдник';
-  if (lowerText.includes('ужин')) return 'ужин';
-  if (lowerText.includes('дополнительный') || lowerText.includes('гарнир')) return 'дополнительно';
-  
-  return 'обед';
-}
-
-function extractPortionAndPrice(text) {
-  let portion = '';
-  let price = 0;
-  let cleanName = text;
-
-  // Find portion
-  const portionMatch = text.match(/(\d+\s*(г|шт|мл|л|кг|порц|порции?))/i);
-  if (portionMatch) {
-    portion = portionMatch[0];
-    cleanName = cleanName.replace(portion, '').trim();
-  }
-
-  // Find price
-  const priceMatch = text.match(/(\d+)\s*(руб|₽|р\.?)/i);
-  if (priceMatch) {
-    price = parseInt(priceMatch[1]);
-    cleanName = cleanName.replace(priceMatch[0], '').trim();
-  }
-
-  // Clean name
-  cleanName = cleanName.replace(/[,\-–—]/g, '').trim();
-
-  return { portion, price, cleanName };
-}
-
-function getDayOfWeek(columnIndex, totalColumns) {
-  const dayIndex = Math.max(0, columnIndex - 1);
-  return Math.min(dayIndex + 1, 5);
-}
+// Старые функции парсера удалены - теперь используется MenuParser класс
 
 // Error handling middleware
 app.use((error, req, res, next) => {

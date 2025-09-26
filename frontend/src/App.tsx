@@ -16,6 +16,8 @@ function App() {
   function handleLogout() {
     setToken(null);
     setRole(null);
+    // Очищаем токен из localStorage
+    localStorage.removeItem('token');
   }
 
   if (!token) {
@@ -23,18 +25,29 @@ function App() {
   }
 
   return (
-    <div>
-      <div style={{ padding: '12px 20px', background: '#f9fafb', borderBottom: '1px solid #e5e7eb', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-        <div>
-          <strong>Школьное питание</strong> — {role === 'DIRECTOR' ? 'Директор' : role === 'PARENT' ? 'Родитель' : role}
+    <div className="fade-in">
+      <header className="header">
+        <div className="container">
+          <div className="header-content">
+            <div className="logo">
+              Школьное питание
+            </div>
+            <div className="user-info">
+              <span className={`role-badge ${role === 'DIRECTOR' ? 'role-director' : 'role-parent'}`}>
+                {role === 'DIRECTOR' ? 'Директор' : 'Родитель/Ученик'}
+              </span>
+              <button onClick={handleLogout} className="btn btn-danger btn-sm">
+                Выйти
+              </button>
+            </div>
+          </div>
         </div>
-        <button onClick={handleLogout} style={{ background: '#ef4444', color: 'white', padding: '6px 12px', borderRadius: '4px', border: 'none', cursor: 'pointer' }}>
-          Выйти
-        </button>
-      </div>
+      </header>
       
-      {role === 'DIRECTOR' && <DirectorAdvanced token={token} />}
-      {role === 'PARENT' && <ParentDemo token={token} />}
+      <main className="container" style={{ paddingTop: '24px', paddingBottom: '24px' }}>
+        {role === 'DIRECTOR' && <DirectorAdvanced token={token} />}
+        {role === 'PARENT' && <ParentDemo token={token} />}
+      </main>
     </div>
   );
 }

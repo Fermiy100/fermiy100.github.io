@@ -175,6 +175,19 @@ class ApiClient {
   async healthCheck(): Promise<{ status: string; timestamp: string }> {
     return this.request<{ status: string; timestamp: string }>('/health');
   }
+
+  // Menu editing methods
+  async updateMenuItem(id: number, data: Partial<MenuItem>): Promise<{ message: string }> {
+    return this.request(`/menu/${id}`, 'PUT', data);
+  }
+
+  async deleteMenuItem(id: number): Promise<{ message: string }> {
+    return this.request(`/menu/${id}`, 'DELETE');
+  }
+
+  async addMenuItem(data: Omit<MenuItem, 'id' | 'school_id' | 'week_start'>): Promise<{ message: string; id: number }> {
+    return this.request('/menu', 'POST', data);
+  }
 }
 
 // Создаем единственный экземпляр API клиента

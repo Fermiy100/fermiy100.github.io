@@ -1,8 +1,8 @@
 // API клиент для работы с backend
 
 const API_BASE_URL = (import.meta as any).env?.PROD 
-  ? 'https://school-meals-api.herokuapp.com/api' 
-  : 'http://localhost:3000/api';
+  ? (import.meta.env.VITE_API_URL || 'https://your-backend-url.com/api')  // Production URL
+  : 'http://localhost:3000/api';       // Development URL
 
 export interface User {
   id: number;

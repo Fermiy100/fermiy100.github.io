@@ -7,7 +7,7 @@ import { body, validationResult } from 'express-validator';
 import path from 'path';
 import { fileURLToPath } from 'url';
 import fs from 'fs';
-import MenuParser from './menuParser.js';
+import { SimpleMenuParser } from './simpleMenuParser.js';
 import { 
   SECURITY_CONFIG, 
   hashPassword, 
@@ -420,7 +420,7 @@ app.post('/api/menu/upload', authenticateToken, upload.single('file'), (req, res
     const weekStart = new Date().toISOString().split('T')[0];
     
     // Создаем экземпляр парсера
-    const parser = new MenuParser();
+    const parser = new SimpleMenuParser();
     
     // Парсим файл
     const parsedData = parser.parseExcelFile(req.file.buffer);

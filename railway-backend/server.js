@@ -49,7 +49,7 @@ app.use(helmet({
 }));
 
 app.use(cors({
-  origin: process.env.FRONTEND_URL || 'https://fermiy100.github.io',
+  origin: process.env.CORS_ORIGIN || 'https://fermiy.ru',
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH'],
   allowedHeaders: ['Content-Type', 'Authorization']

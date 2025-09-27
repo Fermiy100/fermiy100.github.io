@@ -1,0 +1,9 @@
+# СРОЧНО! Добавьте эти переменные в Railway Dashboard
+# Перейдите в Variables и добавьте:
+
+NODE_ENV=production
+PORT=3000
+JWT_SECRET=your-super-secret-jwt-key-change-this-in-production
+CORS_ORIGIN=https://fermiy.ru
+
+# Без CORS_ORIGIN запросы с fermiy.ru будут блокироваться!

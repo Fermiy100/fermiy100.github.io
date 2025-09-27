@@ -7,7 +7,7 @@ import { body, validationResult } from 'express-validator';
 import path from 'path';
 import { fileURLToPath } from 'url';
 import fs from 'fs';
-import { SchoolMenuParser } from './schoolMenuParser.js';
+import MenuParser from './menuParser.js';
 import { 
   SECURITY_CONFIG, 
   hashPassword, 
@@ -49,7 +49,7 @@ app.use(helmet({
 }));
 
 app.use(cors({
-  origin: process.env.CORS_ORIGIN || 'https://fermiy.ru',
+  origin: process.env.FRONTEND_URL || 'https://fermiy100.github.io',
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH'],
   allowedHeaders: ['Content-Type', 'Authorization']
@@ -420,7 +420,7 @@ app.post('/api/menu/upload', authenticateToken, upload.single('file'), (req, res
     const weekStart = new Date().toISOString().split('T')[0];
     
     // Создаем экземпляр парсера
-    const parser = new SchoolMenuParser();
+    const parser = new MenuParser();
     
     // Парсим файл
     const parsedData = parser.parseExcelFile(req.file.buffer);

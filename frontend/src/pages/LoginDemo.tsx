@@ -13,8 +13,8 @@ export default function LoginDemo({ onLogin }: LoginDemoProps) {
 
   // Тестовые аккаунты
   const testAccounts = {
-    'director@school.com': { password: 'password123', role: 'DIRECTOR', name: 'Директор школы' },
-    'parent@school.com': { password: 'password123', role: 'PARENT', name: 'Родитель/Ученик' }
+    'director@school.test': { password: 'P@ssw0rd1!', role: 'DIRECTOR', name: 'Директор школы' },
+    'parent@school.test': { password: 'P@ssw0rd1!', role: 'PARENT', name: 'Родитель/Ученик' }
   };
 
   const handleLogin = async (e: React.FormEvent) => {

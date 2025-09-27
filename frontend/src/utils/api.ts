@@ -1,7 +1,7 @@
 // API клиент для работы с backend
 
 const API_BASE_URL = import.meta.env.PROD 
-  ? (import.meta.env.VITE_API_URL || 'https://fermiy100githubio-production.up.railway.app/api')  // Production URL
+  ? (import.meta.env.VITE_API_URL || 'https://fermiy100githubio-production.up.railway.app/api')  // Railway Backend URL
   : 'http://localhost:3000/api';       // Development URL
 
 export interface User {

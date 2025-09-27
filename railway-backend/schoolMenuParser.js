@@ -1,29 +1,26 @@
 /**
- * СПЕЦИАЛИЗИРОВАННЫЙ ПАРСЕР ДЛЯ ШКОЛЬНОГО МЕНЮ
- * Создан специально для структуры: "2-Я НЕДЕЛЯ ДЛЯ ЗАКАЗА"
+ * ШКОЛЬНЫЙ ПАРСЕР МЕНЮ
+ * Специализированный парсер для структуры школьного меню
+ * Обрабатывает таблицы с днями недели и типами приемов пищи
  */
 
 import XLSX from 'xlsx';
 
 export class SchoolMenuParser {
   constructor() {
-    this.daysOfWeek = ['понедельник', 'вторник', 'среда', 'четверг', 'пятница'];
-    this.mealTypes = ['завтрак', 'обед', 'полдник', 'ужин', 'дополнительно'];
-    
-    // Структура таблицы
-    this.structure = {
-      headerRow: 1,        // Строка с днями недели (0-based)
-      breakfastStart: 2,   // Начало завтрака
-      breakfastEnd: 15,    // Конец завтрака
-      lunchStart: 18,      // Начало обеда
-      lunchEnd: 39,        // Конец обеда
-      dayColumns: [0, 2, 4, 6, 8] // Колонки дней недели (A, C, E, G, I)
-    };
-    
     // Паттерны для извлечения данных
-    this.weightPattern = /(\d+)\s*г/gi;
+    this.weightPattern = /\d+\s*г/gi;
     this.recipePattern = /№\s*(\d+\/\d+)/gi;
-    this.portionPattern = /(\d+)\s*(шт|порц|порции?)/gi;
+    this.portionPattern = /\d+\s*шт/gi;
+    
+    // Словари для определения типов приемов пищи
+    this.breakfastKeywords = ['завтрак', 'утром', 'утренний'];
+    this.lunchKeywords = ['обед', 'дневной', 'основной'];
+    this.snackKeywords = ['полдник', 'перекус', 'дополнительный'];
+    this.dinnerKeywords = ['ужин', 'вечерний', 'вечером'];
+    
+    // Дни недели
+    this.daysOfWeek = ['понедельник', 'вторник', 'среда', 'четверг', 'пятница'];
   }
 
   /**
@@ -31,85 +28,173 @@ export class SchoolMenuParser {
    */
   parseExcelFile(buffer) {
     try {
+      console.log('🔍 Начинаем парсинг Excel файла...');
+      
+      // Читаем Excel файл
       const workbook = XLSX.read(buffer, { type: 'buffer' });
       const sheetName = workbook.SheetNames[0];
       const worksheet = workbook.Sheets[sheetName];
       
       // Конвертируем в JSON
-      const jsonData = XLSX.utils.sheet_to_json(worksheet, { 
-        header: 1, 
-        raw: false, 
-        defval: '',
-        blankrows: false
-      });
-
-      return this.parseMenuData(jsonData);
+      const jsonData = XLSX.utils.sheet_to_json(worksheet, { header: 1 });
+      
+      console.log(`📊 Загружен лист: ${sheetName}`);
+      console.log(`📏 Размер данных: ${jsonData.length} строк`);
+      
+      // Анализируем структуру
+      const structure = this.analyzeStructure(jsonData);
+      console.log('🏗️ Структура таблицы:', structure);
+      
+      // Парсим блюда
+      const items = this.parseMenuItems(jsonData, structure);
+      
+      console.log(`✅ Парсинг завершен. Найдено ${items.length} блюд`);
+      return items;
+      
     } catch (error) {
-      throw new Error(`Ошибка чтения Excel файла: ${error.message}`);
+      console.error('❌ Ошибка парсинга:', error);
+      throw new Error(`Ошибка парсинга Excel файла: ${error.message}`);
     }
   }
 
   /**
-   * Парсинг данных меню
+   * Анализ структуры таблицы
    */
-  parseMenuData(data) {
-    const menuItems = [];
-    const errors = [];
-    const warnings = [];
-    
-    console.log('🍽️ Парсинг школьного меню...');
-    
-    // Парсим завтрак
-    const breakfastItems = this.parseMealSection(data, 'завтрак', this.structure.breakfastStart, this.structure.breakfastEnd);
-    menuItems.push(...breakfastItems);
-    
-    // Парсим обед
-    const lunchItems = this.parseMealSection(data, 'обед', this.structure.lunchStart, this.structure.lunchEnd);
-    menuItems.push(...lunchItems);
-    
-    console.log(`✅ Найдено блюд: ${menuItems.length}`);
-    
-    return {
-      items: menuItems,
-      totalItems: menuItems.length,
-      message: `Обработано ${menuItems.length} блюд из школьного меню`,
-      errors: errors,
-      warnings: warnings
+  analyzeStructure(data) {
+    const structure = {
+      dayColumns: [],
+      mealRows: [],
+      dataStartRow: 0,
+      dataStartCol: 0
     };
+    
+    // Ищем заголовки дней недели
+    for (let rowIndex = 0; rowIndex < Math.min(10, data.length); rowIndex++) {
+      const row = data[rowIndex];
+      if (!row) continue;
+      
+      for (let colIndex = 0; colIndex < row.length; colIndex++) {
+        const cell = row[colIndex];
+        if (!cell || typeof cell !== 'string') continue;
+        
+        const cellText = cell.toLowerCase().trim();
+        
+        // Ищем дни недели
+        this.daysOfWeek.forEach((day, dayIndex) => {
+          if (cellText.includes(day)) {
+            structure.dayColumns.push({
+              day: dayIndex + 1,
+              column: colIndex,
+              name: day
+            });
+          }
+        });
+      }
+    }
+    
+    // Ищем строки с типами приемов пищи
+    for (let rowIndex = 0; rowIndex < data.length; rowIndex++) {
+      const row = data[rowIndex];
+      if (!row) continue;
+      
+      for (let colIndex = 0; colIndex < row.length; colIndex++) {
+        const cell = row[colIndex];
+        if (!cell || typeof cell !== 'string') continue;
+        
+        const cellText = cell.toLowerCase().trim();
+        
+        // Определяем тип приема пищи
+        let mealType = null;
+        if (this.breakfastKeywords.some(keyword => cellText.includes(keyword))) {
+          mealType = 'завтрак';
+        } else if (this.lunchKeywords.some(keyword => cellText.includes(keyword))) {
+          mealType = 'обед';
+        } else if (this.snackKeywords.some(keyword => cellText.includes(keyword))) {
+          mealType = 'полдник';
+        } else if (this.dinnerKeywords.some(keyword => cellText.includes(keyword))) {
+          mealType = 'обед'; // Ужин как дополнение к обеду
+        }
+        
+        if (mealType) {
+          structure.mealRows.push({
+            meal: mealType,
+            row: rowIndex,
+            name: cellText
+          });
+        }
+      }
+    }
+    
+    // Определяем начало данных
+    if (structure.dayColumns.length > 0 && structure.mealRows.length > 0) {
+      structure.dataStartRow = Math.min(...structure.mealRows.map(m => m.row)) + 1;
+      structure.dataStartCol = Math.min(...structure.dayColumns.map(d => d.column));
+    }
+    
+    return structure;
   }
 
   /**
-   * Парсинг секции питания (завтрак/обед)
+   * Парсинг блюд из данных
    */
-  parseMealSection(data, mealType, startRow, endRow) {
+  parseMenuItems(data, structure) {
     const items = [];
     
-    console.log(`📋 Парсинг ${mealType} (строки ${startRow + 1}-${endRow + 1})`);
+    if (!structure.dayColumns.length || !structure.mealRows.length) {
+      console.log('⚠️ Не удалось определить структуру таблицы');
+      return items;
+    }
     
-    for (let rowIndex = startRow; rowIndex <= endRow && rowIndex < data.length; rowIndex++) {
-      const row = data[rowIndex];
+    console.log('🍽️ Парсим блюда...');
+    
+    // Проходим по каждому дню
+    structure.dayColumns.forEach(dayCol => {
+      console.log(`📅 Обрабатываем ${dayCol.name} (колонка ${dayCol.column})`);
       
-      if (!row || row.length === 0) continue;
-      
-      // Пропускаем заголовки
-      if (this.isHeaderRow(row, rowIndex)) continue;
-      
-      // Парсим каждую колонку дня недели
-      this.structure.dayColumns.forEach((colIndex, dayIndex) => {
-        const cell = row[colIndex];
+      // Проходим по каждому типу приема пищи
+      structure.mealRows.forEach(mealRow => {
+        console.log(`  🍴 ${mealRow.meal} (строка ${mealRow.row})`);
         
-        if (!cell || typeof cell !== 'string') return;
+        // Ищем блюда в этой области
+        const mealItems = this.findDishesInArea(
+          data, 
+          dayCol.column, 
+          mealRow.row + 1, 
+          dayCol.day, 
+          mealRow.meal
+        );
         
-        const cellText = cell.trim();
-        if (!cellText || cellText.length < 3) return;
-        
-        // Создаем блюдо
-        const dish = this.createDishFromCell(cellText, rowIndex, colIndex, dayIndex + 1, mealType);
-        if (dish) {
-          items.push(dish);
-          console.log(`   ✅ ${dish.name} (${dish.meal_type}, день ${dish.day_of_week})`);
-        }
+        items.push(...mealItems);
+        console.log(`    ✅ Найдено ${mealItems.length} блюд`);
       });
+    });
+    
+    return items;
+  }
+
+  /**
+   * Поиск блюд в определенной области
+   */
+  findDishesInArea(data, colIndex, startRow, dayOfWeek, mealType) {
+    const items = [];
+    
+    // Ищем в следующих 10 строках после заголовка приема пищи
+    for (let rowIndex = startRow; rowIndex < Math.min(startRow + 10, data.length); rowIndex++) {
+      const row = data[rowIndex];
+      if (!row || !row[colIndex]) continue;
+      
+      const cell = row[colIndex];
+      if (!cell || typeof cell !== 'string') continue;
+      
+      const cellText = cell.trim();
+      if (!cellText || cellText.length < 3) continue;
+      
+      // Создаем блюдо
+      const dish = this.createDishFromCell(cellText, rowIndex, colIndex, dayOfWeek, mealType);
+      if (dish) {
+        items.push(dish);
+        console.log(`   ✅ ${dish.name} (${dish.meal_type}, день ${dish.day_of_week})`);
+      }
     }
     
     return items;
@@ -253,80 +338,66 @@ export class SchoolMenuParser {
    */
   generateDescription(name, recipeNumber) {
     let description = `Вкусное блюдо: ${name}`;
+    
     if (recipeNumber) {
       description += ` (рецепт №${recipeNumber})`;
     }
+    
     return description;
-  }
-
-  /**
-   * Проверка, является ли строка заголовком
-   */
-  isHeaderRow(row, rowIndex) {
-    if (!row || row.length === 0) return true;
-    
-    const rowText = row.join(' ').toLowerCase();
-    
-    // Заголовки типов питания
-    if (rowText.includes('завтрак') || rowText.includes('обед') || 
-        rowText.includes('полдник') || rowText.includes('ужин')) {
-      return true;
-    }
-    
-    // Заголовки дополнительных секций
-    if (rowText.includes('дополнительный') || rowText.includes('гарнир')) {
-      return true;
-    }
-    
-    // Пустые строки
-    if (row.every(cell => !cell || cell.toString().trim() === '')) {
-      return true;
-    }
-    
-    return false;
   }
 
   /**
    * Валидация распарсенного меню
    */
-  validateParsedMenu(data) {
+  validateParsedMenu(items) {
     const errors = [];
     const warnings = [];
     
-    if (!data || !data.items || !Array.isArray(data.items)) {
-      errors.push('Некорректная структура данных');
+    if (!items || items.length === 0) {
+      errors.push('Меню пустое - не найдено ни одного блюда');
       return { isValid: false, errors, warnings };
     }
     
-    if (data.items.length === 0) {
-      warnings.push('Меню пустое');
-    }
+    // Проверяем наличие блюд для каждого дня
+    const daysWithItems = new Set(items.map(item => item.day_of_week));
+    const expectedDays = [1, 2, 3, 4, 5]; // Понедельник - Пятница
     
-    // Проверяем каждое блюдо
-    data.items.forEach((item, index) => {
-      if (!item.name || item.name.trim().length < 2) {
-        errors.push(`Блюдо ${index + 1}: отсутствует название`);
+    expectedDays.forEach(day => {
+      if (!daysWithItems.has(day)) {
+        warnings.push(`Нет блюд для дня ${day}`);
+      }
+    });
+    
+    // Проверяем наличие блюд для каждого типа приема пищи
+    const mealTypes = new Set(items.map(item => item.meal_type));
+    const expectedMeals = ['завтрак', 'обед', 'полдник'];
+    
+    expectedMeals.forEach(meal => {
+      if (!mealTypes.has(meal)) {
+        warnings.push(`Нет блюд для приема пищи: ${meal}`);
+      }
+    });
+    
+    // Проверяем качество названий блюд
+    items.forEach((item, index) => {
+      if (!item.name || item.name.length < 3) {
+        errors.push(`Блюдо ${index + 1}: некорректное название`);
       }
       
-      if (!item.price || item.price <= 0) {
-        warnings.push(`Блюдо "${item.name}": цена не указана или равна 0`);
-      }
-      
-      if (!item.portion || item.portion.trim().length === 0) {
-        warnings.push(`Блюдо "${item.name}": порция не указана`);
-      }
-      
-      if (!item.day_of_week || item.day_of_week < 1 || item.day_of_week > 5) {
-        warnings.push(`Блюдо "${item.name}": некорректный день недели`);
+      if (item.name && item.name.length > 100) {
+        warnings.push(`Блюдо "${item.name}": слишком длинное название`);
       }
     });
     
     return {
       isValid: errors.length === 0,
       errors,
-      warnings
+      warnings,
+      stats: {
+        totalItems: items.length,
+        daysCovered: daysWithItems.size,
+        mealTypesCovered: mealTypes.size
+      }
     };
   }
 }
-
-export default SchoolMenuParser;

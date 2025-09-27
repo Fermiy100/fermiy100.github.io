@@ -1,6 +1,6 @@
 [build]
-  publish = "frontend/dist"
-  command = "cd frontend && npm run build"
+  publish = "."
+  command = "cd frontend && npm install && npm run build && cd .. && xcopy /E /Y frontend\\dist\\* ."
 
 [[redirects]]
   from = "/*"

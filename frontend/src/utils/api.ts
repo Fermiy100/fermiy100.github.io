@@ -1,7 +1,7 @@
 // API клиент для работы с backend
 
-const API_BASE_URL = (import.meta as any).env?.PROD 
-  ? (import.meta.env.VITE_API_URL || 'https://your-backend-url.com/api')  // Production URL
+const API_BASE_URL = import.meta.env.PROD 
+  ? (import.meta.env.VITE_API_URL || 'https://fermiy100githubio-production.up.railway.app/api')  // Production URL
   : 'http://localhost:3000/api';       // Development URL
 
 export interface User {
@@ -178,15 +178,23 @@ class ApiClient {
 
   // Menu editing methods
   async updateMenuItem(id: number, data: Partial<MenuItem>): Promise<{ message: string }> {
-    return this.request(`/menu/${id}`, 'PUT', data);
+    return this.request(`/menu/${id}`, {
+      method: 'PUT',
+      body: JSON.stringify(data)
+    });
   }
 
   async deleteMenuItem(id: number): Promise<{ message: string }> {
-    return this.request(`/menu/${id}`, 'DELETE');
+    return this.request(`/menu/${id}`, {
+      method: 'DELETE'
+    });
   }
 
   async addMenuItem(data: Omit<MenuItem, 'id' | 'school_id' | 'week_start'>): Promise<{ message: string; id: number }> {
-    return this.request('/menu', 'POST', data);
+    return this.request('/menu', {
+      method: 'POST',
+      body: JSON.stringify(data)
+    });
   }
 }
 

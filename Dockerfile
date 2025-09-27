@@ -14,15 +14,15 @@ RUN apk add --no-cache \
     linux-headers \
     && ln -sf python3 /usr/bin/python
 
-# Копируем package.json и package-lock.json из папки backend
-COPY backend/package*.json ./
+# Копируем package.json и package-lock.json
+COPY package*.json ./
 
 # Очищаем npm кэш и устанавливаем зависимости
 RUN npm cache clean --force && \
     npm ci --only=production --no-audit --no-fund
 
-# Копируем исходный код из папки backend
-COPY backend/ ./
+# Копируем исходный код
+COPY . .
 
 # Создаем пользователя для безопасности
 RUN addgroup -g 1001 -S nodejs && \

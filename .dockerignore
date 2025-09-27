@@ -13,3 +13,13 @@ coverage
 *.log
 .DS_Store
 Thumbs.db
+frontend
+school-meals-app
+assets
+.github
+*.html
+*.md
+docker-compose.yml
+nginx.conf
+_config.yml
+_redirects

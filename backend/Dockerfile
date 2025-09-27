@@ -7,6 +7,9 @@ WORKDIR /app
 # Копируем package.json и package-lock.json
 COPY package*.json ./
 
+# Устанавливаем инструменты сборки для нативных зависимостей
+RUN apk add --no-cache python3 make g++
+
 # Устанавливаем зависимости
 RUN npm ci --omit=dev
 

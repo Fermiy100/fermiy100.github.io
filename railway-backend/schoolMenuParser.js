@@ -164,6 +164,12 @@ export class SchoolMenuParser {
     // Убираем лишние символы в начале и конце
     clean = clean.replace(/^[^\wа-яё]+|[^\wа-яё]+$/gi, '');
     
+    // Исключаем общие слова, которые не являются блюдами
+    const excludeWords = ['завтрак', 'обед', 'полдник', 'ужин', 'завтрак:', 'обед:', 'полдник:', 'ужин:'];
+    if (excludeWords.some(word => clean.toLowerCase() === word.toLowerCase())) {
+      return null;
+    }
+    
     return clean;
   }
 

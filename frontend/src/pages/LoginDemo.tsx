@@ -13,8 +13,8 @@ export default function LoginDemo({ onLogin }: LoginDemoProps) {
 
   // Тестовые аккаунты
   const testAccounts = {
-    'director@school.test': { password: 'P@ssw0rd1!', role: 'DIRECTOR', name: 'Директор школы' },
-    'parent@school.test': { password: 'P@ssw0rd1!', role: 'PARENT', name: 'Родитель/Ученик' }
+    'director@school.com': { password: 'password123', role: 'DIRECTOR', name: 'Директор школы' },
+    'parent@school.com': { password: 'password123', role: 'PARENT', name: 'Родитель/Ученик' }
   };
 
   const handleLogin = async (e: React.FormEvent) => {
@@ -54,11 +54,23 @@ export default function LoginDemo({ onLogin }: LoginDemoProps) {
         <div className="card-body">
           <div className="text-center mb-6">
             <div className="logo" style={{ fontSize: '32px', marginBottom: '8px' }}>
-              Школьное питание
+              🍎 Система школьного питания
             </div>
-            <p className="text-muted">
-              Войдите в свой аккаунт
+            <p className="text-muted" style={{ marginBottom: '20px' }}>
+              Мощная платформа для управления питанием в 500+ школах
             </p>
+            <div style={{ 
+              display: 'grid', 
+              gridTemplateColumns: '1fr 1fr', 
+              gap: '8px', 
+              fontSize: '14px',
+              color: '#666'
+            }}>
+              <div>👨‍💼 Панель директора</div>
+              <div>👨‍👩‍👧‍👦 Выбор еды</div>
+              <div>📊 Аналитика</div>
+              <div>🔒 Безопасность</div>
+            </div>
           </div>
 
           <form onSubmit={handleLogin}>

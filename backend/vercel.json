@@ -13,8 +13,6 @@
     }
   ],
   "env": {
-    "NODE_ENV": "production",
-    "JWT_SECRET": "your-super-secret-jwt-key-change-in-production",
-    "FRONTEND_URL": "https://fermiy100.github.io"
+    "NODE_ENV": "production"
   }
 }

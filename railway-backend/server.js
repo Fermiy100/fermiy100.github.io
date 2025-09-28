@@ -7,7 +7,7 @@ import { body, validationResult } from 'express-validator';
 import path from 'path';
 import { fileURLToPath } from 'url';
 import fs from 'fs';
-import UltimateMenuParser from './ultimateMenuParser.js';
+import GuaranteedMenuParser from './guaranteedMenuParser.js';
 import { 
   SECURITY_CONFIG, 
   hashPassword, 
@@ -244,13 +244,13 @@ app.get('/api/health', (req, res) => {
   res.json({ 
     status: 'OK', 
     timestamp: new Date().toISOString(),
-    version: '2.0.1',
+    version: '2.1.0',
     cors_fix: 'applied',
     menu_upload_fix: 'applied',
     database_fix: 'applied',
     variable_scope_fix: 'applied',
     force_update: '2025-09-28-11-25',
-    ultimate_parser: 'active',
+    guaranteed_parser: 'active',
     restart_forced: true
   });
 });
@@ -262,17 +262,17 @@ app.post('/api/test-upload', authenticateToken, (req, res) => {
     message: 'Тестовый endpoint работает!',
     user: req.user,
     timestamp: new Date().toISOString(),
-    parser_status: 'UltimateMenuParser active'
+    parser_status: 'GuaranteedMenuParser active'
   });
 });
 
 // Test endpoint для проверки парсера
 app.get('/api/test-parser', (req, res) => {
   try {
-    const parser = new UltimateMenuParser();
+    const parser = new GuaranteedMenuParser();
     res.json({ 
       message: 'Парсер инициализирован успешно',
-      parser_type: 'UltimateMenuParser',
+      parser_type: 'GuaranteedMenuParser',
       timestamp: new Date().toISOString()
     });
   } catch (error) {
@@ -500,7 +500,7 @@ app.post('/api/menu/upload', authenticateToken, upload.single('file'), async (re
     console.log(`🏫 Школа ID: ${schoolId}, неделя: ${weekStart}`);
     
     // Создаем экземпляр парсера
-    const parser = new UltimateMenuParser();
+    const parser = new GuaranteedMenuParser();
     
     // Парсим файл
     console.log('🔍 Начинаем парсинг...');

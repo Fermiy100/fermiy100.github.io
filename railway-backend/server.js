@@ -7,7 +7,7 @@ import { body, validationResult } from 'express-validator';
 import path from 'path';
 import { fileURLToPath } from 'url';
 import fs from 'fs';
-import { SchoolMenuParser } from './schoolMenuParser.js';
+import { ImprovedMenuParser } from './improvedMenuParser.js';
 import { 
   SECURITY_CONFIG, 
   hashPassword, 
@@ -430,22 +430,46 @@ app.post('/api/menu/upload', authenticateToken, upload.single('file'), (req, res
     const schoolId = req.user.school_id;
     const weekStart = new Date().toISOString().split('T')[0];
     
-    // Создаем экземпляр парсера
-    const parser = new SchoolMenuParser();
+    // Создаем экземпляр улучшенного парсера
+    const parser = new ImprovedMenuParser();
     
     // Парсим файл
-    const parsedData = parser.parseExcelFile(req.file.buffer);
+    let parsedData;
+    try {
+      parsedData = parser.parseExcelFile(req.file.buffer);
+      console.log(`✅ Парсинг завершен. Найдено ${parsedData.length} блюд`);
+    } catch (parseError) {
+      console.error('❌ Ошибка парсинга:', parseError);
+      return res.status(400).json({ 
+        error: 'Ошибка парсинга Excel файла', 
+        details: [parseError.message],
+        suggestions: [
+          'Проверьте, что файл является Excel файлом (.xlsx)',
+          'Убедитесь, что в файле есть данные о блюдах',
+          'Проверьте, что файл не поврежден'
+        ]
+      });
+    }
     
     // Валидируем результат
     const validation = parser.validateParsedMenu(parsedData);
     
     if (!validation.isValid) {
+      console.error('❌ Валидация не пройдена:', validation.errors);
       return res.status(400).json({ 
-        error: 'Ошибка парсинга меню', 
+        error: 'Ошибка валидации меню', 
         details: validation.errors,
-        warnings: validation.warnings
+        warnings: validation.warnings,
+        stats: validation.stats,
+        suggestions: [
+          'Проверьте структуру Excel файла',
+          'Убедитесь, что есть названия блюд',
+          'Проверьте, что файл содержит данные о днях недели'
+        ]
       });
     }
+    
+    console.log(`📊 Статистика парсинга:`, validation.stats);
 
     // Clear existing menu for this week
     db.run('DELETE FROM menu_items WHERE school_id = ? AND week_start = ?', 

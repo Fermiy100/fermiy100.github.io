@@ -1,6 +1,6 @@
 {
   "name": "school-meals-backend",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "Backend для системы управления школьным питанием",
   "main": "server.js",
   "type": "module",

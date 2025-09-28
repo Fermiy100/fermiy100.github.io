@@ -241,7 +241,12 @@ const upload = multer({
 
 // Health check
 app.get('/api/health', (req, res) => {
-  res.json({ status: 'OK', timestamp: new Date().toISOString() });
+  res.json({ 
+    status: 'OK', 
+    timestamp: new Date().toISOString(),
+    version: '1.0.1',
+    cors_fix: 'applied'
+  });
 });
 
 // Auth routes

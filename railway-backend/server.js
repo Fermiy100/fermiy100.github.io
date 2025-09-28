@@ -70,10 +70,16 @@ app.options('*', cors({
 app.use((req, res, next) => {
   console.log(`🌐 CORS Request: ${req.method} ${req.path} from ${req.get('Origin')}`);
   
-  // Ручная установка CORS заголовков
+  // Ручная установка CORS заголовков для всех запросов
   const origin = req.get('Origin');
   if (origin === 'https://fermiy.ru' || origin === 'https://www.fermiy.ru') {
     res.header('Access-Control-Allow-Origin', origin);
+    res.header('Access-Control-Allow-Credentials', 'true');
+    res.header('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, PATCH, OPTIONS');
+    res.header('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-Requested-With, Accept, Origin');
+  } else {
+    // Для запросов без Origin (например, POST) устанавливаем заголовки для fermiy.ru
+    res.header('Access-Control-Allow-Origin', 'https://fermiy.ru');
     res.header('Access-Control-Allow-Credentials', 'true');
     res.header('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, PATCH, OPTIONS');
     res.header('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-Requested-With, Accept, Origin');

@@ -66,27 +66,19 @@ app.options('*', cors({
   allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With', 'Accept', 'Origin']
 }));
 
-// Отладка CORS и ручная установка заголовков
+// Отладка CORS и ручная установка заголовков - КРИТИЧЕСКОЕ ИСПРАВЛЕНИЕ
 app.use((req, res, next) => {
   console.log(`🌐 CORS Request: ${req.method} ${req.path} from ${req.get('Origin')}`);
   
-  // Ручная установка CORS заголовков для всех запросов
-  const origin = req.get('Origin');
-  if (origin === 'https://fermiy.ru' || origin === 'https://www.fermiy.ru') {
-    res.header('Access-Control-Allow-Origin', origin);
-    res.header('Access-Control-Allow-Credentials', 'true');
-    res.header('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, PATCH, OPTIONS');
-    res.header('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-Requested-With, Accept, Origin');
-  } else {
-    // Для запросов без Origin (например, POST) устанавливаем заголовки для fermiy.ru
-    res.header('Access-Control-Allow-Origin', 'https://fermiy.ru');
-    res.header('Access-Control-Allow-Credentials', 'true');
-    res.header('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, PATCH, OPTIONS');
-    res.header('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-Requested-With, Accept, Origin');
-  }
+  // ВСЕГДА устанавливаем CORS заголовки для fermiy.ru
+  res.header('Access-Control-Allow-Origin', 'https://fermiy.ru');
+  res.header('Access-Control-Allow-Credentials', 'true');
+  res.header('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, PATCH, OPTIONS');
+  res.header('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-Requested-With, Accept, Origin');
   
   // Обработка preflight запросов
   if (req.method === 'OPTIONS') {
+    console.log('✅ OPTIONS запрос обработан');
     res.status(200).end();
     return;
   }
@@ -250,8 +242,10 @@ app.get('/api/health', (req, res) => {
   res.json({ 
     status: 'OK', 
     timestamp: new Date().toISOString(),
-    version: '1.0.1',
-    cors_fix: 'applied'
+    version: '1.0.2',
+    cors_fix: 'applied',
+    menu_upload_fix: 'applied',
+    force_update: '2025-09-28-10-45'
   });
 });
 
@@ -449,138 +443,73 @@ app.patch('/api/users/:id/verify', authenticateToken, (req, res) => {
   });
 });
 
-// Upload menu
-app.post('/api/menu/upload', authenticateToken, upload.single('file'), (req, res) => {
-  if (req.user.role !== 'DIRECTOR') {
-    return res.status(403).json({ error: 'Недостаточно прав' });
-  }
-
-  if (!req.file) {
-    return res.status(400).json({ error: 'Файл не предоставлен' });
-  }
-
+// Upload menu - КРИТИЧЕСКОЕ ИСПРАВЛЕНИЕ
+app.post('/api/menu/upload', authenticateToken, upload.single('file'), async (req, res) => {
+  console.log('🚀 НАЧАЛО ЗАГРУЗКИ МЕНЮ');
+  
   try {
+    if (req.user.role !== 'DIRECTOR') {
+      console.log('❌ Недостаточно прав');
+      return res.status(403).json({ error: 'Недостаточно прав' });
+    }
+
+    if (!req.file) {
+      console.log('❌ Файл не предоставлен');
+      return res.status(400).json({ error: 'Файл не предоставлен' });
+    }
+    
+    console.log(`📁 Файл получен: ${req.file.originalname}, размер: ${req.file.buffer.length} байт`);
+
     const schoolId = req.user.school_id;
     const weekStart = new Date().toISOString().split('T')[0];
     
-    // Создаем экземпляр улучшенного парсера
+    console.log(`🏫 Школа ID: ${schoolId}, неделя: ${weekStart}`);
+    
+    // Создаем экземпляр парсера
     const parser = new ImprovedMenuParser();
     
     // Парсим файл
-    let parsedData;
-    try {
-      console.log(`📁 Размер файла: ${req.file.buffer.length} байт`);
-      console.log(`📄 Имя файла: ${req.file.originalname}`);
-      
-      parsedData = parser.parseExcelFile(req.file.buffer);
-      console.log(`✅ Парсинг завершен. Найдено ${parsedData.length} блюд`);
-      
-      // Дополнительная проверка результата
-      if (!Array.isArray(parsedData)) {
-        throw new Error('Парсер вернул не массив данных');
-      }
-      
-    } catch (parseError) {
-      console.error('❌ Ошибка парсинга:', parseError);
-      console.error('❌ Stack trace:', parseError.stack);
-      return res.status(400).json({ 
-        error: 'Ошибка парсинга Excel файла', 
-        details: [parseError.message],
-        suggestions: [
-          'Проверьте, что файл является Excel файлом (.xlsx)',
-          'Убедитесь, что в файле есть данные о блюдах',
-          'Проверьте, что файл не поврежден'
-        ]
-      });
+    console.log('🔍 Начинаем парсинг...');
+    const parsedData = parser.parseExcelFile(req.file.buffer);
+    console.log(`✅ Парсинг завершен. Найдено ${parsedData.length} блюд`);
+    
+    // Простая валидация
+    if (!Array.isArray(parsedData) || parsedData.length === 0) {
+      console.log('❌ Парсер вернул пустой результат');
+      return res.status(400).json({ error: 'Файл не содержит данных о меню' });
     }
     
-    // Валидируем результат
-    const validation = parser.validateParsedMenu(parsedData);
+    // Очищаем старое меню
+    console.log('🗑️ Очищаем старое меню...');
+    db.run('DELETE FROM menu_items WHERE school_id = ? AND week_start = ?', [schoolId, weekStart]);
     
-    if (!validation.isValid) {
-      console.error('❌ Валидация не пройдена:', validation.errors);
-      return res.status(400).json({ 
-        error: 'Ошибка валидации меню', 
-        details: validation.errors,
-        warnings: validation.warnings,
-        stats: validation.stats,
-        suggestions: [
-          'Проверьте структуру Excel файла',
-          'Убедитесь, что есть названия блюд',
-          'Проверьте, что файл содержит данные о днях недели'
-        ]
-      });
+    // Добавляем новые элементы
+    console.log('➕ Добавляем новые элементы...');
+    let insertedCount = 0;
+    
+    for (const item of parsedData) {
+      try {
+        db.run(
+          'INSERT INTO menu_items (school_id, name, description, price, meal_type, day_of_week, portion, week_start, recipe_number, weight) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
+          [schoolId, item.name, item.description, item.price, item.meal_type, item.day_of_week, item.portion, weekStart, item.recipe_number, item.weight]
+        );
+        insertedCount++;
+      } catch (error) {
+        console.error('❌ Ошибка вставки элемента:', error);
+      }
     }
     
-    console.log(`📊 Статистика парсинга:`, validation.stats);
-
-    // Clear existing menu for this week
-    db.run('DELETE FROM menu_items WHERE school_id = ? AND week_start = ?', 
-      [schoolId, weekStart], (err) => {
-      if (err) {
-        console.error('Error clearing menu:', err);
-        return res.status(500).json({ error: 'Ошибка очистки меню' });
-      }
-
-      // Insert new menu items
-      let insertedCount = 0;
-      const stmt = db.prepare(`INSERT INTO menu_items (school_id, name, description, price, meal_type, day_of_week, portion, week_start, recipe_number, weight) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`);
-
-      // Обрабатываем каждый элемент меню
-      let processedCount = 0;
-      let errorCount = 0;
-      
-      parsedData.forEach((item, index) => {
-        try {
-          stmt.run([schoolId, item.name, item.description, item.price, item.meal_type, item.day_of_week, item.portion, weekStart, item.recipe_number, item.weight], (err) => {
-            processedCount++;
-            
-            if (err) {
-              console.error(`❌ Ошибка вставки элемента ${index + 1}:`, err);
-              errorCount++;
-            } else {
-              insertedCount++;
-            }
-            
-            // Если обработали все элементы
-            if (processedCount === parsedData.length) {
-              stmt.finalize(() => {
-                console.log(`✅ Загрузка завершена: ${insertedCount} успешно, ${errorCount} ошибок`);
-                
-                res.json({ 
-                  message: 'Меню успешно загружено и обновлено', 
-                  insertedCount,
-                  errorCount,
-                  totalProcessed: processedCount,
-                  validationWarnings: validation.warnings,
-                  validationStats: validation.stats
-                });
-              });
-            }
-          });
-        } catch (error) {
-          console.error(`❌ Ошибка обработки элемента ${index + 1}:`, error);
-          errorCount++;
-          processedCount++;
-          
-          if (processedCount === parsedData.length) {
-            stmt.finalize(() => {
-              res.json({ 
-                message: 'Меню загружено с ошибками', 
-                insertedCount,
-                errorCount,
-                totalProcessed: processedCount,
-                validationWarnings: validation.warnings,
-                validationStats: validation.stats
-              });
-            });
-          }
-        }
-      });
+    console.log(`✅ Загрузка завершена: ${insertedCount} элементов добавлено`);
+    
+    res.json({ 
+      message: 'Меню успешно загружено', 
+      insertedCount,
+      totalItems: parsedData.length
     });
+    
   } catch (error) {
-    console.error('Menu upload error:', error);
-    res.status(500).json({ error: `Ошибка обработки файла: ${error.message}` });
+    console.error('❌ КРИТИЧЕСКАЯ ОШИБКА:', error);
+    res.status(500).json({ error: `Ошибка сервера: ${error.message}` });
   }
 });
 

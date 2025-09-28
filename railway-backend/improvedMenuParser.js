@@ -14,9 +14,9 @@ export class ImprovedMenuParser {
     this.portionPattern = /\d+\s*шт/gi;
     
     // Расширенные словари для определения типов приемов пищи
-    this.breakfastKeywords = ['завтрак', 'утром', 'утренний', 'утро'];
-    this.lunchKeywords = ['обед', 'дневной', 'основной', 'день'];
-    this.snackKeywords = ['полдник', 'перекус', 'дополнительный', 'доп'];
+    this.breakfastKeywords = ['завтрак', 'утром', 'утренний', 'утро', 'з а в т р а к', 'завтрак'];
+    this.lunchKeywords = ['обед', 'дневной', 'основной', 'день', 'о б е д', 'обед'];
+    this.snackKeywords = ['полдник', 'перекус', 'дополнительный', 'доп', 'дополнительный гарнир'];
     this.dinnerKeywords = ['ужин', 'вечерний', 'вечером', 'вечер'];
     
     // Дни недели (разные варианты написания)
@@ -114,6 +114,10 @@ export class ImprovedMenuParser {
         );
         items.push(...mealItems);
       });
+      
+      // Дополнительно парсим блюда после "О Б Е Д"
+      const lunchItems = this.extractLunchDishes(data, dayCol.column, dayCol.day);
+      items.push(...lunchItems);
     });
     
     // Удаляем дубликаты
@@ -290,6 +294,11 @@ export class ImprovedMenuParser {
           mealType = 'обед'; // Ужин как дополнение к обеду
         }
         
+        // Дополнительная проверка для "О Б Е Д" с пробелами
+        if (cellText.includes('о б е д') || cellText.includes('обед')) {
+          mealType = 'обед';
+        }
+        
         if (mealType) {
           mealRows.push({
             meal: mealType,
@@ -323,11 +332,72 @@ export class ImprovedMenuParser {
       if (!cellText || cellText.length < 3) continue;
       
       // Проверяем, не является ли это заголовком другого приема пищи
-      if (this.isMealHeader(cellText)) break;
+      if (this.isMealHeader(cellText)) {
+        // Если нашли заголовок "О Б Е Д", меняем тип приема пищи на обед
+        if (cellText.toLowerCase().includes('о б е д') || cellText.toLowerCase().includes('обед')) {
+          mealType = 'обед';
+        }
+        break;
+      }
       
       const dish = this.createDish(cellText, dayOfWeek, mealType, cell);
       if (dish) {
-        items.push(dish);
+        // Если это массив блюд (соусы), добавляем все
+        if (Array.isArray(dish)) {
+          items.push(...dish);
+        } else {
+          items.push(dish);
+        }
+      }
+    }
+    
+    return items;
+  }
+
+  /**
+   * Извлечение блюд обеда после заголовка "О Б Е Д"
+   */
+  extractLunchDishes(data, colIndex, dayOfWeek) {
+    const items = [];
+    
+    // Ищем строку с "О Б Е Д"
+    for (let rowIndex = 0; rowIndex < data.length; rowIndex++) {
+      const row = data[rowIndex];
+      if (!row || !row[colIndex]) continue;
+      
+      const cell = row[colIndex];
+      if (!cell || typeof cell !== 'string') continue;
+      
+      const cellText = cell.trim().toLowerCase();
+      
+      // Если нашли "О Б Е Д", парсим следующие строки как обед
+      if (cellText.includes('о б е д') || cellText.includes('обед')) {
+        console.log(`🍽️ Найден обед для дня ${dayOfWeek} в строке ${rowIndex}`);
+        
+        // Парсим следующие 10 строк как блюда обеда
+        for (let i = rowIndex + 1; i < Math.min(rowIndex + 10, data.length); i++) {
+          const lunchRow = data[i];
+          if (!lunchRow || !lunchRow[colIndex]) continue;
+          
+          const lunchCell = lunchRow[colIndex];
+          if (!lunchCell || typeof lunchCell !== 'string') continue;
+          
+          const lunchText = lunchCell.trim();
+          if (!lunchText || lunchText.length < 3) continue;
+          
+          // Проверяем, не является ли это заголовком другого приема пищи
+          if (this.isMealHeader(lunchText)) break;
+          
+          const dish = this.createDish(lunchText, dayOfWeek, 'обед', lunchCell);
+          if (dish) {
+            if (Array.isArray(dish)) {
+              items.push(...dish);
+            } else {
+              items.push(dish);
+            }
+          }
+        }
+        break;
       }
     }
     
@@ -338,6 +408,11 @@ export class ImprovedMenuParser {
    * Создание блюда
    */
   createDish(text, dayOfWeek, mealType, originalText) {
+    // Обрабатываем сложные соусы - разбиваем на отдельные блюда
+    if (text.includes('Соусы:') && text.includes(';')) {
+      return this.createSauceDishes(text, dayOfWeek, mealType, originalText);
+    }
+    
     const cleanName = this.cleanDishName(text);
     if (!cleanName || cleanName.length < 3) return null;
     
@@ -361,6 +436,40 @@ export class ImprovedMenuParser {
   }
 
   /**
+   * Создание отдельных блюд из сложных соусов
+   */
+  createSauceDishes(text, dayOfWeek, mealType, originalText) {
+    const dishes = [];
+    
+    // Извлекаем соусы из текста
+    const sauceText = text.replace('Соусы:', '').trim();
+    const sauces = sauceText.split(';').map(s => s.trim()).filter(s => s.length > 0);
+    
+    sauces.forEach(sauce => {
+      const cleanName = this.cleanDishName(sauce);
+      if (cleanName && cleanName.length >= 3) {
+        const weight = this.extractWeight(sauce);
+        const recipeNumber = this.extractRecipeNumber(sauce);
+        
+        dishes.push({
+          name: cleanName,
+          description: this.generateDescription(cleanName, recipeNumber),
+          price: 0,
+          portion: weight || this.generatePortion(cleanName),
+          day_of_week: Math.min(Math.max(dayOfWeek, 1), 7),
+          meal_type: mealType || 'обед',
+          school_id: 1,
+          week_start: new Date().toISOString().split('T')[0],
+          recipe_number: recipeNumber,
+          weight: weight
+        });
+      }
+    });
+    
+    return dishes;
+  }
+
+  /**
    * Очистка названия блюда
    */
   cleanDishName(text) {
@@ -379,8 +488,10 @@ export class ImprovedMenuParser {
     const excludeWords = [
       'завтрак', 'обед', 'полдник', 'ужин', 
       'завтрак:', 'обед:', 'полдник:', 'ужин:',
+      'з а в т р а к', 'о б е д', 'п о л д н и к', 'у ж и н',
       'понедельник', 'вторник', 'среда', 'четверг', 'пятница',
-      'суббота', 'воскресенье', 'день', 'неделя'
+      'суббота', 'воскресенье', 'день', 'неделя',
+      'дополнительный гарнир', 'количество порций'
     ];
     
     if (excludeWords.some(word => clean.toLowerCase() === word.toLowerCase())) {

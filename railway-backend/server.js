@@ -244,7 +244,7 @@ app.get('/api/health', (req, res) => {
   res.json({ 
     status: 'OK', 
     timestamp: new Date().toISOString(),
-    version: '2.3.0',
+    version: '2.3.1',
     cors_fix: 'applied',
     menu_upload_fix: 'applied',
     database_fix: 'applied',
@@ -510,16 +510,31 @@ app.post('/api/menu/upload', authenticateToken, upload.single('file'), async (re
         const data = XLSX.utils.sheet_to_json(worksheet, { header: 1, defval: '' });
         
         const items = [];
+        console.log(`📊 Данные файла: ${data.length} строк`);
+        
         for (let row = 0; row < data.length; row++) {
           const rowData = data[row];
           if (!rowData) continue;
           
           for (let col = 0; col < rowData.length; col++) {
             const cell = rowData[col];
-            if (!cell || typeof cell !== 'string') continue;
+            if (!cell) continue;
             
             const cellText = cell.toString().trim();
-            if (cellText.length < 2) continue;
+            if (cellText.length < 3) continue;
+            
+            // Пропускаем очевидные заголовки
+            const lowerText = cellText.toLowerCase();
+            if (lowerText.includes('понедельник') || lowerText.includes('вторник') || 
+                lowerText.includes('среда') || lowerText.includes('четверг') || 
+                lowerText.includes('пятница') || lowerText.includes('суббота') || 
+                lowerText.includes('воскресенье') || lowerText.includes('завтрак') || 
+                lowerText.includes('обед') || lowerText.includes('полдник') || 
+                lowerText.includes('ужин')) {
+              continue;
+            }
+            
+            console.log(`🍽️ Найдено блюдо: "${cellText}"`);
             
             items.push({
               name: cellText,
@@ -535,6 +550,8 @@ app.post('/api/menu/upload', authenticateToken, upload.single('file'), async (re
             });
           }
         }
+        
+        console.log(`✅ Найдено ${items.length} реальных блюд`);
         
         return items.length > 0 ? items : [{
           name: 'Тестовое блюдо',

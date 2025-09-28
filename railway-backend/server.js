@@ -48,7 +48,7 @@ app.use(helmet({
   }
 }));
 
-// CORS настройки для fermiy.ru
+// CORS настройки для fermiy.ru - ОБНОВЛЕНО
 app.use(cors({
   origin: ['https://fermiy.ru', 'https://www.fermiy.ru'],
   credentials: true,
@@ -65,6 +65,12 @@ app.options('*', cors({
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With', 'Accept', 'Origin']
 }));
+
+// Отладка CORS
+app.use((req, res, next) => {
+  console.log(`🌐 CORS Request: ${req.method} ${req.path} from ${req.get('Origin')}`);
+  next();
+});
 
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true }));

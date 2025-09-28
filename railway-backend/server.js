@@ -524,31 +524,59 @@ app.post('/api/menu/upload', authenticateToken, upload.single('file'), (req, res
 
       // Insert new menu items
       let insertedCount = 0;
-      const stmt = db.prepare(`INSERT INTO menu_items (school_id, name, description, price, meal_type, day_of_week, portion, week_start) VALUES (?, ?, ?, ?, ?, ?, ?, ?)`);
+      const stmt = db.prepare(`INSERT INTO menu_items (school_id, name, description, price, meal_type, day_of_week, portion, week_start, recipe_number, weight) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`);
 
-      parsedData.items.forEach(item => {
-        stmt.run([schoolId, item.name, item.description, item.price, item.meal_type, item.day_of_week, item.portion, weekStart], (err) => {
-          if (err) {
-            console.error('Error inserting menu item:', err);
-          } else {
-            insertedCount++;
+      // Обрабатываем каждый элемент меню
+      let processedCount = 0;
+      let errorCount = 0;
+      
+      parsedData.forEach((item, index) => {
+        try {
+          stmt.run([schoolId, item.name, item.description, item.price, item.meal_type, item.day_of_week, item.portion, weekStart, item.recipe_number, item.weight], (err) => {
+            processedCount++;
+            
+            if (err) {
+              console.error(`❌ Ошибка вставки элемента ${index + 1}:`, err);
+              errorCount++;
+            } else {
+              insertedCount++;
+            }
+            
+            // Если обработали все элементы
+            if (processedCount === parsedData.length) {
+              stmt.finalize(() => {
+                console.log(`✅ Загрузка завершена: ${insertedCount} успешно, ${errorCount} ошибок`);
+                
+                res.json({ 
+                  message: 'Меню успешно загружено и обновлено', 
+                  insertedCount,
+                  errorCount,
+                  totalProcessed: processedCount,
+                  validationWarnings: validation.warnings,
+                  validationStats: validation.stats
+                });
+              });
+            }
+          });
+        } catch (error) {
+          console.error(`❌ Ошибка обработки элемента ${index + 1}:`, error);
+          errorCount++;
+          processedCount++;
+          
+          if (processedCount === parsedData.length) {
+            stmt.finalize(() => {
+              res.json({ 
+                message: 'Меню загружено с ошибками', 
+                insertedCount,
+                errorCount,
+                totalProcessed: processedCount,
+                validationWarnings: validation.warnings,
+                validationStats: validation.stats
+              });
+            });
           }
-        });
+        }
       });
-
-      stmt.finalize();
-
-      // Wait for all inserts to complete
-      setTimeout(() => {
-        res.json({
-          message: `Меню успешно загружено`,
-          itemsCount: insertedCount,
-          weekStart: weekStart,
-          warnings: validation.warnings,
-          mealTypes: parsedData.mealTypes,
-          days: parsedData.days
-        });
-      }, 500);
     });
   } catch (error) {
     console.error('Menu upload error:', error);

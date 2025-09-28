@@ -138,19 +138,34 @@ export class ImprovedMenuParser {
       const mealSections = this.findMealSectionsForDay(data, dayCol.column);
       console.log(`🍽️ Найдено приемов пищи для дня ${dayCol.day}:`, mealSections.map(s => s.mealType));
       
-      // Парсим блюда для каждого приема пищи
-      mealSections.forEach(section => {
-        const mealItems = this.extractDishesFromSection(
+      // Если не найдено приемов пищи, парсим все как обед
+      if (mealSections.length === 0) {
+        console.log(`⚠️ Приемы пищи не найдены для дня ${dayCol.day}, парсим все как обед`);
+        const allItems = this.extractDishesFromSection(
           data, 
           dayCol.column, 
-          section.startRow, 
-          section.endRow, 
+          0, 
+          data.length - 1, 
           dayCol.day, 
-          section.mealType
+          'обед'
         );
-        items.push(...mealItems);
-        console.log(`✅ Добавлено ${mealItems.length} блюд для ${section.mealType}`);
-      });
+        items.push(...allItems);
+        console.log(`✅ Добавлено ${allItems.length} блюд как обед`);
+      } else {
+        // Парсим блюда для каждого приема пищи
+        mealSections.forEach(section => {
+          const mealItems = this.extractDishesFromSection(
+            data, 
+            dayCol.column, 
+            section.startRow, 
+            section.endRow, 
+            dayCol.day, 
+            section.mealType
+          );
+          items.push(...mealItems);
+          console.log(`✅ Добавлено ${mealItems.length} блюд для ${section.mealType}`);
+        });
+      }
     });
     
     // Удаляем дубликаты
@@ -351,12 +366,15 @@ export class ImprovedMenuParser {
   }
 
   /**
-   * Поиск секций приемов пищи для конкретного дня
+   * Поиск секций приемов пищи для конкретного дня - ИСПРАВЛЕННАЯ ВЕРСИЯ
    */
   findMealSectionsForDay(data, colIndex) {
     const sections = [];
-    let currentSection = null;
+    const mealHeaders = [];
     
+    console.log(`🔍 Ищем приемы пищи в колонке ${colIndex}`);
+    
+    // Сначала находим все заголовки приемов пищи
     for (let rowIndex = 0; rowIndex < data.length; rowIndex++) {
       const row = data[rowIndex];
       if (!row || !row[colIndex]) continue;
@@ -364,43 +382,66 @@ export class ImprovedMenuParser {
       const cell = row[colIndex];
       if (!cell || typeof cell !== 'string') continue;
       
-      const cellText = cell.trim().toLowerCase();
-      if (!cellText) continue;
+      const cellText = cell.trim();
+      if (!cellText || cellText.length < 3) continue;
       
-      // Определяем тип приема пищи
-      let mealType = null;
-      if (this.breakfastKeywords.some(keyword => cellText.includes(keyword))) {
-        mealType = 'завтрак';
-      } else if (this.lunchKeywords.some(keyword => cellText.includes(keyword))) {
-        mealType = 'обед';
-      } else if (this.snackKeywords.some(keyword => cellText.includes(keyword))) {
-        mealType = 'полдник';
-      } else if (this.dinnerKeywords.some(keyword => cellText.includes(keyword))) {
-        mealType = 'ужин';
+      // Проверяем все возможные варианты написания
+      const lowerText = cellText.toLowerCase();
+      
+      // Завтрак
+      if (this.isMealType(lowerText, 'завтрак')) {
+        mealHeaders.push({ row: rowIndex, type: 'завтрак', text: cellText });
+        console.log(`✅ Найден ЗАВТРАК в строке ${rowIndex}: "${cellText}"`);
       }
-      
-      if (mealType) {
-        // Завершаем предыдущую секцию
-        if (currentSection) {
-          currentSection.endRow = rowIndex - 1;
-          sections.push(currentSection);
-        }
-        
-        // Начинаем новую секцию
-        currentSection = {
-          mealType: mealType,
-          startRow: rowIndex + 1,
-          endRow: data.length - 1
-        };
+      // Обед
+      else if (this.isMealType(lowerText, 'обед')) {
+        mealHeaders.push({ row: rowIndex, type: 'обед', text: cellText });
+        console.log(`✅ Найден ОБЕД в строке ${rowIndex}: "${cellText}"`);
+      }
+      // Полдник
+      else if (this.isMealType(lowerText, 'полдник')) {
+        mealHeaders.push({ row: rowIndex, type: 'полдник', text: cellText });
+        console.log(`✅ Найден ПОЛДНИК в строке ${rowIndex}: "${cellText}"`);
+      }
+      // Ужин
+      else if (this.isMealType(lowerText, 'ужин')) {
+        mealHeaders.push({ row: rowIndex, type: 'ужин', text: cellText });
+        console.log(`✅ Найден УЖИН в строке ${rowIndex}: "${cellText}"`);
       }
     }
     
-    // Добавляем последнюю секцию
-    if (currentSection) {
-      sections.push(currentSection);
+    console.log(`📊 Найдено ${mealHeaders.length} приемов пищи:`, mealHeaders.map(h => `${h.type} (строка ${h.row})`));
+    
+    // Создаем секции на основе найденных заголовков
+    for (let i = 0; i < mealHeaders.length; i++) {
+      const currentHeader = mealHeaders[i];
+      const nextHeader = mealHeaders[i + 1];
+      
+      const section = {
+        mealType: currentHeader.type,
+        startRow: currentHeader.row + 1,
+        endRow: nextHeader ? nextHeader.row - 1 : data.length - 1
+      };
+      
+      sections.push(section);
+      console.log(`📋 Секция ${section.mealType}: строки ${section.startRow}-${section.endRow}`);
     }
     
     return sections;
+  }
+
+  /**
+   * Проверка является ли текст заголовком приема пищи
+   */
+  isMealType(text, mealType) {
+    const keywords = {
+      'завтрак': ['завтрак', 'з а в т р а к', 'утром', 'утренний', 'утро'],
+      'обед': ['обед', 'о б е д', 'дневной', 'основной', 'день'],
+      'полдник': ['полдник', 'п о л д н и к', 'перекус', 'дополнительный', 'доп'],
+      'ужин': ['ужин', 'у ж и н', 'вечерний', 'вечером', 'вечер']
+    };
+    
+    return keywords[mealType].some(keyword => text.includes(keyword));
   }
 
   /**
@@ -740,10 +781,10 @@ export class ImprovedMenuParser {
    */
   isMealHeader(text) {
     const lowerText = text.toLowerCase();
-    return this.breakfastKeywords.some(k => lowerText.includes(k)) ||
-           this.lunchKeywords.some(k => lowerText.includes(k)) ||
-           this.snackKeywords.some(k => lowerText.includes(k)) ||
-           this.dinnerKeywords.some(k => lowerText.includes(k));
+    return this.isMealType(lowerText, 'завтрак') ||
+           this.isMealType(lowerText, 'обед') ||
+           this.isMealType(lowerText, 'полдник') ||
+           this.isMealType(lowerText, 'ужин');
   }
 
   /**

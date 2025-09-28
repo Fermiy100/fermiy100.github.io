@@ -40,21 +40,24 @@ export class ImprovedMenuParser {
       
       // Проверяем буфер
       if (!buffer || buffer.length === 0) {
-        throw new Error('Файл пустой или поврежден');
+        console.error('❌ Файл пустой или поврежден');
+        return [];
       }
       
       // Читаем Excel файл
       const workbook = XLSX.read(buffer, { type: 'buffer' });
       
       if (!workbook.SheetNames || workbook.SheetNames.length === 0) {
-        throw new Error('В Excel файле нет листов');
+        console.error('❌ В Excel файле нет листов');
+        return [];
       }
       
       const sheetName = workbook.SheetNames[0];
       const worksheet = workbook.Sheets[sheetName];
       
       if (!worksheet) {
-        throw new Error(`Лист "${sheetName}" не найден`);
+        console.error(`❌ Лист "${sheetName}" не найден`);
+        return [];
       }
       
       // Конвертируем в JSON
@@ -106,12 +109,12 @@ export class ImprovedMenuParser {
         return items;
       } catch (error) {
         console.log(`⚠️ Универсальный парсинг не сработал: ${error.message}`);
-        throw new Error(`Все стратегии парсинга не сработали. Последняя ошибка: ${error.message}`);
+        return [];
       }
       
     } catch (error) {
       console.error('❌ Ошибка парсинга:', error);
-      throw new Error(`Ошибка парсинга Excel файла: ${error.message}`);
+      return [];
     }
   }
 

@@ -139,11 +139,13 @@ db.serialize(() => {
     school_id INTEGER NOT NULL,
     name TEXT NOT NULL,
     description TEXT,
-    price REAL NOT NULL,
+    price REAL NOT NULL DEFAULT 0,
     meal_type TEXT NOT NULL,
     day_of_week INTEGER NOT NULL CHECK(day_of_week BETWEEN 1 AND 7),
     portion TEXT,
     week_start DATE NOT NULL,
+    recipe_number TEXT,
+    weight TEXT,
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (school_id) REFERENCES schools (id)
   )`);
@@ -242,10 +244,11 @@ app.get('/api/health', (req, res) => {
   res.json({ 
     status: 'OK', 
     timestamp: new Date().toISOString(),
-    version: '1.0.3',
+    version: '1.0.4',
     cors_fix: 'applied',
     menu_upload_fix: 'applied',
-    force_update: '2025-09-28-10-50',
+    database_fix: 'applied',
+    force_update: '2025-09-28-11-00',
     restart_forced: true
   });
 });
@@ -492,23 +495,61 @@ app.post('/api/menu/upload', authenticateToken, upload.single('file'), async (re
     
     // Очищаем старое меню
     console.log('🗑️ Очищаем старое меню...');
-    db.run('DELETE FROM menu_items WHERE school_id = ? AND week_start = ?', [schoolId, weekStart]);
-    
-    // Добавляем новые элементы
-    console.log('➕ Добавляем новые элементы...');
-    let insertedCount = 0;
-    
-    for (const item of parsedData) {
-      try {
-        db.run(
-          'INSERT INTO menu_items (school_id, name, description, price, meal_type, day_of_week, portion, week_start, recipe_number, weight) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
-          [schoolId, item.name, item.description, item.price, item.meal_type, item.day_of_week, item.portion, weekStart, item.recipe_number, item.weight]
-        );
-        insertedCount++;
-      } catch (error) {
-        console.error('❌ Ошибка вставки элемента:', error);
+    db.run('DELETE FROM menu_items WHERE school_id = ? AND week_start = ?', [schoolId, weekStart], (err) => {
+      if (err) {
+        console.error('❌ Ошибка очистки меню:', err);
+        return res.status(500).json({ error: 'Ошибка очистки меню' });
       }
-    }
+      
+      // Добавляем новые элементы
+      console.log('➕ Добавляем новые элементы...');
+      let insertedCount = 0;
+      let processedCount = 0;
+      
+      if (parsedData.length === 0) {
+        return res.json({ 
+          message: 'Меню успешно загружено', 
+          insertedCount: 0,
+          totalItems: 0
+        });
+      }
+      
+      for (const item of parsedData) {
+        try {
+          db.run(
+            'INSERT INTO menu_items (school_id, name, description, price, meal_type, day_of_week, portion, week_start, recipe_number, weight) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
+            [schoolId, item.name || 'Блюдо', item.description || null, item.price || 0, item.meal_type || 'обед', item.day_of_week || 1, item.portion || null, weekStart, item.recipe_number || null, item.weight || null],
+            function(err) {
+              processedCount++;
+              if (err) {
+                console.error('❌ Ошибка вставки элемента:', err);
+              } else {
+                insertedCount++;
+              }
+              
+              if (processedCount === parsedData.length) {
+                console.log(`✅ Загрузка завершена: ${insertedCount} элементов добавлено`);
+                res.json({ 
+                  message: 'Меню успешно загружено', 
+                  insertedCount,
+                  totalItems: parsedData.length
+                });
+              }
+            }
+          );
+        } catch (error) {
+          console.error('❌ Ошибка обработки элемента:', error);
+          processedCount++;
+          if (processedCount === parsedData.length) {
+            res.json({ 
+              message: 'Меню загружено с ошибками', 
+              insertedCount,
+              totalItems: parsedData.length
+            });
+          }
+        }
+      }
+    });
     
     console.log(`✅ Загрузка завершена: ${insertedCount} элементов добавлено`);
     
@@ -662,29 +703,50 @@ app.post('/api/orders', authenticateToken, [
     let insertedCount = 0;
     const stmt = db.prepare(`INSERT INTO orders (user_id, school_id, menu_item_id, week_start, day_of_week) VALUES (?, ?, ?, ?, ?)`);
 
+    // Ждем завершения всех операций
+    let completedCount = 0;
+    const totalItems = menuItemIds.length;
+    
+    if (totalItems === 0) {
+      return res.json({
+        message: 'Заказ успешно создан',
+        itemsCount: 0
+      });
+    }
+    
     menuItemIds.forEach(menuItemId => {
-      // Get menu item details
       db.get('SELECT day_of_week FROM menu_items WHERE id = ? AND school_id = ?', 
         [menuItemId, schoolId], (err, item) => {
-        if (err || !item) return;
+        if (err || !item) {
+          completedCount++;
+          if (completedCount === totalItems) {
+            stmt.finalize();
+            res.json({
+              message: 'Заказ успешно создан',
+              itemsCount: insertedCount
+            });
+          }
+          return;
+        }
 
         stmt.run([userId, schoolId, menuItemId, weekStart, item.day_of_week], (err) => {
+          completedCount++;
           if (err) {
             console.error('Error inserting order:', err);
           } else {
             insertedCount++;
           }
+          
+          if (completedCount === totalItems) {
+            stmt.finalize();
+            res.json({
+              message: 'Заказ успешно создан',
+              itemsCount: insertedCount
+            });
+          }
         });
       });
     });
-
-    setTimeout(() => {
-      stmt.finalize();
-      res.json({
-        message: 'Заказ успешно создан',
-        itemsCount: insertedCount
-      });
-    }, 1000);
   });
 });
 

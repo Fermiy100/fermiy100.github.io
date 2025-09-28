@@ -242,10 +242,21 @@ app.get('/api/health', (req, res) => {
   res.json({ 
     status: 'OK', 
     timestamp: new Date().toISOString(),
-    version: '1.0.2',
+    version: '1.0.3',
     cors_fix: 'applied',
     menu_upload_fix: 'applied',
-    force_update: '2025-09-28-10-45'
+    force_update: '2025-09-28-10-50',
+    restart_forced: true
+  });
+});
+
+// Test endpoint для проверки загрузки
+app.post('/api/test-upload', authenticateToken, (req, res) => {
+  console.log('🧪 ТЕСТОВЫЙ ENDPOINT ВЫЗВАН');
+  res.json({ 
+    message: 'Тестовый endpoint работает!',
+    user: req.user,
+    timestamp: new Date().toISOString()
   });
 });
 

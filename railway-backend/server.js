@@ -48,11 +48,22 @@ app.use(helmet({
   }
 }));
 
+// CORS настройки для fermiy.ru
 app.use(cors({
-  origin: 'https://fermiy.ru',
+  origin: ['https://fermiy.ru', 'https://www.fermiy.ru'],
   credentials: true,
-  methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH'],
-  allowedHeaders: ['Content-Type', 'Authorization']
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With', 'Accept', 'Origin'],
+  preflightContinue: false,
+  optionsSuccessStatus: 200
+}));
+
+// Дополнительная обработка preflight запросов
+app.options('*', cors({
+  origin: ['https://fermiy.ru', 'https://www.fermiy.ru'],
+  credentials: true,
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With', 'Accept', 'Origin']
 }));
 
 app.use(express.json({ limit: '10mb' }));

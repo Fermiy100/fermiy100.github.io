@@ -119,7 +119,7 @@ export class ImprovedMenuParser {
   }
 
   /**
-   * Парсинг стандартной структуры (дни + приемы пищи)
+   * Парсинг стандартной структуры (дни + приемы пищи) - ИСПРАВЛЕННАЯ ВЕРСИЯ
    */
   parseStandardStructure(data) {
     const items = [];
@@ -128,44 +128,36 @@ export class ImprovedMenuParser {
     const dayColumns = this.findDayColumns(data);
     if (dayColumns.length === 0) return items;
     
-    // Ищем строки с типами приемов пищи
-    const mealRows = this.findMealRows(data);
-    if (mealRows.length === 0) return items;
-    
     console.log(`📅 Найдено дней: ${dayColumns.length}`);
-    console.log(`🍽️ Найдено приемов пищи: ${mealRows.length}`);
     
-    // Парсим блюда для каждой комбинации день + прием пищи
+    // Для каждого дня парсим блюда по приемам пищи
     dayColumns.forEach(dayCol => {
-      mealRows.forEach(mealRow => {
-        const mealItems = this.extractDishesFromArea(
+      console.log(`🔍 Парсим день ${dayCol.day} в колонке ${dayCol.column}`);
+      
+      // Ищем все приемы пищи для этого дня
+      const mealSections = this.findMealSectionsForDay(data, dayCol.column);
+      console.log(`🍽️ Найдено приемов пищи для дня ${dayCol.day}:`, mealSections.map(s => s.mealType));
+      
+      // Парсим блюда для каждого приема пищи
+      mealSections.forEach(section => {
+        const mealItems = this.extractDishesFromSection(
           data, 
           dayCol.column, 
-          mealRow.row + 1, 
+          section.startRow, 
+          section.endRow, 
           dayCol.day, 
-          mealRow.meal
+          section.mealType
         );
         items.push(...mealItems);
+        console.log(`✅ Добавлено ${mealItems.length} блюд для ${section.mealType}`);
       });
     });
     
-    // Дополнительно парсим блюда после "О Б Е Д" для каждого дня
-    dayColumns.forEach(dayCol => {
-      const lunchItems = this.extractLunchDishes(data, dayCol.column, dayCol.day);
-      items.push(...lunchItems);
-    });
-    
-    // Если не нашли блюда обеда, попробуем найти "О Б Е Д" во всех колонках
-    if (items.filter(item => item.meal_type === 'обед').length === 0) {
-      console.log('🔍 Не найдено блюд обеда, ищем "О Б Е Д" во всех колонках...');
-      this.extractLunchFromAllColumns(data, items, dayColumns);
-    }
-    
-    // Исправляем типы приемов пищи - блюда после "О Б Е Д" должны быть обедом
-    this.fixMealTypes(data, items);
-    
     // Удаляем дубликаты
-    return this.removeDuplicates(items);
+    const uniqueItems = this.removeDuplicates(items);
+    
+    console.log(`✅ Парсинг завершен. Найдено ${uniqueItems.length} уникальных блюд`);
+    return uniqueItems;
   }
 
   /**
@@ -359,7 +351,95 @@ export class ImprovedMenuParser {
   }
 
   /**
-   * Извлечение блюд из определенной области
+   * Поиск секций приемов пищи для конкретного дня
+   */
+  findMealSectionsForDay(data, colIndex) {
+    const sections = [];
+    let currentSection = null;
+    
+    for (let rowIndex = 0; rowIndex < data.length; rowIndex++) {
+      const row = data[rowIndex];
+      if (!row || !row[colIndex]) continue;
+      
+      const cell = row[colIndex];
+      if (!cell || typeof cell !== 'string') continue;
+      
+      const cellText = cell.trim().toLowerCase();
+      if (!cellText) continue;
+      
+      // Определяем тип приема пищи
+      let mealType = null;
+      if (this.breakfastKeywords.some(keyword => cellText.includes(keyword))) {
+        mealType = 'завтрак';
+      } else if (this.lunchKeywords.some(keyword => cellText.includes(keyword))) {
+        mealType = 'обед';
+      } else if (this.snackKeywords.some(keyword => cellText.includes(keyword))) {
+        mealType = 'полдник';
+      } else if (this.dinnerKeywords.some(keyword => cellText.includes(keyword))) {
+        mealType = 'ужин';
+      }
+      
+      if (mealType) {
+        // Завершаем предыдущую секцию
+        if (currentSection) {
+          currentSection.endRow = rowIndex - 1;
+          sections.push(currentSection);
+        }
+        
+        // Начинаем новую секцию
+        currentSection = {
+          mealType: mealType,
+          startRow: rowIndex + 1,
+          endRow: data.length - 1
+        };
+      }
+    }
+    
+    // Добавляем последнюю секцию
+    if (currentSection) {
+      sections.push(currentSection);
+    }
+    
+    return sections;
+  }
+
+  /**
+   * Извлечение блюд из секции приема пищи
+   */
+  extractDishesFromSection(data, colIndex, startRow, endRow, dayOfWeek, mealType) {
+    const items = [];
+    
+    for (let rowIndex = startRow; rowIndex <= endRow; rowIndex++) {
+      const row = data[rowIndex];
+      if (!row || !row[colIndex]) continue;
+      
+      const cell = row[colIndex];
+      if (!cell || typeof cell !== 'string') continue;
+      
+      const cellText = cell.trim();
+      if (!cellText || cellText.length < 3) continue;
+      
+      // Проверяем, не является ли это заголовком другого приема пищи
+      if (this.isMealHeader(cellText)) {
+        break; // Завершаем парсинг этой секции
+      }
+      
+      const dish = this.createDish(cellText, dayOfWeek, mealType, cell);
+      if (dish) {
+        // Если это массив блюд (соусы), добавляем все
+        if (Array.isArray(dish)) {
+          items.push(...dish);
+        } else {
+          items.push(dish);
+        }
+      }
+    }
+    
+    return items;
+  }
+
+  /**
+   * Извлечение блюд из определенной области (старый метод для совместимости)
    */
   extractDishesFromArea(data, colIndex, startRow, dayOfWeek, mealType) {
     const items = [];

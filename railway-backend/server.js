@@ -244,11 +244,12 @@ app.get('/api/health', (req, res) => {
   res.json({ 
     status: 'OK', 
     timestamp: new Date().toISOString(),
-    version: '1.0.4',
+    version: '1.0.5',
     cors_fix: 'applied',
     menu_upload_fix: 'applied',
     database_fix: 'applied',
-    force_update: '2025-09-28-11-00',
+    variable_scope_fix: 'applied',
+    force_update: '2025-09-28-11-05',
     restart_forced: true
   });
 });
@@ -505,8 +506,9 @@ app.post('/api/menu/upload', authenticateToken, upload.single('file'), async (re
       console.log('➕ Добавляем новые элементы...');
       let insertedCount = 0;
       let processedCount = 0;
+      const totalItems = parsedData.length;
       
-      if (parsedData.length === 0) {
+      if (totalItems === 0) {
         return res.json({ 
           message: 'Меню успешно загружено', 
           insertedCount: 0,
@@ -514,49 +516,34 @@ app.post('/api/menu/upload', authenticateToken, upload.single('file'), async (re
         });
       }
       
-      for (const item of parsedData) {
-        try {
-          db.run(
-            'INSERT INTO menu_items (school_id, name, description, price, meal_type, day_of_week, portion, week_start, recipe_number, weight) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
-            [schoolId, item.name || 'Блюдо', item.description || null, item.price || 0, item.meal_type || 'обед', item.day_of_week || 1, item.portion || null, weekStart, item.recipe_number || null, item.weight || null],
-            function(err) {
-              processedCount++;
-              if (err) {
-                console.error('❌ Ошибка вставки элемента:', err);
-              } else {
-                insertedCount++;
-              }
-              
-              if (processedCount === parsedData.length) {
-                console.log(`✅ Загрузка завершена: ${insertedCount} элементов добавлено`);
-                res.json({ 
-                  message: 'Меню успешно загружено', 
-                  insertedCount,
-                  totalItems: parsedData.length
-                });
-              }
+      const processItem = (item, index) => {
+        db.run(
+          'INSERT INTO menu_items (school_id, name, description, price, meal_type, day_of_week, portion, week_start, recipe_number, weight) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
+          [schoolId, item.name || 'Блюдо', item.description || null, item.price || 0, item.meal_type || 'обед', item.day_of_week || 1, item.portion || null, weekStart, item.recipe_number || null, item.weight || null],
+          function(err) {
+            processedCount++;
+            if (err) {
+              console.error(`❌ Ошибка вставки элемента ${index + 1}:`, err);
+            } else {
+              insertedCount++;
             }
-          );
-        } catch (error) {
-          console.error('❌ Ошибка обработки элемента:', error);
-          processedCount++;
-          if (processedCount === parsedData.length) {
-            res.json({ 
-              message: 'Меню загружено с ошибками', 
-              insertedCount,
-              totalItems: parsedData.length
-            });
+            
+            if (processedCount === totalItems) {
+              console.log(`✅ Загрузка завершена: ${insertedCount} элементов добавлено`);
+              res.json({ 
+                message: 'Меню успешно загружено', 
+                insertedCount,
+                totalItems
+              });
+            }
           }
-        }
-      }
-    });
-    
-    console.log(`✅ Загрузка завершена: ${insertedCount} элементов добавлено`);
-    
-    res.json({ 
-      message: 'Меню успешно загружено', 
-      insertedCount,
-      totalItems: parsedData.length
+        );
+      };
+      
+      // Обрабатываем все элементы
+      parsedData.forEach((item, index) => {
+        processItem(item, index);
+      });
     });
     
   } catch (error) {

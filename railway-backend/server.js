@@ -244,7 +244,7 @@ app.get('/api/health', (req, res) => {
   res.json({ 
     status: 'OK', 
     timestamp: new Date().toISOString(),
-    version: '1.0.5',
+    version: '1.0.6',
     cors_fix: 'applied',
     menu_upload_fix: 'applied',
     database_fix: 'applied',

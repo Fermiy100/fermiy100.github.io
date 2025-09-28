@@ -7,7 +7,7 @@ import { body, validationResult } from 'express-validator';
 import path from 'path';
 import { fileURLToPath } from 'url';
 import fs from 'fs';
-import { ImprovedMenuParser } from './improvedMenuParser.js';
+import PerfectMenuParser from './perfectMenuParser.js';
 import { 
   SECURITY_CONFIG, 
   hashPassword, 
@@ -244,12 +244,13 @@ app.get('/api/health', (req, res) => {
   res.json({ 
     status: 'OK', 
     timestamp: new Date().toISOString(),
-    version: '1.0.6',
+    version: '1.1.0',
     cors_fix: 'applied',
     menu_upload_fix: 'applied',
     database_fix: 'applied',
     variable_scope_fix: 'applied',
-    force_update: '2025-09-28-11-05',
+    force_update: '2025-09-28-11-10',
+    perfect_parser: 'active',
     restart_forced: true
   });
 });
@@ -481,7 +482,7 @@ app.post('/api/menu/upload', authenticateToken, upload.single('file'), async (re
     console.log(`🏫 Школа ID: ${schoolId}, неделя: ${weekStart}`);
     
     // Создаем экземпляр парсера
-    const parser = new ImprovedMenuParser();
+    const parser = new PerfectMenuParser();
     
     // Парсим файл
     console.log('🔍 Начинаем парсинг...');

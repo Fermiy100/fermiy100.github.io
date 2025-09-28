@@ -66,9 +66,25 @@ app.options('*', cors({
   allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With', 'Accept', 'Origin']
 }));
 
-// Отладка CORS
+// Отладка CORS и ручная установка заголовков
 app.use((req, res, next) => {
   console.log(`🌐 CORS Request: ${req.method} ${req.path} from ${req.get('Origin')}`);
+  
+  // Ручная установка CORS заголовков
+  const origin = req.get('Origin');
+  if (origin === 'https://fermiy.ru' || origin === 'https://www.fermiy.ru') {
+    res.header('Access-Control-Allow-Origin', origin);
+    res.header('Access-Control-Allow-Credentials', 'true');
+    res.header('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, PATCH, OPTIONS');
+    res.header('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-Requested-With, Accept, Origin');
+  }
+  
+  // Обработка preflight запросов
+  if (req.method === 'OPTIONS') {
+    res.status(200).end();
+    return;
+  }
+  
   next();
 });
 

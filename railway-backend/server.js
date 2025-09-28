@@ -436,10 +436,20 @@ app.post('/api/menu/upload', authenticateToken, upload.single('file'), (req, res
     // Парсим файл
     let parsedData;
     try {
+      console.log(`📁 Размер файла: ${req.file.buffer.length} байт`);
+      console.log(`📄 Имя файла: ${req.file.originalname}`);
+      
       parsedData = parser.parseExcelFile(req.file.buffer);
       console.log(`✅ Парсинг завершен. Найдено ${parsedData.length} блюд`);
+      
+      // Дополнительная проверка результата
+      if (!Array.isArray(parsedData)) {
+        throw new Error('Парсер вернул не массив данных');
+      }
+      
     } catch (parseError) {
       console.error('❌ Ошибка парсинга:', parseError);
+      console.error('❌ Stack trace:', parseError.stack);
       return res.status(400).json({ 
         error: 'Ошибка парсинга Excel файла', 
         details: [parseError.message],

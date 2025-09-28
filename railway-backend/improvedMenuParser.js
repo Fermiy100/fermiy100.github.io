@@ -38,10 +38,24 @@ export class ImprovedMenuParser {
     try {
       console.log('🔍 Начинаем улучшенный парсинг Excel файла...');
       
+      // Проверяем буфер
+      if (!buffer || buffer.length === 0) {
+        throw new Error('Файл пустой или поврежден');
+      }
+      
       // Читаем Excel файл
       const workbook = XLSX.read(buffer, { type: 'buffer' });
+      
+      if (!workbook.SheetNames || workbook.SheetNames.length === 0) {
+        throw new Error('В Excel файле нет листов');
+      }
+      
       const sheetName = workbook.SheetNames[0];
       const worksheet = workbook.Sheets[sheetName];
+      
+      if (!worksheet) {
+        throw new Error(`Лист "${sheetName}" не найден`);
+      }
       
       // Конвертируем в JSON
       const jsonData = XLSX.utils.sheet_to_json(worksheet, { header: 1 });
@@ -53,31 +67,47 @@ export class ImprovedMenuParser {
       let items = [];
       
       // Стратегия 1: Стандартная структура с днями и приемами пищи
-      items = this.parseStandardStructure(jsonData);
-      if (items.length > 0) {
-        console.log(`✅ Стандартная структура: найдено ${items.length} блюд`);
-        return items;
+      try {
+        items = this.parseStandardStructure(jsonData);
+        if (items.length > 0) {
+          console.log(`✅ Стандартная структура: найдено ${items.length} блюд`);
+          return items;
+        }
+      } catch (error) {
+        console.log(`⚠️ Стандартная структура не сработала: ${error.message}`);
       }
       
       // Стратегия 2: Простой список блюд
-      items = this.parseSimpleList(jsonData);
-      if (items.length > 0) {
-        console.log(`✅ Простой список: найдено ${items.length} блюд`);
-        return items;
+      try {
+        items = this.parseSimpleList(jsonData);
+        if (items.length > 0) {
+          console.log(`✅ Простой список: найдено ${items.length} блюд`);
+          return items;
+        }
+      } catch (error) {
+        console.log(`⚠️ Простой список не сработал: ${error.message}`);
       }
       
       // Стратегия 3: Поиск по ключевым словам
-      items = this.parseByKeywords(jsonData);
-      if (items.length > 0) {
-        console.log(`✅ Поиск по ключевым словам: найдено ${items.length} блюд`);
-        return items;
+      try {
+        items = this.parseByKeywords(jsonData);
+        if (items.length > 0) {
+          console.log(`✅ Поиск по ключевым словам: найдено ${items.length} блюд`);
+          return items;
+        }
+      } catch (error) {
+        console.log(`⚠️ Поиск по ключевым словам не сработал: ${error.message}`);
       }
       
       // Стратегия 4: Универсальный парсинг
-      items = this.parseUniversal(jsonData);
-      console.log(`✅ Универсальный парсинг: найдено ${items.length} блюд`);
-      
-      return items;
+      try {
+        items = this.parseUniversal(jsonData);
+        console.log(`✅ Универсальный парсинг: найдено ${items.length} блюд`);
+        return items;
+      } catch (error) {
+        console.log(`⚠️ Универсальный парсинг не сработал: ${error.message}`);
+        throw new Error(`Все стратегии парсинга не сработали. Последняя ошибка: ${error.message}`);
+      }
       
     } catch (error) {
       console.error('❌ Ошибка парсинга:', error);

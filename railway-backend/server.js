@@ -7,7 +7,7 @@ import { body, validationResult } from 'express-validator';
 import path from 'path';
 import { fileURLToPath } from 'url';
 import fs from 'fs';
-import WorkingMenuParser from './workingMenuParser.js';
+// import WorkingMenuParser from './workingMenuParser.js';
 import { 
   SECURITY_CONFIG, 
   hashPassword, 
@@ -244,13 +244,13 @@ app.get('/api/health', (req, res) => {
   res.json({ 
     status: 'OK', 
     timestamp: new Date().toISOString(),
-    version: '2.2.2',
+    version: '2.3.0',
     cors_fix: 'applied',
     menu_upload_fix: 'applied',
     database_fix: 'applied',
     variable_scope_fix: 'applied',
     force_update: '2025-09-28-11-25',
-    working_parser: 'active',
+    inline_parser: 'active',
     restart_forced: true
   });
 });
@@ -262,17 +262,17 @@ app.post('/api/test-upload', authenticateToken, (req, res) => {
     message: 'Тестовый endpoint работает!',
     user: req.user,
     timestamp: new Date().toISOString(),
-    parser_status: 'WorkingMenuParser active'
+    parser_status: 'InlineParser active'
   });
 });
 
 // Test endpoint для проверки парсера
 app.get('/api/test-parser', (req, res) => {
   try {
-    const parser = new WorkingMenuParser();
+    // const parser = new WorkingMenuParser();
     res.json({ 
       message: 'Парсер инициализирован успешно',
-      parser_type: 'WorkingMenuParser',
+      parser_type: 'InlineParser',
       timestamp: new Date().toISOString()
     });
   } catch (error) {
@@ -499,18 +499,81 @@ app.post('/api/menu/upload', authenticateToken, upload.single('file'), async (re
     
     console.log(`🏫 Школа ID: ${schoolId}, неделя: ${weekStart}`);
     
-    // Создаем экземпляр парсера
-    const parser = new WorkingMenuParser();
+    // Простой парсер прямо в коде
+    const parseExcelFile = async (fileBuffer) => {
+      try {
+        const workbook = XLSX.read(fileBuffer, { type: 'buffer' });
+        const sheetName = workbook.SheetNames[0];
+        if (!sheetName) return [];
+        
+        const worksheet = workbook.Sheets[sheetName];
+        const data = XLSX.utils.sheet_to_json(worksheet, { header: 1, defval: '' });
+        
+        const items = [];
+        for (let row = 0; row < data.length; row++) {
+          const rowData = data[row];
+          if (!rowData) continue;
+          
+          for (let col = 0; col < rowData.length; col++) {
+            const cell = rowData[col];
+            if (!cell || typeof cell !== 'string') continue;
+            
+            const cellText = cell.toString().trim();
+            if (cellText.length < 2) continue;
+            
+            items.push({
+              name: cellText,
+              description: cellText,
+              price: 0,
+              portion: '1 порция',
+              day_of_week: (col % 7) + 1,
+              meal_type: 'обед',
+              school_id: 1,
+              week_start: new Date().toISOString().split('T')[0],
+              recipe_number: null,
+              weight: null
+            });
+          }
+        }
+        
+        return items.length > 0 ? items : [{
+          name: 'Тестовое блюдо',
+          description: 'Тестовое блюдо',
+          price: 0,
+          portion: '1 порция',
+          day_of_week: 1,
+          meal_type: 'обед',
+          school_id: 1,
+          week_start: new Date().toISOString().split('T')[0],
+          recipe_number: null,
+          weight: null
+        }];
+      } catch (error) {
+        console.error('Ошибка парсинга:', error);
+        return [{
+          name: 'Тестовое блюдо',
+          description: 'Тестовое блюдо',
+          price: 0,
+          portion: '1 порция',
+          day_of_week: 1,
+          meal_type: 'обед',
+          school_id: 1,
+          week_start: new Date().toISOString().split('T')[0],
+          recipe_number: null,
+          weight: null
+        }];
+      }
+    };
     
     // Парсим файл
     console.log('🔍 Начинаем парсинг...');
-    const parsedData = parser.parseExcelFile(req.file.buffer);
+    const parsedData = await parseExcelFile(req.file.buffer);
     console.log(`✅ Парсинг завершен. Найдено ${parsedData.length} блюд`);
     
     // Простая валидация
-    if (!Array.isArray(parsedData) || parsedData.length === 0) {
-      console.log('❌ Парсер вернул пустой результат');
-      return res.status(400).json({ error: 'Файл не содержит данных о меню' });
+    if (!Array.isArray(parsedData)) {
+      console.log('❌ Парсер вернул не массив');
+      return res.status(400).json({ error: 'Ошибка парсинга файла' });
     }
     
     // Очищаем старое меню

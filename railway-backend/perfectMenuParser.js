@@ -47,6 +47,9 @@ class PerfectMenuParser {
    * Парсинг данных меню
    */
   parseMenuData(data) {
+    console.log('🔍 Начинаем парсинг данных меню');
+    console.log(`📊 Размер данных: ${data.length} строк`);
+    
     const menuItems = [];
     
     // Ищем колонки с днями недели
@@ -55,7 +58,9 @@ class PerfectMenuParser {
     
     if (dayColumns.length === 0) {
       console.log('⚠️ Дни недели не найдены, пробуем альтернативный парсинг');
-      return this.parseAlternativeStructure(data);
+      const altItems = this.parseAlternativeStructure(data);
+      console.log(`🔄 Альтернативный парсинг дал ${altItems.length} блюд`);
+      return altItems;
     }
     
     // Парсим каждый день
@@ -67,6 +72,14 @@ class PerfectMenuParser {
       
       console.log(`✅ Добавлено ${dayItems.length} блюд для дня ${dayCol.day}`);
     });
+    
+    // Если ничего не найдено, пробуем альтернативный парсинг
+    if (menuItems.length === 0) {
+      console.log('⚠️ Основной парсинг не дал результатов, пробуем альтернативный');
+      const altItems = this.parseAlternativeStructure(data);
+      console.log(`🔄 Альтернативный парсинг дал ${altItems.length} блюд`);
+      return altItems;
+    }
     
     // Удаляем дубликаты
     const uniqueItems = this.removeDuplicates(menuItems);
@@ -387,7 +400,74 @@ class PerfectMenuParser {
       }
     }
     
+    console.log(`🔄 Альтернативный парсинг нашел ${items.length} блюд`);
+    
+    // Если все еще ничего не найдено, пробуем еще более агрессивный парсинг
+    if (items.length === 0) {
+      console.log('🔄 Пробуем агрессивный парсинг');
+      return this.aggressiveParsing(data);
+    }
+    
     return items;
+  }
+
+  /**
+   * Агрессивный парсинг - берем все что похоже на блюда
+   */
+  aggressiveParsing(data) {
+    console.log('🔥 Агрессивный парсинг - берем все что похоже на блюда');
+    const items = [];
+    
+    for (let row = 0; row < data.length; row++) {
+      const rowData = data[row];
+      if (!rowData) continue;
+      
+      for (let col = 0; col < rowData.length; col++) {
+        const cell = rowData[col];
+        if (!cell || typeof cell !== 'string') continue;
+        
+        const cellText = cell.toString().trim();
+        if (cellText.length < 3) continue;
+        
+        // Берем все что содержит цифры (вес) или похоже на блюда
+        if (this.looksLikeDish(cellText)) {
+          const dish = this.createDish(cellText, 1, 'обед');
+          if (dish) {
+            if (Array.isArray(dish)) {
+              items.push(...dish);
+            } else {
+              items.push(dish);
+            }
+          }
+        }
+      }
+    }
+    
+    console.log(`🔥 Агрессивный парсинг нашел ${items.length} блюд`);
+    return items;
+  }
+
+  /**
+   * Проверка, похоже ли на блюдо
+   */
+  looksLikeDish(text) {
+    const lowerText = text.toLowerCase();
+    
+    // Исключаем явные заголовки
+    const excludeWords = [
+      'понедельник', 'вторник', 'среда', 'четверг', 'пятница', 'суббота', 'воскресенье',
+      'завтрак', 'обед', 'полдник', 'ужин', 'дополнительно',
+      'пн', 'вт', 'ср', 'чт', 'пт', 'сб', 'вс',
+      'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday',
+      'breakfast', 'lunch', 'dinner', 'snack'
+    ];
+    
+    if (excludeWords.some(word => lowerText.includes(word))) {
+      return false;
+    }
+    
+    // Берем если содержит цифры (вес) или длинное название
+    return text.length > 5 || /\d/.test(text);
   }
 
   /**

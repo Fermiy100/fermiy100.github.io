@@ -261,8 +261,26 @@ app.post('/api/test-upload', authenticateToken, (req, res) => {
   res.json({ 
     message: 'Тестовый endpoint работает!',
     user: req.user,
-    timestamp: new Date().toISOString()
+    timestamp: new Date().toISOString(),
+    parser_status: 'PerfectMenuParser active'
   });
+});
+
+// Test endpoint для проверки парсера
+app.get('/api/test-parser', (req, res) => {
+  try {
+    const parser = new PerfectMenuParser();
+    res.json({ 
+      message: 'Парсер инициализирован успешно',
+      parser_type: 'PerfectMenuParser',
+      timestamp: new Date().toISOString()
+    });
+  } catch (error) {
+    res.status(500).json({ 
+      error: 'Ошибка инициализации парсера',
+      details: error.message
+    });
+  }
 });
 
 // Auth routes

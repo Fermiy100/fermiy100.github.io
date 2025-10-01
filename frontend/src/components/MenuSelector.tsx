@@ -1,33 +1,33 @@
 import { useState, useEffect } from 'react';
-import { apiClient } from '../utils/api';
+import { apiClient, MenuItem } from '../utils/api';
 
 interface MenuSelectorProps {
-  schoolId: number;
+  onSelectionChange: (selectedItems: MenuItem[]) => void;
 }
 
-export default function MenuSelector({ schoolId }: MenuSelectorProps) {
-  const [menuItems, setMenuItems] = useState<any[]>([]);
-  const [loading, setLoading] = useState(true);
+export default function MenuSelector({ onSelectionChange }: MenuSelectorProps) {
+  const [menuItems, setMenuItems] = useState<MenuItem[]>([]);
+  const [selectedDay, setSelectedDay] = useState<string>('понедельник');
   const [selectedItems, setSelectedItems] = useState<Set<number>>(new Set());
-  const [filterDay, setFilterDay] = useState<number>(1);
-  const [filterMeal, setFilterMeal] = useState<string>('завтрак');
+  const [loading, setLoading] = useState(true);
   const [msg, setMsg] = useState('');
 
-  const daysOfWeek = [
-    '', 'Понедельник', 'Вторник', 'Среда', 'Четверг', 'Пятница'
-  ];
-
-  const mealTypes = ['завтрак', 'обед', 'полдник'];
+  const days = ['понедельник', 'вторник', 'среда', 'четверг', 'пятница'];
 
   useEffect(() => {
     loadMenu();
-  }, [schoolId]);
+  }, []);
+
+  useEffect(() => {
+    const selected = menuItems.filter(item => selectedItems.has(item.id));
+    onSelectionChange(selected);
+  }, [selectedItems, menuItems, onSelectionChange]);
 
   const loadMenu = async () => {
     try {
       setLoading(true);
-      const data = await apiClient.getMenu(schoolId.toString());
-      setMenuItems(data.items || []);
+      const data = await apiClient.getMenu();
+      setMenuItems(data);
     } catch (error: any) {
       setMsg(`❌ Ошибка загрузки меню: ${error.message}`);
     } finally {
@@ -35,7 +35,7 @@ export default function MenuSelector({ schoolId }: MenuSelectorProps) {
     }
   };
 
-  const toggleItemSelection = (itemId: number) => {
+  const toggleItem = (itemId: number) => {
     const newSelected = new Set(selectedItems);
     if (newSelected.has(itemId)) {
       newSelected.delete(itemId);
@@ -45,50 +45,36 @@ export default function MenuSelector({ schoolId }: MenuSelectorProps) {
     setSelectedItems(newSelected);
   };
 
+  const getItemsForDay = (day: string) => {
+    return menuItems.filter(item => item.day_of_week === day);
+  };
+
+  const getItemsForMeal = (day: string, mealType: string) => {
+    return getItemsForDay(day).filter(item => item.meal_type === mealType);
+  };
+
   const clearAllSelections = () => {
     setSelectedItems(new Set());
     setMsg('✅ Выбор очищен');
   };
 
-  const getFilteredItems = () => {
-    return menuItems.filter(item => 
-      item.day_of_week === filterDay && 
-      item.meal_type === filterMeal
-    );
-  };
-
-  const getTotalCost = () => {
-    return Array.from(selectedItems).reduce((total, itemId) => {
-      const item = menuItems.find(i => i.id === itemId);
-      return total + (item?.price || 0);
-    }, 0);
-  };
-
   if (loading) {
     return (
-      <div style={{ 
-        display: 'flex', 
-        justifyContent: 'center', 
-        alignItems: 'center', 
-        height: '200px',
-        fontSize: '18px'
-      }}>
-        Загрузка меню...
+      <div style={{ textAlign: 'center', padding: '50px' }}>
+        <div>⏳ Загружаем меню...</div>
       </div>
     );
   }
-
-  const filteredItems = getFilteredItems();
 
   return (
     <div className="parent-menu-selector">
       {msg && (
         <div style={{
-          background: msg.includes('❌') ? '#fee' : '#efe',
+          padding: '10px',
+          margin: '10px 0',
+          borderRadius: '5px',
+          backgroundColor: msg.includes('❌') ? '#fee' : '#efe',
           border: `1px solid ${msg.includes('❌') ? '#fcc' : '#cfc'}`,
-          borderRadius: '8px',
-          padding: '15px',
-          marginBottom: '20px',
           color: msg.includes('❌') ? '#c33' : '#363'
         }}>
           {msg}
@@ -97,193 +83,181 @@ export default function MenuSelector({ schoolId }: MenuSelectorProps) {
 
       {/* Выбор дня недели */}
       <div className="day-selector">
-        <h2>Выберите день недели</h2>
+        <h2>📅 Выберите день недели</h2>
         <div className="day-buttons">
-          {[1, 2, 3, 4, 5].map(day => (
+          {days.map(day => (
             <button
               key={day}
-              onClick={() => setFilterDay(day)}
-              className={filterDay === day ? 'active' : ''}
+              onClick={() => setSelectedDay(day)}
+              className={selectedDay === day ? 'active' : ''}
             >
-              {daysOfWeek[day].slice(0, 2)}
+              {day.charAt(0).toUpperCase() + day.slice(1)}
             </button>
           ))}
         </div>
       </div>
 
-      {/* Выбор приема пищи */}
-      <div style={{ 
-        background: 'white', 
-        borderRadius: '12px', 
-        padding: '20px', 
-        marginBottom: '20px',
-        boxShadow: '0 2px 10px rgba(0,0,0,0.1)'
-      }}>
-        <h3 style={{ margin: '0 0 15px 0', color: '#333' }}>
-          Выберите прием пищи
-        </h3>
-        <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap' }}>
-          {mealTypes.map(meal => (
-            <button
-              key={meal}
-              onClick={() => setFilterMeal(meal)}
-              style={{
-                padding: '10px 20px',
-                backgroundColor: filterMeal === meal ? '#007bff' : '#f8f9fa',
-                color: filterMeal === meal ? 'white' : '#333',
-                border: '1px solid #dee2e6',
-                borderRadius: '6px',
-                cursor: 'pointer',
-                fontSize: '14px',
-                fontWeight: '600',
-                textTransform: 'capitalize'
-              }}
-            >
-              {meal}
-            </button>
-          ))}
-        </div>
-      </div>
-
-      {/* Меню на выбранный день и прием пищи */}
+      {/* Меню на выбранный день */}
       <div className="menu-layout">
+        {/* Завтрак */}
         <div className="meal-column">
           <div className="meal-header">
-            <h3>{mealTypes.find(m => m === filterMeal)}</h3>
+            <h3>🌅 Завтрак</h3>
             <div className="item-count">
-              {filteredItems.length} блюд
+              {getItemsForMeal(selectedDay, 'завтрак').length}
             </div>
           </div>
-
-          {filteredItems.length === 0 ? (
-            <p style={{ 
-              color: '#666', 
-              textAlign: 'center', 
-              padding: '40px',
-              fontStyle: 'italic'
-            }}>
-              Нет блюд для {daysOfWeek[filterDay]} - {filterMeal}
-            </p>
-          ) : (
-            <div style={{ display: 'grid', gap: '10px' }}>
-              {filteredItems.map((item) => (
-                <div
-                  key={item.id}
-                  onClick={() => toggleItemSelection(item.id)}
-                  style={{
-                    background: selectedItems.has(item.id) ? '#e3f2fd' : 'white',
-                    border: `2px solid ${selectedItems.has(item.id) ? '#2196f3' : '#e0e0e0'}`,
-                    borderRadius: '8px',
-                    padding: '15px',
-                    cursor: 'pointer',
-                    transition: 'all 0.2s ease'
-                  }}
-                >
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                    <div>
-                      <h4 style={{ margin: '0 0 5px 0', color: '#333' }}>
-                        {item.name}
-                      </h4>
-                      {item.description && (
-                        <p style={{ margin: '0', color: '#666', fontSize: '14px' }}>
-                          {item.description}
-                        </p>
-                      )}
-                    </div>
-                    <div style={{ textAlign: 'right' }}>
-                      <div style={{ 
-                        fontSize: '18px', 
-                        fontWeight: 'bold', 
-                        color: '#2196f3' 
-                      }}>
-                        {item.price} ₽
-                      </div>
-                      {selectedItems.has(item.id) && (
-                        <div style={{ 
-                          fontSize: '12px', 
-                          color: '#2196f3',
-                          fontWeight: '600'
-                        }}>
-                          ✓ Выбрано
-                        </div>
-                      )}
-                    </div>
-                  </div>
+          <div className="meal-items">
+            {getItemsForMeal(selectedDay, 'завтрак').map(item => (
+              <div
+                key={item.id}
+                className={`menu-item ${selectedItems.has(item.id) ? 'selected' : ''}`}
+                onClick={() => toggleItem(item.id)}
+              >
+                <div className="item-checkbox">
+                  {selectedItems.has(item.id) ? '✅' : '☐'}
                 </div>
-              ))}
+                <div className="item-content">
+                  <div className="item-name">{item.name}</div>
+                  {item.description && (
+                    <div className="item-description">{item.description}</div>
+                  )}
+                  {item.price && (
+                    <div className="item-price">{item.price} ₽</div>
+                  )}
+                </div>
+              </div>
+            ))}
+            {getItemsForMeal(selectedDay, 'завтрак').length === 0 && (
+              <div className="no-items">Нет блюд для завтрака</div>
+            )}
+          </div>
+        </div>
+
+        {/* Обед */}
+        <div className="meal-column">
+          <div className="meal-header">
+            <h3>🍽️ Обед</h3>
+            <div className="item-count">
+              {getItemsForMeal(selectedDay, 'обед').length}
             </div>
-          )}
+          </div>
+          <div className="meal-items">
+            {getItemsForMeal(selectedDay, 'обед').map(item => (
+              <div
+                key={item.id}
+                className={`menu-item ${selectedItems.has(item.id) ? 'selected' : ''}`}
+                onClick={() => toggleItem(item.id)}
+              >
+                <div className="item-checkbox">
+                  {selectedItems.has(item.id) ? '✅' : '☐'}
+                </div>
+                <div className="item-content">
+                  <div className="item-name">{item.name}</div>
+                  {item.description && (
+                    <div className="item-description">{item.description}</div>
+                  )}
+                  {item.price && (
+                    <div className="item-price">{item.price} ₽</div>
+                  )}
+                </div>
+              </div>
+            ))}
+            {getItemsForMeal(selectedDay, 'обед').length === 0 && (
+              <div className="no-items">Нет блюд для обеда</div>
+            )}
+          </div>
+        </div>
+
+        {/* Полдник */}
+        <div className="meal-column">
+          <div className="meal-header">
+            <h3>🍎 Полдник</h3>
+            <div className="item-count">
+              {getItemsForMeal(selectedDay, 'полдник').length}
+            </div>
+          </div>
+          <div className="meal-items">
+            {getItemsForMeal(selectedDay, 'полдник').map(item => (
+              <div
+                key={item.id}
+                className={`menu-item ${selectedItems.has(item.id) ? 'selected' : ''}`}
+                onClick={() => toggleItem(item.id)}
+              >
+                <div className="item-checkbox">
+                  {selectedItems.has(item.id) ? '✅' : '☐'}
+                </div>
+                <div className="item-content">
+                  <div className="item-name">{item.name}</div>
+                  {item.description && (
+                    <div className="item-description">{item.description}</div>
+                  )}
+                  {item.price && (
+                    <div className="item-price">{item.price} ₽</div>
+                  )}
+                </div>
+              </div>
+            ))}
+            {getItemsForMeal(selectedDay, 'полдник').length === 0 && (
+              <div className="no-items">Нет блюд для полдника</div>
+            )}
+          </div>
         </div>
       </div>
 
-      {/* Панель выбранных блюд */}
+      {/* Кнопки управления */}
+      <div style={{
+        display: 'flex',
+        gap: '10px',
+        justifyContent: 'center',
+        marginTop: '20px',
+        flexWrap: 'wrap'
+      }}>
+        <button
+          onClick={clearAllSelections}
+          style={{
+            padding: '10px 20px',
+            backgroundColor: '#6b7280',
+            color: 'white',
+            border: 'none',
+            borderRadius: '8px',
+            cursor: 'pointer',
+            fontSize: '14px',
+            fontWeight: '600'
+          }}
+        >
+          🗑️ Очистить выбор
+        </button>
+        
+        <button
+          onClick={loadMenu}
+          style={{
+            padding: '10px 20px',
+            backgroundColor: '#3b82f6',
+            color: 'white',
+            border: 'none',
+            borderRadius: '8px',
+            cursor: 'pointer',
+            fontSize: '14px',
+            fontWeight: '600'
+          }}
+        >
+          🔄 Обновить меню
+        </button>
+      </div>
+
+      {/* Информация о выборе */}
       {selectedItems.size > 0 && (
         <div style={{
-          background: 'white',
-          border: '2px solid #4caf50',
-          borderRadius: '12px',
-          padding: '20px',
           marginTop: '20px',
-          boxShadow: '0 2px 10px rgba(0,0,0,0.1)'
+          padding: '15px',
+          backgroundColor: '#f0f9ff',
+          border: '2px solid #0ea5e9',
+          borderRadius: '10px',
+          textAlign: 'center'
         }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '15px' }}>
-            <h3 style={{ margin: '0', color: '#333' }}>
-              Выбранные блюда ({selectedItems.size})
-            </h3>
-            <button
-              onClick={clearAllSelections}
-              style={{
-                padding: '8px 16px',
-                backgroundColor: '#6c757d',
-                color: 'white',
-                border: 'none',
-                borderRadius: '6px',
-                cursor: 'pointer',
-                fontSize: '14px'
-              }}
-            >
-              Очистить выбор
-            </button>
-          </div>
-
-          <div style={{ display: 'grid', gap: '10px', marginBottom: '15px' }}>
-            {Array.from(selectedItems).map(itemId => {
-              const item = menuItems.find(i => i.id === itemId);
-              if (!item) return null;
-              
-              return (
-                <div key={itemId} style={{
-                  display: 'flex',
-                  justifyContent: 'space-between',
-                  alignItems: 'center',
-                  padding: '10px',
-                  background: '#f8f9fa',
-                  borderRadius: '6px'
-                }}>
-                  <span style={{ fontWeight: '600' }}>{item.name}</span>
-                  <span style={{ color: '#4caf50', fontWeight: 'bold' }}>
-                    {item.price} ₽
-                  </span>
-                </div>
-              );
-            })}
-          </div>
-
-          <div style={{
-            display: 'flex',
-            justifyContent: 'space-between',
-            alignItems: 'center',
-            padding: '15px',
-            background: '#4caf50',
-            borderRadius: '8px',
-            color: 'white'
-          }}>
-            <span style={{ fontSize: '18px', fontWeight: 'bold' }}>
-              Итого:
-            </span>
-            <span style={{ fontSize: '24px', fontWeight: 'bold' }}>
-              {getTotalCost()} ₽
-            </span>
+          <div style={{ fontSize: '16px', fontWeight: '600', color: '#0c4a6e' }}>
+            ✅ Выбрано блюд: {selectedItems.size}
           </div>
         </div>
       )}

@@ -4,14 +4,14 @@
  */
 
 import React, { useState, useEffect } from 'react';
-import { getMenuItems, updateMenuItem } from '../utils/api';
+import { apiClient } from '../utils/api';
 
 interface MenuItem {
   id: number;
   name: string;
-  description: string;
+  description?: string;
   price: number;
-  portion: string;
+  portion?: string;
   day_of_week: number;
   meal_type: string;
   school_id: number;
@@ -49,7 +49,8 @@ const MenuSelector: React.FC<MenuSelectorProps> = ({ schoolId, weekStart }) => {
   const loadMenuItems = async () => {
     try {
       setLoading(true);
-      const items = await getMenuItems(schoolId, weekStart);
+      const response = await apiClient.getMenu(weekStart);
+      const items = response.items;
       setMenuItems(items);
     } catch (error) {
       console.error('Ошибка загрузки меню:', error);

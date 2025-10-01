@@ -1,51 +1,21 @@
-RewriteEngine On
-
-# Правильные MIME типы для статических файлов
-<IfModule mod_mime.c>
-    AddType text/css .css
-    AddType application/javascript .js
-    AddType application/json .json
-    AddType image/svg+xml .svg
-    AddType image/png .png
-    AddType image/jpeg .jpg .jpeg
-    AddType image/gif .gif
-</IfModule>
-
-# Перенаправление только для HTML файлов (не для статических ресурсов)
-RewriteCond %{REQUEST_FILENAME} !-f
-RewriteCond %{REQUEST_FILENAME} !-d
-RewriteCond %{REQUEST_URI} !^/assets/
-RewriteCond %{REQUEST_URI} !\.(css|js|png|jpg|jpeg|gif|svg|ico|woff|woff2|ttf|eot)$
-RewriteRule . /index.html [L]
-
-# Сжатие для лучшей производительности
-<IfModule mod_deflate.c>
-    AddOutputFilterByType DEFLATE text/plain
-    AddOutputFilterByType DEFLATE text/html
-    AddOutputFilterByType DEFLATE text/xml
-    AddOutputFilterByType DEFLATE text/css
-    AddOutputFilterByType DEFLATE application/xml
-    AddOutputFilterByType DEFLATE application/xhtml+xml
-    AddOutputFilterByType DEFLATE application/rss+xml
-    AddOutputFilterByType DEFLATE application/javascript
-    AddOutputFilterByType DEFLATE application/x-javascript
-</IfModule>
-
-# Кэширование статических файлов
-<IfModule mod_expires.c>
-    ExpiresActive on
-    ExpiresByType text/css "access plus 1 year"
-    ExpiresByType application/javascript "access plus 1 year"
-    ExpiresByType image/png "access plus 1 year"
-    ExpiresByType image/jpg "access plus 1 year"
-    ExpiresByType image/jpeg "access plus 1 year"
-    ExpiresByType image/gif "access plus 1 year"
-    ExpiresByType image/svg+xml "access plus 1 year"
-</IfModule>
-
-# Безопасность
+# Отключение кэширования для разработки
 <IfModule mod_headers.c>
-    Header always set X-Content-Type-Options nosniff
-    Header always set X-Frame-Options DENY
-    Header always set X-XSS-Protection "1; mode=block"
+    Header set Cache-Control "no-cache, no-store, must-revalidate"
+    Header set Pragma "no-cache"
+    Header set Expires "0"
+</IfModule>
+
+# Установка правильных MIME-типов
+AddType text/javascript .js
+AddType text/css .css
+AddType image/svg+xml .svg
+
+# Перенаправление всех запросов на index.html для SPA
+<IfModule mod_rewrite.c>
+    RewriteEngine On
+    # Исключаем существующие файлы и директории
+    RewriteCond %{REQUEST_FILENAME} !-f
+    RewriteCond %{REQUEST_FILENAME} !-d
+    # Перенаправляем все остальное на index.html
+    RewriteRule ^ index.html [L]
 </IfModule>

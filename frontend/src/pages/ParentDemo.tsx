@@ -8,7 +8,7 @@ interface ParentDemoProps {
 
 export default function ParentDemo({ token: _token }: ParentDemoProps) {
   const [selectedItems, setSelectedItems] = useState<{ [key: string]: boolean }>({});
-  const [totalCost, setTotalCost] = useState(0);
+  const [_totalCost, setTotalCost] = useState(0);
   const [menuItems, setMenuItems] = useState<MenuItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [_orders, setOrders] = useState<Order[]>([]);
@@ -59,54 +59,6 @@ export default function ParentDemo({ token: _token }: ParentDemoProps) {
     setTotalCost(total);
   }, [selectedItems, menuItems]);
 
-  const handleItemToggle = (itemId: number) => {
-    setSelectedItems(prev => ({
-      ...prev,
-      [itemId]: !prev[itemId]
-    }));
-  };
-
-  const handleSubmitOrder = async () => {
-    const selectedCount = Object.values(selectedItems).filter(Boolean).length;
-    if (selectedCount === 0) {
-      alert('Выберите хотя бы одно блюдо');
-      return;
-    }
-    
-    try {
-      const selectedItemIds = Object.keys(selectedItems)
-        .filter(key => selectedItems[key])
-        .map(key => parseInt(key));
-      
-      const weekStart = new Date().toISOString().split('T')[0];
-      await apiClient.createOrder(selectedItemIds, weekStart);
-      
-      alert(`Заказ отправлен!\nВыбрано блюд: ${selectedCount}\nОбщая стоимость: ${totalCost} ₽`);
-      
-      // Перезагружаем заказы
-      const userOrders = await apiClient.getUserOrders();
-      setOrders(userOrders);
-      
-    } catch (error: any) {
-      alert(`Ошибка отправки заказа: ${error.message}`);
-    }
-  };
-
-  const dayNames = ["", "Понедельник", "Вторник", "Среда", "Четверг", "Пятница", "Суббота", "Воскресенье"];
-
-  // Группируем блюда по дням и типам питания
-  const groupedMenu = menuItems.reduce((acc: any, item: MenuItem) => {
-    const key = `${item.day_of_week}-${item.meal_type}`;
-    if (!acc[key]) {
-      acc[key] = {
-        day: dayNames[item.day_of_week] || `День ${item.day_of_week}`,
-        mealType: item.meal_type,
-        items: []
-      };
-    }
-    acc[key].items.push(item);
-    return acc;
-  }, {});
 
   if (loading) {
     return (

@@ -1,4 +1,4 @@
-/* Modern Minimal Design System */
+/* Школьный дизайн - яркий и читаемый */
 * {
   margin: 0;
   padding: 0;
@@ -6,12 +6,11 @@
 }
 
 :root {
-  font-family: Inter, system-ui, Avenir, Helvetica, Arial, sans-serif;
-  line-height: 1.5;
-  font-weight: 400;
-  color-scheme: light dark;
-  color: rgba(255, 255, 255, 0.87);
-  background-color: #242424;
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  line-height: 1.6;
+  font-weight: 500;
+  color: #2c3e50;
+  background-color: #f8f9fa;
   font-synthesis: none;
   text-rendering: optimizeLegibility;
   -webkit-font-smoothing: antialiased;
@@ -20,46 +19,73 @@
 }
 
 a {
-  font-weight: 500;
-  color: #646cff;
-  text-decoration: inherit;
+  font-weight: 600;
+  color: #3498db;
+  text-decoration: none;
 }
 a:hover {
-  color: #535bf2;
+  color: #2980b9;
+  text-decoration: underline;
 }
 
 body {
   margin: 0;
-  display: flex;
-  place-items: center;
   min-width: 320px;
   min-height: 100vh;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background: linear-gradient(135deg, #74b9ff 0%, #0984e3 50%, #00b894 100%);
+  color: #2c3e50;
 }
 
 h1 {
-  font-size: 3.2em;
-  line-height: 1.1;
+  font-size: 2.5em;
+  line-height: 1.2;
+  color: #2c3e50;
+  font-weight: 700;
+  text-align: center;
+  margin-bottom: 20px;
+}
+
+h2 {
+  font-size: 1.8em;
+  color: #2c3e50;
+  font-weight: 600;
+  margin-bottom: 15px;
+}
+
+h3 {
+  font-size: 1.4em;
+  color: #34495e;
+  font-weight: 600;
+  margin-bottom: 10px;
 }
 
 button {
-  border-radius: 8px;
-  border: 1px solid transparent;
-  padding: 0.6em 1.2em;
-  font-size: 1em;
-  font-weight: 500;
+  border-radius: 12px;
+  border: 2px solid transparent;
+  padding: 12px 24px;
+  font-size: 16px;
+  font-weight: 600;
   font-family: inherit;
-  background-color: #1a1a1a;
+  background: linear-gradient(135deg, #3498db, #2980b9);
   color: white;
   cursor: pointer;
-  transition: border-color 0.25s;
+  transition: all 0.3s ease;
+  box-shadow: 0 4px 15px rgba(52, 152, 219, 0.3);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
 }
 button:hover {
-  border-color: #646cff;
+  background: linear-gradient(135deg, #2980b9, #1f618d);
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(52, 152, 219, 0.4);
+}
+button:active {
+  transform: translateY(0);
 }
 button:focus,
 button:focus-visible {
-  outline: 4px auto -webkit-focus-ring-color;
+  outline: 3px solid #f39c12;
+  outline-offset: 2px;
 }
 
 @media (prefers-color-scheme: light) {
@@ -87,8 +113,12 @@ button:focus-visible {
 
 .container {
   max-width: 1200px;
-  margin: 0 auto;
-  padding: 0 20px;
+  margin: 20px auto;
+  padding: 30px;
+  background: white;
+  border-radius: 20px;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+  border: 3px solid #f39c12;
 }
 
 /* Typography */
@@ -108,24 +138,27 @@ p {
 /* Cards */
 .card {
   background: white;
-  border-radius: 12px;
-  padding: 24px;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
-  border: 1px solid #e5e7eb;
-  margin-bottom: 24px;
-}
-
-.card-header {
-  border-bottom: 1px solid #e5e7eb;
-  padding-bottom: 16px;
+  border-radius: 20px;
+  padding: 30px;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+  border: 3px solid #f39c12;
   margin-bottom: 20px;
 }
 
+.card-header {
+  border-bottom: 3px solid #e74c3c;
+  padding-bottom: 20px;
+  margin-bottom: 25px;
+  text-align: center;
+}
+
 .card-title {
-  font-size: 18px;
-  font-weight: 600;
-  color: #1f2937;
+  font-size: 24px;
+  font-weight: 700;
+  color: #2c3e50;
   margin: 0;
+  text-transform: uppercase;
+  letter-spacing: 1px;
 }
 
 .card-body {
@@ -147,22 +180,26 @@ p {
 
 .input {
   width: 100%;
-  padding: 12px 16px;
-  border: 1px solid #d1d5db;
-  border-radius: 8px;
-  font-size: 14px;
-  transition: border-color 0.2s ease;
+  padding: 15px 20px;
+  border: 3px solid #bdc3c7;
+  border-radius: 12px;
+  font-size: 16px;
+  font-weight: 600;
+  transition: all 0.3s ease;
   background: white;
+  color: #2c3e50;
 }
 
 .input:focus {
   outline: none;
-  border-color: #2563eb;
-  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+  border-color: #e74c3c;
+  box-shadow: 0 0 0 4px rgba(231, 76, 60, 0.2);
+  transform: scale(1.02);
 }
 
 .input:invalid {
-  border-color: #dc2626;
+  border-color: #e74c3c;
+  background: #f8d7da;
 }
 
 .select {
@@ -858,6 +895,183 @@ p {
   
   .item-description {
     font-size: 12px;
+  }
+}
+
+/* Стили для простого меню - школьный дизайн */
+.simple-menu-selector {
+  max-width: 800px;
+  margin: 0 auto;
+  padding: 30px;
+  background: white;
+  border: 3px solid #e74c3c;
+  border-radius: 15px;
+  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
+}
+
+/* Кружки дней недели - школьный стиль */
+.day-circles {
+  display: flex;
+  gap: 20px;
+  justify-content: center;
+  margin-bottom: 30px;
+  flex-wrap: wrap;
+}
+
+.day-circle {
+  width: 60px;
+  height: 60px;
+  border: 3px solid #e74c3c;
+  border-radius: 50%;
+  background: white;
+  color: #e74c3c;
+  font-weight: 700;
+  font-size: 16px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 4px 10px rgba(231, 76, 60, 0.2);
+}
+
+.day-circle:hover {
+  background: #f8d7da;
+  transform: scale(1.1);
+  box-shadow: 0 6px 15px rgba(231, 76, 60, 0.3);
+}
+
+.day-circle.active {
+  background: #e74c3c;
+  color: white;
+  transform: scale(1.15);
+  box-shadow: 0 8px 20px rgba(231, 76, 60, 0.4);
+}
+
+/* Горизонтальная линия */
+.divider-line {
+  width: 100%;
+  height: 3px;
+  background: linear-gradient(90deg, #e74c3c, #f39c12, #e74c3c);
+  margin: 25px 0;
+  border-radius: 2px;
+}
+
+/* Заголовок дня */
+.day-title {
+  text-align: center;
+  font-size: 24px;
+  font-weight: 700;
+  color: #2c3e50;
+  margin-bottom: 25px;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  background: linear-gradient(135deg, #e74c3c, #f39c12);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+/* Простой список блюд */
+.menu-list {
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+}
+
+.menu-item {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  padding: 20px;
+  border: 2px solid #bdc3c7;
+  border-radius: 12px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  background: white;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.menu-item:hover {
+  background: #ecf0f1;
+  border-color: #e74c3c;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 15px rgba(231, 76, 60, 0.2);
+}
+
+.menu-item.selected {
+  background: linear-gradient(135deg, #e8f5e8, #d4edda);
+  border-color: #27ae60;
+  box-shadow: 0 4px 15px rgba(39, 174, 96, 0.3);
+}
+
+.item-checkbox {
+  width: 24px;
+  height: 24px;
+  cursor: pointer;
+  accent-color: #e74c3c;
+  transform: scale(1.2);
+}
+
+.item-name {
+  font-size: 18px;
+  color: #2c3e50;
+  font-weight: 600;
+  flex: 1;
+}
+
+.no-items {
+  text-align: center;
+  color: #7f8c8d;
+  font-style: italic;
+  padding: 40px;
+  background: #ecf0f1;
+  border: 2px dashed #bdc3c7;
+  border-radius: 12px;
+  font-size: 18px;
+  font-weight: 500;
+}
+
+.loading {
+  text-align: center;
+  font-size: 20px;
+  color: #2c3e50;
+  font-weight: 600;
+  padding: 40px;
+}
+
+/* Мобильная адаптация для простого меню */
+@media (max-width: 768px) {
+  .simple-menu-selector {
+    padding: 20px;
+    margin: 10px;
+  }
+  
+  .day-circles {
+    gap: 15px;
+  }
+  
+  .day-circle {
+    width: 50px;
+    height: 50px;
+    font-size: 14px;
+  }
+  
+  .day-title {
+    font-size: 20px;
+  }
+  
+  .menu-item {
+    padding: 15px;
+  }
+  
+  .item-name {
+    font-size: 16px;
+  }
+  
+  .item-checkbox {
+    width: 20px;
+    height: 20px;
   }
 }
 

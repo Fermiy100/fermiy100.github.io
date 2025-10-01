@@ -245,13 +245,14 @@ app.get('/api/health', (req, res) => {
   res.json({ 
     status: 'OK', 
     timestamp: new Date().toISOString(),
-    version: '3.1.1',
+    version: '3.2.0',
     cors_fix: 'applied',
     menu_upload_fix: 'applied',
     database_fix: 'applied',
     variable_scope_fix: 'applied',
     force_update: '2025-10-01-17-15',
     ai_parser: 'active',
+    new_features: 'menu_management',
     restart_forced: true
   });
 });
@@ -1008,6 +1009,195 @@ app.get('/api/menu', authenticateToken, (req, res) => {
       items,
       weekStart,
       title: `Меню на неделю с ${weekStart}`
+    });
+  });
+});
+
+// Удаление всех блюд
+app.delete('/api/menu/clear', authenticateToken, (req, res) => {
+  const schoolId = req.user.school_id;
+  const weekStart = req.query.week || new Date().toISOString().split('T')[0];
+  
+  console.log(`🗑️ Пользователь ${req.user.username} очищает меню для школы ${schoolId}`);
+  
+  db.run('DELETE FROM menu_items WHERE school_id = ? AND week_start = ?', 
+    [schoolId, weekStart], function(err) {
+    if (err) {
+      console.error('Ошибка очистки меню:', err);
+      return res.status(500).json({ error: 'Ошибка очистки меню' });
+    }
+    
+    console.log(`✅ Удалено ${this.changes} блюд из меню`);
+    res.json({ 
+      message: `Удалено ${this.changes} блюд из меню`,
+      deletedCount: this.changes 
+    });
+  });
+});
+
+// Удаление блюда по ID
+app.delete('/api/menu/:id', authenticateToken, (req, res) => {
+  const { id } = req.params;
+  const schoolId = req.user.school_id;
+  
+  console.log(`🗑️ Пользователь ${req.user.username} удаляет блюдо ${id}`);
+  
+  db.run('DELETE FROM menu_items WHERE id = ? AND school_id = ?', 
+    [id, schoolId], function(err) {
+    if (err) {
+      console.error('Ошибка удаления блюда:', err);
+      return res.status(500).json({ error: 'Ошибка удаления блюда' });
+    }
+    
+    if (this.changes === 0) {
+      return res.status(404).json({ error: 'Блюдо не найдено' });
+    }
+    
+    console.log(`✅ Блюдо ${id} удалено`);
+    res.json({ 
+      message: 'Блюдо успешно удалено',
+      deletedId: id 
+    });
+  });
+});
+
+// Добавление нового блюда
+app.post('/api/menu/add', authenticateToken, [
+  body('name').notEmpty().withMessage('Название блюда обязательно'),
+  body('meal_type').isIn(['завтрак', 'обед', 'полдник', 'ужин']).withMessage('Неверный тип приёма пищи'),
+  body('day_of_week').isInt({ min: 1, max: 7 }).withMessage('День недели должен быть от 1 до 7'),
+  body('price').isFloat({ min: 0 }).withMessage('Цена должна быть положительной')
+], (req, res) => {
+  const errors = validationResult(req);
+  if (!errors.isEmpty()) {
+    return res.status(400).json({ errors: errors.array() });
+  }
+  
+  const { name, description, price, portion, meal_type, day_of_week, weight, recipe_number } = req.body;
+  const schoolId = req.user.school_id;
+  const weekStart = req.query.week || new Date().toISOString().split('T')[0];
+  
+  console.log(`➕ Пользователь ${req.user.username} добавляет блюдо: ${name}`);
+  
+  db.run(`INSERT INTO menu_items 
+    (name, description, price, portion, meal_type, day_of_week, weight, recipe_number, school_id, week_start)
+    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`, 
+    [name, description || name, price, portion || '1 порция', 
+     meal_type, day_of_week, weight, recipe_number, schoolId, weekStart], 
+    function(err) {
+    if (err) {
+      console.error('Ошибка добавления блюда:', err);
+      return res.status(500).json({ error: 'Ошибка добавления блюда' });
+    }
+    
+    console.log(`✅ Блюдо добавлено с ID ${this.lastID}`);
+    res.json({ 
+      message: 'Блюдо успешно добавлено',
+      id: this.lastID,
+      name: name 
+    });
+  });
+});
+
+// Дублирование меню на другую неделю
+app.post('/api/menu/duplicate', authenticateToken, [
+  body('targetWeekStart').isISO8601().withMessage('Неверная дата начала недели')
+], (req, res) => {
+  const errors = validationResult(req);
+  if (!errors.isEmpty()) {
+    return res.status(400).json({ errors: errors.array() });
+  }
+  
+  const { targetWeekStart } = req.body;
+  const schoolId = req.user.school_id;
+  const currentWeekStart = req.query.week || new Date().toISOString().split('T')[0];
+  
+  console.log(`📋 Пользователь ${req.user.username} дублирует меню с ${currentWeekStart} на ${targetWeekStart}`);
+  
+  // Сначала получаем текущее меню
+  db.all('SELECT * FROM menu_items WHERE school_id = ? AND week_start = ?', 
+    [schoolId, currentWeekStart], (err, rows) => {
+    if (err) {
+      console.error('Ошибка получения меню для дублирования:', err);
+      return res.status(500).json({ error: 'Ошибка получения меню' });
+    }
+    
+    if (rows.length === 0) {
+      return res.status(404).json({ error: 'Нет меню для дублирования' });
+    }
+    
+    // Дублируем каждое блюдо
+    let completed = 0;
+    let errors = [];
+    
+    rows.forEach((item, index) => {
+      db.run(`INSERT INTO menu_items 
+        (name, description, price, portion, meal_type, day_of_week, weight, recipe_number, school_id, week_start)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`, 
+        [item.name, item.description, item.price, item.portion, 
+         item.meal_type, item.day_of_week, item.weight, item.recipe_number, schoolId, targetWeekStart], 
+        function(err) {
+        if (err) {
+          console.error(`Ошибка дублирования блюда ${item.name}:`, err);
+          errors.push({ name: item.name, error: err.message });
+        }
+        
+        completed++;
+        if (completed === rows.length) {
+          if (errors.length > 0) {
+            return res.status(500).json({ 
+              error: 'Ошибки при дублировании',
+              details: errors,
+              duplicated: rows.length - errors.length
+            });
+          }
+          
+          console.log(`✅ Дублировано ${rows.length} блюд на неделю ${targetWeekStart}`);
+          res.json({ 
+            message: `Меню успешно дублировано на неделю ${targetWeekStart}`,
+            duplicatedCount: rows.length 
+          });
+        }
+      });
+    });
+  });
+});
+
+// Статистика меню
+app.get('/api/menu/stats', authenticateToken, (req, res) => {
+  const schoolId = req.user.school_id;
+  const weekStart = req.query.week || new Date().toISOString().split('T')[0];
+  
+  db.all(`SELECT 
+    meal_type,
+    day_of_week,
+    COUNT(*) as count,
+    AVG(price) as avg_price,
+    SUM(price) as total_price
+    FROM menu_items 
+    WHERE school_id = ? AND week_start = ?
+    GROUP BY meal_type, day_of_week
+    ORDER BY day_of_week, meal_type`, 
+    [schoolId, weekStart], (err, rows) => {
+    if (err) {
+      console.error('Ошибка получения статистики:', err);
+      return res.status(500).json({ error: 'Ошибка получения статистики' });
+    }
+    
+    // Общая статистика
+    db.get('SELECT COUNT(*) as total_dishes, AVG(price) as avg_price, SUM(price) as total_price FROM menu_items WHERE school_id = ? AND week_start = ?', 
+      [schoolId, weekStart], (err, totalStats) => {
+      if (err) {
+        console.error('Ошибка получения общей статистики:', err);
+        return res.status(500).json({ error: 'Ошибка получения статистики' });
+      }
+      
+      res.json({
+        totalDishes: totalStats.total_dishes,
+        averagePrice: Math.round(totalStats.avg_price * 100) / 100,
+        totalPrice: Math.round(totalStats.total_price * 100) / 100,
+        byMealType: rows
+      });
     });
   });
 });

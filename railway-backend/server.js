@@ -244,7 +244,7 @@ app.get('/api/health', (req, res) => {
   res.json({ 
     status: 'OK', 
     timestamp: new Date().toISOString(),
-    version: '2.3.1',
+    version: '2.3.2',
     cors_fix: 'applied',
     menu_upload_fix: 'applied',
     database_fix: 'applied',
@@ -523,14 +523,15 @@ app.post('/api/menu/upload', authenticateToken, upload.single('file'), async (re
             const cellText = cell.toString().trim();
             if (cellText.length < 3) continue;
             
-            // Пропускаем очевидные заголовки
+            // Пропускаем только самые очевидные заголовки
             const lowerText = cellText.toLowerCase();
-            if (lowerText.includes('понедельник') || lowerText.includes('вторник') || 
-                lowerText.includes('среда') || lowerText.includes('четверг') || 
-                lowerText.includes('пятница') || lowerText.includes('суббота') || 
-                lowerText.includes('воскресенье') || lowerText.includes('завтрак') || 
-                lowerText.includes('обед') || lowerText.includes('полдник') || 
-                lowerText.includes('ужин')) {
+            if (lowerText === 'понедельник' || lowerText === 'вторник' || 
+                lowerText === 'среда' || lowerText === 'четверг' || 
+                lowerText === 'пятница' || lowerText === 'суббота' || 
+                lowerText === 'воскресенье' || lowerText === 'завтрак' || 
+                lowerText === 'обед' || lowerText === 'полдник' || 
+                lowerText === 'ужин' || lowerText === 'меню' ||
+                lowerText === 'неделя' || lowerText === 'день') {
               continue;
             }
             
@@ -553,18 +554,24 @@ app.post('/api/menu/upload', authenticateToken, upload.single('file'), async (re
         
         console.log(`✅ Найдено ${items.length} реальных блюд`);
         
-        return items.length > 0 ? items : [{
-          name: 'Тестовое блюдо',
-          description: 'Тестовое блюдо',
-          price: 0,
-          portion: '1 порция',
-          day_of_week: 1,
-          meal_type: 'обед',
-          school_id: 1,
-          week_start: new Date().toISOString().split('T')[0],
-          recipe_number: null,
-          weight: null
-        }];
+        // Если ничего не найдено, добавляем тестовое блюдо
+        if (items.length === 0) {
+          console.log('⚠️ Реальных блюд не найдено, добавляем тестовое');
+          items.push({
+            name: 'Тестовое блюдо (файл пустой)',
+            description: 'Тестовое блюдо (файл пустой)',
+            price: 0,
+            portion: '1 порция',
+            day_of_week: 1,
+            meal_type: 'обед',
+            school_id: 1,
+            week_start: new Date().toISOString().split('T')[0],
+            recipe_number: null,
+            weight: null
+          });
+        }
+        
+        return items;
       } catch (error) {
         console.error('Ошибка парсинга:', error);
         return [{

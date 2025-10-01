@@ -245,12 +245,12 @@ app.get('/api/health', (req, res) => {
   res.json({ 
     status: 'OK', 
     timestamp: new Date().toISOString(),
-    version: '3.0.2',
+    version: '3.0.3',
     cors_fix: 'applied',
     menu_upload_fix: 'applied',
     database_fix: 'applied',
     variable_scope_fix: 'applied',
-    force_update: '2025-09-28-11-25',
+    force_update: '2025-10-01-17-15',
     ai_parser: 'active',
     restart_forced: true
   });

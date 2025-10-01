@@ -38,7 +38,7 @@ export default function DirectorAdvanced({ token: _token }: any) {
         
         // Загружаем меню
         const menuData = await apiClient.getMenu();
-        setMenuItems(menuData);
+        setMenuItems(menuData.items || []);
       }
     } catch (error: any) {
       setMsg(`❌ Ошибка загрузки: ${error.message}`);
@@ -488,9 +488,9 @@ export default function DirectorAdvanced({ token: _token }: any) {
       {editingItem && (
         <MenuItemEditor
           item={editingItem}
-          onSave={(updatedItem) => {
+          onSave={async (updatedItem) => {
             setMenuItems(prev => prev.map(item => 
-              item.id === updatedItem.id ? updatedItem : item
+              item.id === editingItem.id ? { ...item, ...updatedItem } : item
             ));
             setEditingItem(null);
             setMsg('✅ Блюдо обновлено');
@@ -501,9 +501,10 @@ export default function DirectorAdvanced({ token: _token }: any) {
 
       {showAddForm && (
         <MenuItemEditor
-          item={null}
-          onSave={(newItem) => {
-            setMenuItems(prev => [...prev, newItem]);
+          item={undefined}
+          onSave={async (newItem) => {
+            const itemWithId = { ...newItem, id: Date.now(), school_id: currentUser?.school_id || 0, week_start: new Date().toISOString().split('T')[0] };
+            setMenuItems(prev => [...prev, itemWithId]);
             setShowAddForm(false);
             setMsg('✅ Блюдо добавлено');
           }}

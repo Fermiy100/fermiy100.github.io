@@ -75,17 +75,26 @@ class ApiClient {
       (headers as any).Authorization = `Bearer ${this.token}`;
     }
 
-    const response = await fetch(url, {
-      ...options,
-      headers,
-    });
+    try {
+      const response = await fetch(url, {
+        ...options,
+        headers,
+      });
 
-    if (!response.ok) {
-      const error = await response.json().catch(() => ({ error: 'Ошибка сервера' }));
-      throw new Error(error.error || `HTTP ${response.status}`);
+      if (!response.ok) {
+        const error = await response.json().catch(() => ({ error: 'Ошибка сервера' }));
+        throw new Error(error.error || `HTTP ${response.status}`);
+      }
+
+      const data = await response.json();
+      return data;
+    } catch (error: any) {
+      console.error('API Request Error:', error);
+      if (error.message.includes('Unexpected token')) {
+        throw new Error('Сервер недоступен. Попробуйте позже.');
+      }
+      throw error;
     }
-
-    return response.json();
   }
 
   // Auth methods

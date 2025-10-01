@@ -27,7 +27,7 @@ export default function MenuSelector({ onSelectionChange }: MenuSelectorProps) {
     try {
       setLoading(true);
       const data = await apiClient.getMenu();
-      setMenuItems(data);
+      setMenuItems(data.items || []);
     } catch (error: any) {
       setMsg(`❌ Ошибка загрузки меню: ${error.message}`);
     } finally {
@@ -46,7 +46,7 @@ export default function MenuSelector({ onSelectionChange }: MenuSelectorProps) {
   };
 
   const getItemsForDay = (day: string) => {
-    return menuItems.filter(item => item.day_of_week === day);
+    return menuItems.filter(item => String(item.day_of_week) === day);
   };
 
   const getItemsForMeal = (day: string, mealType: string) => {

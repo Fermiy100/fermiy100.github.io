@@ -245,7 +245,7 @@ app.get('/api/health', (req, res) => {
   res.json({ 
     status: 'OK', 
     timestamp: new Date().toISOString(),
-    version: '3.0.3',
+    version: '3.1.0',
     cors_fix: 'applied',
     menu_upload_fix: 'applied',
     database_fix: 'applied',
@@ -483,16 +483,16 @@ app.post('/api/menu/upload', authenticateToken, upload.single('file'), async (re
   console.log('🚀 НАЧАЛО ЗАГРУЗКИ МЕНЮ');
   
   try {
-    if (req.user.role !== 'DIRECTOR') {
+  if (req.user.role !== 'DIRECTOR') {
       console.log('❌ Недостаточно прав');
-      return res.status(403).json({ error: 'Недостаточно прав' });
-    }
+    return res.status(403).json({ error: 'Недостаточно прав' });
+  }
 
-    if (!req.file) {
+  if (!req.file) {
       console.log('❌ Файл не предоставлен');
-      return res.status(400).json({ error: 'Файл не предоставлен' });
-    }
-    
+    return res.status(400).json({ error: 'Файл не предоставлен' });
+  }
+
     console.log(`📁 Файл получен: ${req.file.originalname}, размер: ${req.file.buffer.length} байт`);
 
     const schoolId = req.user.school_id;
@@ -609,7 +609,7 @@ app.post('/api/menu/upload', authenticateToken, upload.single('file'), async (re
       
       // Стратегия 3: ИИ ищет блюда по паттернам
       for (const pattern of analysis.dishPatterns) {
-        const dish = createDish(pattern.text, 'обед', getDayFromColumn(pattern.col, data));
+        const dish = createDish(pattern.text, 'обед', getDayFromColumn(pattern.col, data), pattern.row, pattern.col, data);
         if (dish) dishes.push(dish);
       }
       
@@ -639,7 +639,57 @@ app.post('/api/menu/upload', authenticateToken, upload.single('file'), async (re
       if (lowerText.includes('обед')) return 'обед';
       if (lowerText.includes('полдник')) return 'полдник';
       if (lowerText.includes('ужин')) return 'ужин';
-      return 'обед';
+      return 'обед'; // По умолчанию обед
+    }
+    
+    function getMealTypeByPosition(row, col, data) {
+      // Анализируем контекст вокруг ячейки
+      const context = analyzeContext(row, col, data);
+      
+      // Если рядом есть заголовок приёма пищи, используем его
+      if (context.nearbyMeal) {
+        return context.nearbyMeal;
+      }
+      
+      // Определяем по позиции в таблице
+      if (row < data.length * 0.3) {
+        return 'завтрак';
+      } else if (row < data.length * 0.7) {
+        return 'обед';
+      } else {
+        return 'полдник';
+      }
+    }
+    
+    function analyzeContext(row, col, data) {
+      const context = { nearbyMeal: null };
+      
+      // Ищем заголовки приёмов пищи в радиусе 5 строк
+      for (let r = Math.max(0, row - 5); r < Math.min(data.length, row + 6); r++) {
+        const rowData = data[r];
+        if (!rowData) continue;
+        
+        for (let c = Math.max(0, col - 2); c < Math.min(rowData.length, col + 3); c++) {
+          const cell = rowData[c];
+          if (!cell) continue;
+          
+          const cellText = cell.toString().trim().toLowerCase();
+          if (cellText.includes('завтрак')) {
+            context.nearbyMeal = 'завтрак';
+            return context;
+          }
+          if (cellText.includes('обед')) {
+            context.nearbyMeal = 'обед';
+            return context;
+          }
+          if (cellText.includes('полдник')) {
+            context.nearbyMeal = 'полдник';
+            return context;
+          }
+        }
+      }
+      
+      return context;
     }
     
     function looksLikeDish(text) {
@@ -673,7 +723,7 @@ app.post('/api/menu/upload', authenticateToken, upload.single('file'), async (re
           
           const cellText = cell.toString().trim();
           if (looksLikeDish(cellText)) {
-            dishes.push(createDish(cellText, type, getDayFromColumn(c, data)));
+            dishes.push(createDish(cellText, type, getDayFromColumn(c, data), r, c, data));
           }
         }
       }
@@ -692,7 +742,7 @@ app.post('/api/menu/upload', authenticateToken, upload.single('file'), async (re
         
         const cellText = rowData[col].toString().trim();
         if (looksLikeDish(cellText)) {
-          dishes.push(createDish(cellText, 'обед', getDayFromColumn(col, data)));
+          dishes.push(createDish(cellText, 'обед', getDayFromColumn(col, data), row, col, data));
         }
       }
       
@@ -713,7 +763,7 @@ app.post('/api/menu/upload', authenticateToken, upload.single('file'), async (re
           
           const cellText = cell.toString().trim();
           if (looksLikeDish(cellText) && !isHeader(cellText)) {
-            dishes.push(createDish(cellText, 'обед', getDayFromColumn(col, data)));
+            dishes.push(createDish(cellText, 'обед', getDayFromColumn(col, data), row, col, data));
           }
         }
       }
@@ -732,7 +782,14 @@ app.post('/api/menu/upload', authenticateToken, upload.single('file'), async (re
       return (col % 7) + 1;
     }
     
-    function createDish(text, mealType, dayOfWeek) {
+    function createDish(text, mealType, dayOfWeek, row, col, data) {
+      // Если тип приёма пищи не указан, определяем по контексту
+      if (!mealType || mealType === 'обед') {
+        mealType = getMealTypeByPosition(row, col, data);
+      }
+      
+      console.log(`🍽️ Создано блюдо: "${text}" -> ${mealType} (строка ${row}, колонка ${col})`);
+      
       return {
         name: text,
         description: text,
@@ -787,7 +844,7 @@ app.post('/api/menu/upload', authenticateToken, upload.single('file'), async (re
           const cellText = cell.toString().trim();
           if (cellText.length > 3 && cellText.length < 50 && !isHeader(cellText)) {
             console.log(`🍽️ Резервный метод нашел: "${cellText}"`);
-            dishes.push(createDish(cellText, 'обед', (col % 7) + 1));
+            dishes.push(createDish(cellText, 'обед', (col % 7) + 1, row, col, data));
           }
         }
       }
@@ -814,7 +871,7 @@ app.post('/api/menu/upload', authenticateToken, upload.single('file'), async (re
         console.error('❌ Ошибка очистки меню:', err);
         return res.status(500).json({ error: 'Ошибка очистки меню' });
       }
-      
+
       // Добавляем новые элементы
       console.log('➕ Добавляем новые элементы...');
       let insertedCount = 0;
@@ -835,15 +892,15 @@ app.post('/api/menu/upload', authenticateToken, upload.single('file'), async (re
           [schoolId, item.name || 'Блюдо', item.description || null, item.price || 0, item.meal_type || 'обед', item.day_of_week || 1, item.portion || null, weekStart, item.recipe_number || null, item.weight || null],
           function(err) {
             processedCount++;
-            if (err) {
+          if (err) {
               console.error(`❌ Ошибка вставки элемента ${index + 1}:`, err);
-            } else {
-              insertedCount++;
-            }
+          } else {
+            insertedCount++;
+          }
             
             if (processedCount === totalItems) {
               console.log(`✅ Загрузка завершена: ${insertedCount} элементов добавлено`);
-              res.json({ 
+        res.json({
                 message: 'Меню успешно загружено', 
                 insertedCount,
                 totalItems
@@ -1013,7 +1070,7 @@ app.post('/api/orders', authenticateToken, [
         itemsCount: 0
       });
     }
-    
+
     menuItemIds.forEach(menuItemId => {
       db.get('SELECT day_of_week FROM menu_items WHERE id = ? AND school_id = ?', 
         [menuItemId, schoolId], (err, item) => {
@@ -1036,13 +1093,13 @@ app.post('/api/orders', authenticateToken, [
           } else {
             insertedCount++;
           }
-          
+
           if (completedCount === totalItems) {
-            stmt.finalize();
-            res.json({
-              message: 'Заказ успешно создан',
-              itemsCount: insertedCount
-            });
+      stmt.finalize();
+      res.json({
+        message: 'Заказ успешно создан',
+        itemsCount: insertedCount
+      });
           }
         });
       });

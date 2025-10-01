@@ -166,6 +166,18 @@ db.serialize(() => {
     FOREIGN KEY (menu_item_id) REFERENCES menu_items (id)
   )`);
 
+  db.run(`CREATE TABLE IF NOT EXISTS favorites (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    user_id INTEGER NOT NULL,
+    menu_item_id INTEGER NOT NULL,
+    school_id INTEGER NOT NULL,
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (user_id) REFERENCES users (id),
+    FOREIGN KEY (menu_item_id) REFERENCES menu_items (id),
+    FOREIGN KEY (school_id) REFERENCES schools (id),
+    UNIQUE(user_id, menu_item_id, school_id)
+  )`);
+
   // Create default school and users
   db.get("SELECT COUNT(*) as count FROM schools", (err, row) => {
     if (err) {
@@ -245,12 +257,14 @@ app.get('/api/health', (req, res) => {
   res.json({ 
     status: 'OK', 
     timestamp: new Date().toISOString(),
-    version: '3.2.0',
+    version: '4.0.0',
     cors_fix: 'applied',
     menu_upload_fix: 'applied',
     database_fix: 'applied',
     variable_scope_fix: 'applied',
-    force_update: '2025-10-01-17-15',
+    force_update: '2025-10-01-18-00',
+    ai_parser: 'active',
+    new_features: 'maximized_features',
     ai_parser: 'active',
     new_features: 'menu_management',
     restart_forced: true
@@ -1400,6 +1414,241 @@ app.listen(PORT, () => {
   console.log(`🚀 Сервер запущен на порту ${PORT}`);
   console.log(`📝 API доступно по адресу: http://localhost:${PORT}/api`);
   console.log(`🏥 Health check: http://localhost:${PORT}/api/health`);
+});
+
+// Поиск блюд
+app.get('/api/menu/search', authenticateToken, async (req, res) => {
+  try {
+    const { week, query, meal_type, day_of_week, min_price, max_price } = req.query;
+    
+    if (!week) {
+      return res.status(400).json({ error: 'Необходимо указать неделю' });
+    }
+
+    let sql = `
+      SELECT * FROM menu_items 
+      WHERE week_start = ? AND school_id = ?
+    `;
+    const params = [week, req.user.schoolId];
+
+    if (query) {
+      sql += ` AND (name LIKE ? OR description LIKE ?)`;
+      params.push(`%${query}%`, `%${query}%`);
+    }
+
+    if (meal_type) {
+      sql += ` AND meal_type = ?`;
+      params.push(meal_type);
+    }
+
+    if (day_of_week) {
+      sql += ` AND day_of_week = ?`;
+      params.push(day_of_week);
+    }
+
+    if (min_price) {
+      sql += ` AND price >= ?`;
+      params.push(min_price);
+    }
+
+    if (max_price) {
+      sql += ` AND price <= ?`;
+      params.push(max_price);
+    }
+
+    sql += ` ORDER BY day_of_week, meal_type, name`;
+
+    const items = await db.all(sql, params);
+    res.json({ items });
+  } catch (error) {
+    console.error('Ошибка поиска:', error);
+    res.status(500).json({ error: 'Ошибка поиска блюд' });
+  }
+});
+
+// Массовые операции
+app.post('/api/menu/bulk-delete', authenticateToken, async (req, res) => {
+  try {
+    const { week, ids } = req.body;
+    
+    if (!week || !ids || !Array.isArray(ids)) {
+      return res.status(400).json({ error: 'Необходимо указать неделю и массив ID' });
+    }
+
+    const placeholders = ids.map(() => '?').join(',');
+    const result = await db.run(`
+      DELETE FROM menu_items 
+      WHERE id IN (${placeholders}) AND school_id = ? AND week_start = ?
+    `, [...ids, req.user.schoolId, week]);
+
+    res.json({ 
+      message: 'Блюда удалены',
+      deletedCount: result.changes 
+    });
+  } catch (error) {
+    console.error('Ошибка массового удаления:', error);
+    res.status(500).json({ error: 'Ошибка массового удаления' });
+  }
+});
+
+// Экспорт меню в Excel
+app.get('/api/menu/export', authenticateToken, async (req, res) => {
+  try {
+    const { week } = req.query;
+    
+    if (!week) {
+      return res.status(400).json({ error: 'Необходимо указать неделю' });
+    }
+
+    const items = await db.all(`
+      SELECT * FROM menu_items 
+      WHERE week_start = ? AND school_id = ?
+      ORDER BY day_of_week, meal_type, name
+    `, [week, req.user.schoolId]);
+
+    // Создаем Excel файл
+    const ws = XLSX.utils.json_to_sheet(items);
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, 'Меню');
+
+    const buffer = XLSX.write(wb, { type: 'buffer', bookType: 'xlsx' });
+    
+    res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+    res.setHeader('Content-Disposition', `attachment; filename="menu_${week}.xlsx"`);
+    res.send(buffer);
+  } catch (error) {
+    console.error('Ошибка экспорта:', error);
+    res.status(500).json({ error: 'Ошибка экспорта меню' });
+  }
+});
+
+// Избранные блюда
+app.get('/api/favorites', authenticateToken, async (req, res) => {
+  try {
+    const favorites = await db.all(`
+      SELECT mi.* FROM menu_items mi
+      JOIN favorites f ON mi.id = f.menu_item_id
+      WHERE f.user_id = ? AND f.school_id = ?
+      ORDER BY mi.name
+    `, [req.user.id, req.user.schoolId]);
+
+    res.json({ favorites });
+  } catch (error) {
+    console.error('Ошибка получения избранного:', error);
+    res.status(500).json({ error: 'Ошибка получения избранного' });
+  }
+});
+
+app.post('/api/favorites', authenticateToken, async (req, res) => {
+  try {
+    const { menu_item_id } = req.body;
+    
+    if (!menu_item_id) {
+      return res.status(400).json({ error: 'Необходимо указать ID блюда' });
+    }
+
+    // Проверяем, не добавлено ли уже
+    const existing = await db.get(`
+      SELECT id FROM favorites 
+      WHERE user_id = ? AND menu_item_id = ? AND school_id = ?
+    `, [req.user.id, menu_item_id, req.user.schoolId]);
+
+    if (existing) {
+      return res.status(400).json({ error: 'Блюдо уже в избранном' });
+    }
+
+    await db.run(`
+      INSERT INTO favorites (user_id, menu_item_id, school_id, created_at)
+      VALUES (?, ?, ?, datetime('now'))
+    `, [req.user.id, menu_item_id, req.user.schoolId]);
+
+    res.json({ message: 'Блюдо добавлено в избранное' });
+  } catch (error) {
+    console.error('Ошибка добавления в избранное:', error);
+    res.status(500).json({ error: 'Ошибка добавления в избранное' });
+  }
+});
+
+app.delete('/api/favorites/:id', authenticateToken, async (req, res) => {
+  try {
+    const { id } = req.params;
+    
+    const result = await db.run(`
+      DELETE FROM favorites 
+      WHERE id = ? AND user_id = ? AND school_id = ?
+    `, [id, req.user.id, req.user.schoolId]);
+
+    if (result.changes === 0) {
+      return res.status(404).json({ error: 'Избранное не найдено' });
+    }
+
+    res.json({ message: 'Блюдо удалено из избранного' });
+  } catch (error) {
+    console.error('Ошибка удаления из избранного:', error);
+    res.status(500).json({ error: 'Ошибка удаления из избранного' });
+  }
+});
+
+// Калькулятор стоимости
+app.get('/api/menu/calculator', authenticateToken, async (req, res) => {
+  try {
+    const { week, selected_items } = req.query;
+    
+    if (!week || !selected_items) {
+      return res.status(400).json({ error: 'Необходимо указать неделю и выбранные блюда' });
+    }
+
+    const itemIds = JSON.parse(selected_items);
+    const placeholders = itemIds.map(() => '?').join(',');
+    
+    const items = await db.all(`
+      SELECT * FROM menu_items 
+      WHERE id IN (${placeholders}) AND school_id = ? AND week_start = ?
+    `, [...itemIds, req.user.schoolId, week]);
+
+    const total = items.reduce((sum, item) => sum + item.price, 0);
+    const byDay = {};
+    const byMeal = {};
+
+    items.forEach(item => {
+      const day = item.day_of_week;
+      const meal = item.meal_type;
+      
+      if (!byDay[day]) byDay[day] = 0;
+      if (!byMeal[meal]) byMeal[meal] = 0;
+      
+      byDay[day] += item.price;
+      byMeal[meal] += item.price;
+    });
+
+    res.json({
+      total,
+      byDay,
+      byMeal,
+      items: items.length
+    });
+  } catch (error) {
+    console.error('Ошибка калькулятора:', error);
+    res.status(500).json({ error: 'Ошибка расчета стоимости' });
+  }
+});
+
+// Получить все недели с меню
+app.get('/api/menu/weeks', authenticateToken, async (req, res) => {
+  try {
+    const weeks = await db.all(`
+      SELECT DISTINCT week_start, COUNT(*) as item_count
+      FROM menu_items 
+      WHERE school_id = ?
+      GROUP BY week_start
+      ORDER BY week_start DESC
+    `, [req.user.schoolId]);
+
+    res.json({ weeks });
+  } catch (error) {
+    console.error('Ошибка получения недель:', error);
+    res.status(500).json({ error: 'Ошибка получения недель' });
+  }
 });
 
 // Graceful shutdown

@@ -1,16 +1,17 @@
-import React, { useState, useEffect } from 'react';
-import { User, School, MenuItem } from '../utils/auth';
+import { useState, useEffect } from 'react';
 import { apiClient } from '../utils/api';
 import MenuItemCard from '../components/MenuItemCard';
 
 export default function DirectorAdvanced({ token: _token }: any) {
-  const [currentUser, setCurrentUser] = useState<User | null>(null);
-  const [school, setSchool] = useState<School | null>(null);
-  const [menuItems, setMenuItems] = useState<MenuItem[]>([]);
+  const [currentUser, setCurrentUser] = useState<any>(null);
+  const [school, setSchool] = useState<any>(null);
+  const [menuItems, setMenuItems] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [msg, setMsg] = useState('');
   const [bulkSelected, setBulkSelected] = useState<Set<number>>(new Set());
   const [showBulkActions, setShowBulkActions] = useState(false);
+  const [uploading, setUploading] = useState(false);
+  const [dragOver, setDragOver] = useState(false);
 
   // Загружаем данные при входе
   useEffect(() => {
@@ -31,8 +32,8 @@ export default function DirectorAdvanced({ token: _token }: any) {
         setSchool(schoolData);
         
         // Загружаем меню
-        const menuData = await apiClient.getMenu(user.school_id);
-        setMenuItems(menuData);
+        const menuData = await apiClient.getMenu(user.school_id.toString());
+        setMenuItems(menuData.items || []);
       }
     } catch (error: any) {
       setMsg(`❌ Ошибка загрузки: ${error.message}`);
@@ -45,7 +46,7 @@ export default function DirectorAdvanced({ token: _token }: any) {
     if (!confirm('Вы уверены, что хотите удалить ВСЕ блюда из меню?')) {
       return;
     }
-    
+
     try {
       const response = await fetch('/api/menu/clear', {
         method: 'DELETE',
@@ -124,6 +125,70 @@ export default function DirectorAdvanced({ token: _token }: any) {
     setBulkSelected(new Set());
   };
 
+  const handleFileUpload = async (file: File) => {
+    if (!file.name.toLowerCase().endsWith('.xlsx') && !file.name.toLowerCase().endsWith('.xls')) {
+      setMsg('❌ Пожалуйста, выберите Excel файл (.xlsx или .xls)');
+      return;
+    }
+
+    setUploading(true);
+    setMsg('');
+
+    try {
+      const formData = new FormData();
+      formData.append('file', file);
+
+      const response = await fetch('/api/menu/upload', {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${localStorage.getItem('token')}`
+        },
+        body: formData
+      });
+
+      if (response.ok) {
+        const result = await response.json();
+        setMsg(`✅ Меню загружено! Добавлено ${result.addedCount} блюд`);
+        loadData();
+      } else {
+        const error = await response.json();
+        setMsg(`❌ Ошибка загрузки: ${error.error}`);
+      }
+    } catch (error) {
+      console.error('Ошибка загрузки файла:', error);
+      setMsg('❌ Ошибка при загрузке файла');
+    } finally {
+      setUploading(false);
+    }
+  };
+
+  const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      handleFileUpload(file);
+    }
+  };
+
+  const handleDrop = (e: React.DragEvent) => {
+    e.preventDefault();
+    setDragOver(false);
+    
+    const file = e.dataTransfer.files[0];
+    if (file) {
+      handleFileUpload(file);
+    }
+  };
+
+  const handleDragOver = (e: React.DragEvent) => {
+    e.preventDefault();
+    setDragOver(true);
+  };
+
+  const handleDragLeave = (e: React.DragEvent) => {
+    e.preventDefault();
+    setDragOver(false);
+  };
+
   if (loading) {
     return (
       <div style={{ 
@@ -170,7 +235,7 @@ export default function DirectorAdvanced({ token: _token }: any) {
         </p>
       </div>
 
-      {msg && (
+          {msg && (
         <div style={{
           background: msg.includes('❌') ? '#fee' : '#efe',
           border: `1px solid ${msg.includes('❌') ? '#fcc' : '#cfc'}`,
@@ -179,9 +244,102 @@ export default function DirectorAdvanced({ token: _token }: any) {
           marginBottom: '20px',
           color: msg.includes('❌') ? '#c33' : '#363'
         }}>
-          {msg}
+              {msg}
+            </div>
+          )}
+
+      {/* Загрузка Excel файла */}
+      <div style={{ 
+        background: 'white', 
+        borderRadius: '12px', 
+        padding: '20px', 
+        marginBottom: '20px',
+        boxShadow: '0 2px 10px rgba(0,0,0,0.1)'
+      }}>
+        <h2 style={{ margin: '0 0 20px 0', color: '#333' }}>
+          📁 Загрузка меню
+        </h2>
+        
+        <div
+          onDrop={handleDrop}
+          onDragOver={handleDragOver}
+          onDragLeave={handleDragLeave}
+          style={{
+            border: `3px dashed ${dragOver ? '#007bff' : '#dee2e6'}`,
+            borderRadius: '12px',
+            padding: '40px 20px',
+            textAlign: 'center',
+            backgroundColor: dragOver ? '#f8f9ff' : '#f8f9fa',
+            transition: 'all 0.3s ease',
+            cursor: 'pointer',
+            position: 'relative'
+          }}
+        >
+          {uploading ? (
+            <div>
+              <div style={{ 
+                fontSize: '48px', 
+                marginBottom: '20px',
+                animation: 'spin 1s linear infinite'
+              }}>
+                ⏳
+              </div>
+              <h3 style={{ margin: '0 0 10px 0', color: '#007bff' }}>
+                Загружаем меню...
+              </h3>
+              <p style={{ margin: '0', color: '#666' }}>
+                Пожалуйста, подождите
+              </p>
+            </div>
+          ) : (
+            <div>
+              <div style={{ fontSize: '64px', marginBottom: '20px' }}>
+                📊
+              </div>
+              <h3 style={{ margin: '0 0 10px 0', color: '#333' }}>
+                Перетащите Excel файл сюда
+              </h3>
+              <p style={{ margin: '0 0 20px 0', color: '#666' }}>
+                или нажмите для выбора файла
+              </p>
+              
+              <input
+                type="file"
+                accept=".xlsx,.xls"
+                onChange={handleFileSelect}
+                style={{ display: 'none' }}
+                id="file-upload"
+              />
+              
+              <label
+                htmlFor="file-upload"
+                style={{
+                  display: 'inline-block',
+                  padding: '12px 24px',
+                  backgroundColor: '#007bff',
+                  color: 'white',
+                  borderRadius: '8px',
+                  cursor: 'pointer',
+                  fontSize: '16px',
+                  fontWeight: '600',
+                  textDecoration: 'none',
+                  transition: 'background-color 0.2s ease'
+                }}
+              >
+                📁 Выбрать файл
+              </label>
+              
+              <div style={{ 
+                marginTop: '15px', 
+                fontSize: '14px', 
+                color: '#6c757d' 
+              }}>
+                Поддерживаются форматы: .xlsx, .xls
+              </div>
+            </div>
+          )}
         </div>
-      )}
+      </div>
 
       {/* Панель управления меню */}
       <div style={{ 
@@ -196,7 +354,7 @@ export default function DirectorAdvanced({ token: _token }: any) {
         </h2>
         
         <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap', marginBottom: '20px' }}>
-          <button
+                <button 
             onClick={clearAllMenu}
             style={{
               padding: '10px 20px',
@@ -210,7 +368,7 @@ export default function DirectorAdvanced({ token: _token }: any) {
             }}
           >
             🗑️ Удалить все блюда
-          </button>
+                </button>
 
           <button
             onClick={() => setShowBulkActions(!showBulkActions)}
@@ -227,7 +385,7 @@ export default function DirectorAdvanced({ token: _token }: any) {
           >
             📋 Массовые операции
           </button>
-        </div>
+          </div>
 
         {showBulkActions && (
           <div style={{
@@ -257,7 +415,7 @@ export default function DirectorAdvanced({ token: _token }: any) {
                 Выбрать все
               </button>
 
-              <button
+                    <button
                 onClick={clearBulkSelection}
                 style={{
                   padding: '8px 16px',
@@ -270,9 +428,9 @@ export default function DirectorAdvanced({ token: _token }: any) {
                 }}
               >
                 Очистить выбор
-              </button>
+                    </button>
 
-              <button
+                    <button
                 onClick={bulkDelete}
                 disabled={bulkSelected.size === 0}
                 style={{
@@ -286,11 +444,11 @@ export default function DirectorAdvanced({ token: _token }: any) {
                 }}
               >
                 Удалить выбранные
-              </button>
-            </div>
-          </div>
+                    </button>
+                  </div>
+                </div>
         )}
-      </div>
+              </div>
 
       {/* Список блюд */}
       <div style={{ 
@@ -309,18 +467,20 @@ export default function DirectorAdvanced({ token: _token }: any) {
           </p>
         ) : (
           <div style={{ display: 'grid', gap: '15px' }}>
-            {menuItems.map((item) => (
-              <MenuItemCard
-                key={item.id}
-                item={item}
+                    {menuItems.map((item) => (
+                      <MenuItemCard
+                        key={item.id}
+                        item={item}
                 showBulkSelection={showBulkActions}
                 isBulkSelected={bulkSelected.has(item.id)}
                 onBulkSelect={() => toggleBulkSelection(item.id)}
-              />
-            ))}
-          </div>
-        )}
-      </div>
+                onEdit={() => {}}
+                onDelete={() => {}}
+                      />
+                    ))}
+                  </div>
+                )}
+              </div>
     </div>
   );
 }

@@ -1,14 +1,12 @@
-import React, { useState, useEffect } from 'react';
-import { MenuItem } from '../utils/auth';
+import { useState, useEffect } from 'react';
 import { apiClient } from '../utils/api';
-import MenuItemCard from './MenuItemCard';
 
 interface MenuSelectorProps {
   schoolId: number;
 }
 
 export default function MenuSelector({ schoolId }: MenuSelectorProps) {
-  const [menuItems, setMenuItems] = useState<MenuItem[]>([]);
+  const [menuItems, setMenuItems] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedItems, setSelectedItems] = useState<Set<number>>(new Set());
   const [filterDay, setFilterDay] = useState<number>(1);
@@ -28,8 +26,8 @@ export default function MenuSelector({ schoolId }: MenuSelectorProps) {
   const loadMenu = async () => {
     try {
       setLoading(true);
-      const data = await apiClient.getMenu(schoolId);
-      setMenuItems(data);
+      const data = await apiClient.getMenu(schoolId.toString());
+      setMenuItems(data.items || []);
     } catch (error: any) {
       setMsg(`❌ Ошибка загрузки меню: ${error.message}`);
     } finally {

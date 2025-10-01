@@ -17,6 +17,16 @@ export default function DirectorAdvanced({ token: _token }: any) {
   const [editingItem, setEditingItem] = useState<MenuItem | null>(null);
   const [showAddForm, setShowAddForm] = useState(false);
   const [menuView, setMenuView] = useState<'grid' | 'list'>('grid');
+  const [showSearch, setShowSearch] = useState(false);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [showStats, setShowStats] = useState(false);
+  const [stats, setStats] = useState<any>(null);
+  // const [showCalculator, setShowCalculator] = useState(false);
+  // const [calculatorData, setCalculatorData] = useState<any>(null);
+  // const [showFavorites, setShowFavorites] = useState(false);
+  // const [favorites, setFavorites] = useState<MenuItem[]>([]);
+  const [bulkSelected, setBulkSelected] = useState<Set<number>>(new Set());
+  const [showBulkActions, setShowBulkActions] = useState(false);
 
   // Загружаем данные при входе
   useEffect(() => {
@@ -118,6 +128,182 @@ export default function DirectorAdvanced({ token: _token }: any) {
       setMsg(`❌ Ошибка удаления: ${error.message}`);
     }
   }
+
+  // Новые функции для расширенных возможностей
+  const clearAllMenu = async () => {
+    if (!confirm('Вы уверены, что хотите удалить ВСЕ блюда из меню?')) {
+      return;
+    }
+    
+    try {
+      const response = await fetch('/api/menu/clear', {
+        method: 'DELETE',
+        headers: {
+          'Authorization': `Bearer ${localStorage.getItem('token')}`,
+          'Content-Type': 'application/json'
+        }
+      });
+      
+      if (response.ok) {
+        const result = await response.json();
+        setMsg(`✅ Удалено ${result.deletedCount} блюд из меню`);
+        loadData();
+      } else {
+        const error = await response.json();
+        setMsg(`❌ Ошибка: ${error.error}`);
+      }
+    } catch (error) {
+      console.error('Ошибка очистки меню:', error);
+      setMsg('❌ Ошибка при удалении блюд');
+    }
+  };
+
+  const loadStats = async () => {
+    try {
+      const response = await fetch('/api/menu/stats', {
+        headers: {
+          'Authorization': `Bearer ${localStorage.getItem('token')}`,
+          'Content-Type': 'application/json'
+        }
+      });
+      
+      if (response.ok) {
+        const statsData = await response.json();
+        // Преобразуем данные в нужный формат
+        const totalDishes = statsData.reduce((sum: number, item: any) => sum + item.count, 0);
+        const totalPrice = statsData.reduce((sum: number, item: any) => sum + item.total_price, 0);
+        const averagePrice = totalDishes > 0 ? totalPrice / totalDishes : 0;
+        
+        setStats({
+          totalDishes,
+          averagePrice: Math.round(averagePrice * 100) / 100,
+          totalPrice: Math.round(totalPrice * 100) / 100,
+          byMeal: statsData
+        });
+        setShowStats(true);
+      } else {
+        const error = await response.json();
+        setMsg(`❌ Ошибка: ${error.error}`);
+      }
+    } catch (error) {
+      console.error('Ошибка загрузки статистики:', error);
+      setMsg('❌ Ошибка при загрузке статистики');
+    }
+  };
+
+  const searchMenu = async () => {
+    try {
+      const params = new URLSearchParams({
+        ...(searchQuery && { query: searchQuery })
+      });
+
+      const response = await fetch(`/api/menu/search?${params}`, {
+        headers: {
+          'Authorization': `Bearer ${localStorage.getItem('token')}`,
+          'Content-Type': 'application/json'
+        }
+      });
+      
+      if (response.ok) {
+        const data = await response.json();
+        setMenuItems(data.items);
+        setMsg(`✅ Найдено ${data.items.length} блюд`);
+      } else {
+        const error = await response.json();
+        setMsg(`❌ Ошибка поиска: ${error.error}`);
+      }
+    } catch (error) {
+      console.error('Ошибка поиска:', error);
+      setMsg('❌ Ошибка при поиске');
+    }
+  };
+
+  const exportMenu = async () => {
+    try {
+      const response = await fetch('/api/menu/export', {
+        headers: {
+          'Authorization': `Bearer ${localStorage.getItem('token')}`
+        }
+      });
+      
+      if (response.ok) {
+        const blob = await response.blob();
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `menu_${new Date().toISOString().split('T')[0]}.xlsx`;
+        document.body.appendChild(a);
+        a.click();
+        window.URL.revokeObjectURL(url);
+        document.body.removeChild(a);
+        setMsg('✅ Меню экспортировано в Excel');
+      } else {
+        const error = await response.json();
+        setMsg(`❌ Ошибка экспорта: ${error.error}`);
+      }
+    } catch (error) {
+      console.error('Ошибка экспорта:', error);
+      setMsg('❌ Ошибка при экспорте');
+    }
+  };
+
+  const bulkDelete = async () => {
+    if (bulkSelected.size === 0) {
+      setMsg('❌ Выберите блюда для удаления');
+      return;
+    }
+
+    if (!confirm(`Удалить ${bulkSelected.size} выбранных блюд?`)) {
+      return;
+    }
+
+    try {
+      const response = await fetch('/api/menu/bulk-delete', {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${localStorage.getItem('token')}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          ids: Array.from(bulkSelected)
+        })
+      });
+      
+      if (response.ok) {
+        const result = await response.json();
+        setMsg(`✅ Удалено ${result.deletedCount} блюд`);
+        setBulkSelected(new Set());
+        setShowBulkActions(false);
+        loadData();
+      } else {
+        const error = await response.json();
+        setMsg(`❌ Ошибка: ${error.error}`);
+      }
+    } catch (error) {
+      console.error('Ошибка массового удаления:', error);
+      setMsg('❌ Ошибка при массовом удалении');
+    }
+  };
+
+  const toggleBulkSelection = (itemId: number) => {
+    const newSelected = new Set(bulkSelected);
+    if (newSelected.has(itemId)) {
+      newSelected.delete(itemId);
+    } else {
+      newSelected.add(itemId);
+    }
+    setBulkSelected(newSelected);
+  };
+
+  const selectAllVisible = () => {
+    const newSelected = new Set(bulkSelected);
+    menuItems.forEach(item => newSelected.add(item.id));
+    setBulkSelected(newSelected);
+  };
+
+  const clearBulkSelection = () => {
+    setBulkSelected(new Set());
+  };
 
   async function handleSaveItem(data: Omit<MenuItem, 'id' | 'school_id' | 'week_start'>) {
     try {
@@ -291,7 +477,7 @@ export default function DirectorAdvanced({ token: _token }: any) {
               <div className="card-header">
                 <div className="flex justify-between items-center">
                   <h3 className="card-title">📋 Текущее меню ({menuItems.length} блюд)</h3>
-                  <div className="flex gap-2">
+                  <div className="flex gap-2 flex-wrap">
                     <button
                       onClick={() => setMenuView(menuView === 'grid' ? 'list' : 'grid')}
                       className="btn btn-secondary btn-sm"
@@ -304,10 +490,81 @@ export default function DirectorAdvanced({ token: _token }: any) {
                     >
                       ➕ Добавить блюдо
                     </button>
+                    <button
+                      onClick={clearAllMenu}
+                      className="btn btn-danger btn-sm"
+                    >
+                      🗑️ Удалить все
+                    </button>
+                    <button
+                      onClick={loadStats}
+                      className="btn btn-info btn-sm"
+                    >
+                      📊 Статистика
+                    </button>
+                    <button
+                      onClick={() => setShowSearch(!showSearch)}
+                      className="btn btn-warning btn-sm"
+                    >
+                      🔍 Поиск
+                    </button>
+                    <button
+                      onClick={exportMenu}
+                      className="btn btn-secondary btn-sm"
+                    >
+                      📤 Экспорт Excel
+                    </button>
+                    <button
+                      onClick={() => setShowBulkActions(!showBulkActions)}
+                      className="btn btn-dark btn-sm"
+                    >
+                      📋 Массовые операции
+                    </button>
                   </div>
                 </div>
               </div>
               <div className="card-body">
+
+                {/* Поиск */}
+                {showSearch && (
+                  <div className="search-panel mb-4">
+                    <div className="search-controls">
+                      <input
+                        type="text"
+                        placeholder="Поиск по названию или описанию..."
+                        value={searchQuery}
+                        onChange={(e) => setSearchQuery(e.target.value)}
+                        className="search-input"
+                      />
+                      <button onClick={searchMenu} className="btn btn-primary btn-sm">
+                        🔍 Найти
+                      </button>
+                      <button onClick={() => {
+                        setSearchQuery('');
+                        loadData();
+                      }} className="btn btn-secondary btn-sm">
+                        🔄 Сбросить
+                      </button>
+                    </div>
+                  </div>
+                )}
+
+                {/* Массовые операции */}
+                {showBulkActions && (
+                  <div className="bulk-actions-panel mb-4">
+                    <div className="bulk-controls">
+                      <button onClick={selectAllVisible} className="btn btn-sm btn-primary">
+                        ✅ Выбрать все
+                      </button>
+                      <button onClick={clearBulkSelection} className="btn btn-sm btn-secondary">
+                        ❌ Очистить выбор
+                      </button>
+                      <button onClick={bulkDelete} className="btn btn-sm btn-danger">
+                        🗑️ Удалить выбранные ({bulkSelected.size})
+                      </button>
+                    </div>
+                  </div>
+                )}
 
                 {menuView === 'grid' ? (
                   <div className="menu-grid">
@@ -318,6 +575,9 @@ export default function DirectorAdvanced({ token: _token }: any) {
                         onEdit={handleEditItem}
                         onDelete={handleDeleteItem}
                         showActions={true}
+                        showBulkSelection={showBulkActions}
+                        isBulkSelected={bulkSelected.has(item.id)}
+                        onBulkSelect={toggleBulkSelection}
                       />
                     ))}
                   </div>
@@ -339,6 +599,9 @@ export default function DirectorAdvanced({ token: _token }: any) {
                                 onEdit={handleEditItem}
                                 onDelete={handleDeleteItem}
                                 showActions={true}
+                                showBulkSelection={showBulkActions}
+                                isBulkSelected={bulkSelected.has(item.id)}
+                                onBulkSelect={toggleBulkSelection}
                               />
                             ))}
                           </div>
@@ -374,6 +637,32 @@ export default function DirectorAdvanced({ token: _token }: any) {
               <li>• Можно указать порцию (например: "200г") и цену (например: "150 руб")</li>
               <li>• Парсер автоматически распознает структуру таблицы</li>
             </ul>
+          </div>
+        </div>
+      )}
+
+      {/* Модальное окно статистики */}
+      {showStats && stats && (
+        <div className="modal-overlay" onClick={() => setShowStats(false)}>
+          <div className="modal-content" onClick={(e) => e.stopPropagation()}>
+            <h3>📊 Статистика меню</h3>
+            <div className="stats-grid">
+              <div className="stat-item">
+                <h4>Всего блюд</h4>
+                <p>{stats.totalDishes}</p>
+              </div>
+              <div className="stat-item">
+                <h4>Средняя цена</h4>
+                <p>{stats.averagePrice} ₽</p>
+              </div>
+              <div className="stat-item">
+                <h4>Общая стоимость</h4>
+                <p>{stats.totalPrice} ₽</p>
+              </div>
+            </div>
+            <button onClick={() => setShowStats(false)} className="btn btn-primary">
+              Закрыть
+            </button>
           </div>
         </div>
       )}

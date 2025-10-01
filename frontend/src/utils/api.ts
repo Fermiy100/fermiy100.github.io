@@ -114,6 +114,7 @@ class ApiClient {
     email: string;
     name: string;
     role: 'PARENT' | 'STUDENT';
+    password: string;
   }): Promise<User> {
     return this.request<User>('/users', {
       method: 'POST',

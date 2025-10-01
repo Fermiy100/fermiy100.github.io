@@ -18,8 +18,24 @@ export default function UserManagement({ currentUser, onUserCreated }: UserManag
   const [newUser, setNewUser] = useState({
     email: '',
     name: '',
-    role: 'PARENT' as 'PARENT' | 'STUDENT'
+    role: 'PARENT' as 'PARENT' | 'STUDENT',
+    password: ''
   });
+
+  // Функция генерации пароля
+  const generatePassword = () => {
+    const chars = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
+    let password = '';
+    
+    // Генерируем пароль длиной 12-16 символов
+    const length = 12 + Math.floor(Math.random() * 5);
+    
+    for (let i = 0; i < length; i++) {
+      password += chars.charAt(Math.floor(Math.random() * chars.length));
+    }
+    
+    setNewUser(prev => ({ ...prev, password }));
+  };
 
   useEffect(() => {
     loadData();
@@ -53,14 +69,19 @@ export default function UserManagement({ currentUser, onUserCreated }: UserManag
       return;
     }
 
+    if (!newUser.email || !newUser.name || !newUser.password) {
+      setMessage('❌ Заполните все поля и сгенерируйте пароль');
+      return;
+    }
+
     try {
       setMessage('');
       const createdUser = await apiClient.createUser(newUser);
       
       setUsers(prev => [...prev, createdUser]);
-      setNewUser({ email: '', name: '', role: 'PARENT' });
+      setNewUser({ email: '', name: '', role: 'PARENT', password: '' });
       setShowCreateForm(false);
-      setMessage(`✅ Пользователь ${createdUser.name} создан. Требуется верификация.`);
+      setMessage(`✅ Пользователь ${createdUser.name} создан. Пароль: ${newUser.password}`);
       
       if (onUserCreated) {
         onUserCreated(createdUser);
@@ -218,6 +239,48 @@ export default function UserManagement({ currentUser, onUserCreated }: UserManag
                   <option value="PARENT">Родитель</option>
                   <option value="STUDENT">Ученик</option>
                 </select>
+              </div>
+
+              <div>
+                <label style={{ display: 'block', marginBottom: '5px', fontWeight: '600' }}>
+                  Пароль
+                </label>
+                <div style={{ display: 'flex', gap: '10px' }}>
+                  <input
+                    type="text"
+                    value={newUser.password}
+                    onChange={(e) => setNewUser(prev => ({ ...prev, password: e.target.value }))}
+                    placeholder="Сгенерируйте пароль"
+                    readOnly
+                    style={{
+                      flex: 1,
+                      padding: '10px',
+                      border: '1px solid #d1d5db',
+                      borderRadius: '6px',
+                      fontSize: '14px',
+                      backgroundColor: '#f9fafb'
+                    }}
+                  />
+                  <button
+                    type="button"
+                    onClick={generatePassword}
+                    style={{
+                      padding: '10px 15px',
+                      backgroundColor: '#3b82f6',
+                      color: 'white',
+                      border: 'none',
+                      borderRadius: '6px',
+                      fontSize: '14px',
+                      cursor: 'pointer',
+                      fontWeight: '600'
+                    }}
+                  >
+                    🔑 Сгенерировать
+                  </button>
+                </div>
+                <div style={{ fontSize: '12px', color: '#6b7280', marginTop: '5px' }}>
+                  Пароль будет содержать 12-16 символов (буквы и цифры)
+                </div>
               </div>
             </div>
             

@@ -8,6 +8,9 @@ interface MenuItemCardProps {
   isSelected?: boolean;
   onSelect?: (id: number) => void;
   showActions?: boolean;
+  showBulkSelection?: boolean;
+  isBulkSelected?: boolean;
+  onBulkSelect?: (id: number) => void;
 }
 
 const dayNames = ['', 'Пн', 'Вт', 'Ср', 'Чт', 'Пт'];
@@ -25,7 +28,10 @@ export default function MenuItemCard({
   onDelete, 
   isSelected = false, 
   onSelect,
-  showActions = true 
+  showActions = true,
+  showBulkSelection = false,
+  isBulkSelected = false,
+  onBulkSelect
 }: MenuItemCardProps) {
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
 
@@ -53,6 +59,18 @@ export default function MenuItemCard({
       <div className="menu-item-header">
         <div className="menu-item-name">{item.name}</div>
         <div className="menu-item-price">{item.price} ₽</div>
+        {showBulkSelection && onBulkSelect && (
+          <input
+            type="checkbox"
+            checked={isBulkSelected}
+            onChange={(e) => {
+              e.stopPropagation();
+              onBulkSelect(item.id);
+            }}
+            className="bulk-checkbox"
+            title="Выбрать для массовых операций"
+          />
+        )}
       </div>
       
       {item.description && (

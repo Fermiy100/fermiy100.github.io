@@ -257,7 +257,7 @@ app.get('/api/health', (req, res) => {
   res.json({ 
     status: 'OK', 
     timestamp: new Date().toISOString(),
-    version: '4.0.0',
+    version: '4.1.0',
     cors_fix: 'applied',
     menu_upload_fix: 'applied',
     database_fix: 'applied',
@@ -1409,6 +1409,61 @@ app.use((error, req, res, next) => {
   res.status(500).json({ error: 'Внутренняя ошибка сервера' });
 });
 
+// Создание пользователя (только для директоров)
+app.post('/api/users', authenticateToken, async (req, res) => {
+  try {
+    // Проверяем, что пользователь - директор
+    if (req.user.role !== 'DIRECTOR') {
+      return res.status(403).json({ error: 'Недостаточно прав для создания пользователей' });
+    }
+
+    const { email, name, role, password } = req.body;
+
+    // Валидация
+    if (!email || !name || !role || !password) {
+      return res.status(400).json({ error: 'Все поля обязательны' });
+    }
+
+    if (!['PARENT', 'STUDENT'].includes(role)) {
+      return res.status(400).json({ error: 'Недопустимая роль' });
+    }
+
+    // Проверяем уникальность email
+    const existingUser = await db.get(
+      'SELECT id FROM users WHERE email = ? AND school_id = ?',
+      [email, req.user.schoolId]
+    );
+
+    if (existingUser) {
+      return res.status(400).json({ error: 'Пользователь с таким email уже существует' });
+    }
+
+    // Хешируем пароль
+    const hashedPassword = await bcrypt.hash(password, 10);
+
+    // Создаем пользователя
+    const result = await db.run(`
+      INSERT INTO users (email, name, role, password, school_id, verified, created_at)
+      VALUES (?, ?, ?, ?, ?, 0, datetime('now'))
+    `, [email, name, role, hashedPassword, req.user.schoolId]);
+
+    const newUser = {
+      id: result.lastID,
+      email,
+      name,
+      role,
+      school_id: req.user.schoolId,
+      verified: false,
+      created_at: new Date().toISOString()
+    };
+
+    res.status(201).json(newUser);
+  } catch (error) {
+    console.error('Ошибка создания пользователя:', error);
+    res.status(500).json({ error: 'Ошибка создания пользователя' });
+  }
+});
+
 // Start server
 app.listen(PORT, () => {
   console.log(`🚀 Сервер запущен на порту ${PORT}`);
@@ -1421,15 +1476,20 @@ app.get('/api/menu/search', authenticateToken, async (req, res) => {
   try {
     const { week, query, meal_type, day_of_week, min_price, max_price } = req.query;
     
-    if (!week) {
-      return res.status(400).json({ error: 'Необходимо указать неделю' });
-    }
+    // Если неделя не указана, используем текущую неделю
+    const currentWeek = week || new Date().toISOString().split('T')[0];
 
     let sql = `
       SELECT * FROM menu_items 
-      WHERE week_start = ? AND school_id = ?
+      WHERE school_id = ?
     `;
-    const params = [week, req.user.schoolId];
+    const params = [req.user.schoolId];
+
+    // Добавляем фильтр по неделе только если указана
+    if (week) {
+      sql += ` AND week_start = ?`;
+      params.push(week);
+    }
 
     if (query) {
       sql += ` AND (name LIKE ? OR description LIKE ?)`;
@@ -1471,15 +1531,21 @@ app.post('/api/menu/bulk-delete', authenticateToken, async (req, res) => {
   try {
     const { week, ids } = req.body;
     
-    if (!week || !ids || !Array.isArray(ids)) {
-      return res.status(400).json({ error: 'Необходимо указать неделю и массив ID' });
+    if (!ids || !Array.isArray(ids)) {
+      return res.status(400).json({ error: 'Необходимо указать массив ID' });
     }
 
     const placeholders = ids.map(() => '?').join(',');
-    const result = await db.run(`
-      DELETE FROM menu_items 
-      WHERE id IN (${placeholders}) AND school_id = ? AND week_start = ?
-    `, [...ids, req.user.schoolId, week]);
+    let sql = `DELETE FROM menu_items WHERE id IN (${placeholders}) AND school_id = ?`;
+    const params = [...ids, req.user.schoolId];
+
+    // Добавляем фильтр по неделе только если указана
+    if (week) {
+      sql += ` AND week_start = ?`;
+      params.push(week);
+    }
+
+    const result = await db.run(sql, params);
 
     res.json({ 
       message: 'Блюда удалены',
@@ -1496,15 +1562,24 @@ app.get('/api/menu/export', authenticateToken, async (req, res) => {
   try {
     const { week } = req.query;
     
-    if (!week) {
-      return res.status(400).json({ error: 'Необходимо указать неделю' });
+    let sql = `
+      SELECT * FROM menu_items 
+      WHERE school_id = ?
+      ORDER BY day_of_week, meal_type, name
+    `;
+    const params = [req.user.schoolId];
+
+    // Добавляем фильтр по неделе только если указана
+    if (week) {
+      sql = `
+        SELECT * FROM menu_items 
+        WHERE week_start = ? AND school_id = ?
+        ORDER BY day_of_week, meal_type, name
+      `;
+      params.unshift(week);
     }
 
-    const items = await db.all(`
-      SELECT * FROM menu_items 
-      WHERE week_start = ? AND school_id = ?
-      ORDER BY day_of_week, meal_type, name
-    `, [week, req.user.schoolId]);
+    const items = await db.all(sql, params);
 
     // Создаем Excel файл
     const ws = XLSX.utils.json_to_sheet(items);

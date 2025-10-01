@@ -244,7 +244,7 @@ app.get('/api/health', (req, res) => {
   res.json({ 
     status: 'OK', 
     timestamp: new Date().toISOString(),
-    version: '3.0.0',
+    version: '3.0.1',
     cors_fix: 'applied',
     menu_upload_fix: 'applied',
     database_fix: 'applied',
@@ -525,13 +525,21 @@ app.post('/api/menu/upload', authenticateToken, upload.single('file'), async (re
         if (items.length === 0) {
           console.log('🔄 ИИ не нашел блюда, используем резервный метод...');
           const fallbackItems = fallbackParsing(data);
-          return fallbackItems.length > 0 ? fallbackItems : [createTestDish('ИИ не смог распознать')];
+          if (fallbackItems.length > 0) {
+            console.log(`✅ Резервный метод нашел ${fallbackItems.length} блюд`);
+            return fallbackItems;
+          } else {
+            console.log('⚠️ Резервный метод тоже не нашел блюда');
+            return [createTestDish('Файл не содержит блюд')];
+          }
         }
         
         return items;
       } catch (error) {
         console.error('❌ Ошибка ИИ парсера:', error);
-        return [createTestDish('Ошибка ИИ парсера')];
+        console.error('❌ Детали ошибки:', error.message);
+        console.error('❌ Стек ошибки:', error.stack);
+        return [createTestDish('Ошибка парсера: ' + error.message)];
       }
     };
     
@@ -600,7 +608,7 @@ app.post('/api/menu/upload', authenticateToken, upload.single('file'), async (re
       
       // Стратегия 3: ИИ ищет блюда по паттернам
       for (const pattern of analysis.dishPatterns) {
-        const dish = createDishFromPattern(pattern, analysis);
+        const dish = createDish(pattern.text, 'обед', getDayFromColumn(pattern.col, data));
         if (dish) dishes.push(dish);
       }
       
@@ -764,7 +772,9 @@ app.post('/api/menu/upload', authenticateToken, upload.single('file'), async (re
     }
     
     function fallbackParsing(data) {
+      console.log('🔄 Запуск резервного парсинга...');
       const dishes = [];
+      
       for (let row = 0; row < data.length; row++) {
         const rowData = data[row];
         if (!rowData) continue;
@@ -775,10 +785,13 @@ app.post('/api/menu/upload', authenticateToken, upload.single('file'), async (re
           
           const cellText = cell.toString().trim();
           if (cellText.length > 3 && cellText.length < 50 && !isHeader(cellText)) {
+            console.log(`🍽️ Резервный метод нашел: "${cellText}"`);
             dishes.push(createDish(cellText, 'обед', (col % 7) + 1));
           }
         }
       }
+      
+      console.log(`✅ Резервный метод завершен, найдено ${dishes.length} блюд`);
       return dishes;
     }
     

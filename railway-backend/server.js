@@ -7,6 +7,7 @@ import { body, validationResult } from 'express-validator';
 import path from 'path';
 import { fileURLToPath } from 'url';
 import fs from 'fs';
+import XLSX from 'xlsx';
 // import WorkingMenuParser from './workingMenuParser.js';
 import { 
   SECURITY_CONFIG, 
@@ -244,7 +245,7 @@ app.get('/api/health', (req, res) => {
   res.json({ 
     status: 'OK', 
     timestamp: new Date().toISOString(),
-    version: '3.0.1',
+    version: '3.0.2',
     cors_fix: 'applied',
     menu_upload_fix: 'applied',
     database_fix: 'applied',

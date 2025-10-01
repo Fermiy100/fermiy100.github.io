@@ -245,7 +245,7 @@ app.get('/api/health', (req, res) => {
   res.json({ 
     status: 'OK', 
     timestamp: new Date().toISOString(),
-    version: '3.1.0',
+    version: '3.1.1',
     cors_fix: 'applied',
     menu_upload_fix: 'applied',
     database_fix: 'applied',
@@ -651,6 +651,12 @@ app.post('/api/menu/upload', authenticateToken, upload.single('file'), async (re
         return context.nearbyMeal;
       }
       
+      // Умное определение для напитков
+      const mealType = getMealTypeByDrinkType(data[row][col]);
+      if (mealType) {
+        return mealType;
+      }
+      
       // Определяем по позиции в таблице
       if (row < data.length * 0.3) {
         return 'завтрак';
@@ -659,6 +665,68 @@ app.post('/api/menu/upload', authenticateToken, upload.single('file'), async (re
       } else {
         return 'полдник';
       }
+    }
+    
+    function getMealTypeByDrinkType(text) {
+      if (!text) return null;
+      
+      const lowerText = text.toLowerCase();
+      
+      // Напитки для завтрака
+      const breakfastDrinks = ['какао', 'молоко', 'чай с молоком', 'кофе', 'сок'];
+      if (breakfastDrinks.some(drink => lowerText.includes(drink))) {
+        return 'завтрак';
+      }
+      
+      // Напитки для полдника
+      const snackDrinks = ['компот', 'кисель', 'морс', 'сок', 'кефир', 'ряженка'];
+      if (snackDrinks.some(drink => lowerText.includes(drink))) {
+        return 'полдник';
+      }
+      
+      // Напитки для обеда (обычно чай)
+      const lunchDrinks = ['чай с сахаром', 'чай'];
+      if (lunchDrinks.some(drink => lowerText.includes(drink))) {
+        return 'обед';
+      }
+      
+      return null;
+    }
+    
+    function getDishType(text) {
+      if (!text) return 'неизвестно';
+      
+      const lowerText = text.toLowerCase();
+      
+      if (lowerText.includes('какао') || lowerText.includes('молоко') || lowerText.includes('чай') || 
+          lowerText.includes('кофе') || lowerText.includes('сок') || lowerText.includes('компот') || 
+          lowerText.includes('кисель') || lowerText.includes('морс') || lowerText.includes('кефир')) {
+        return 'напиток';
+      }
+      
+      if (lowerText.includes('суп') || lowerText.includes('борщ') || lowerText.includes('щи')) {
+        return 'суп';
+      }
+      
+      if (lowerText.includes('каша') || lowerText.includes('овсянка') || lowerText.includes('манка') || 
+          lowerText.includes('гречка') || lowerText.includes('рис') || lowerText.includes('макароны')) {
+        return 'гарнир';
+      }
+      
+      if (lowerText.includes('котлета') || lowerText.includes('мясо') || lowerText.includes('рыба') || 
+          lowerText.includes('курица') || lowerText.includes('говядина') || lowerText.includes('сосиска')) {
+        return 'мясо';
+      }
+      
+      if (lowerText.includes('салат') || lowerText.includes('овощи') || lowerText.includes('картофель')) {
+        return 'овощи';
+      }
+      
+      if (lowerText.includes('хлеб') || lowerText.includes('печенье') || lowerText.includes('булочка')) {
+        return 'выпечка';
+      }
+      
+      return 'блюдо';
     }
     
     function analyzeContext(row, col, data) {
@@ -788,7 +856,9 @@ app.post('/api/menu/upload', authenticateToken, upload.single('file'), async (re
         mealType = getMealTypeByPosition(row, col, data);
       }
       
-      console.log(`🍽️ Создано блюдо: "${text}" -> ${mealType} (строка ${row}, колонка ${col})`);
+      // Определяем тип блюда для логирования
+      const dishType = getDishType(text);
+      console.log(`🍽️ Создано блюдо: "${text}" -> ${mealType} (${dishType}, строка ${row}, колонка ${col})`);
       
       return {
         name: text,

@@ -27,28 +27,72 @@ const server = http.createServer((req, res) => {
     return;
   }
   
-  // LOGIN endpoint
+  // LOGIN endpoint - ОБРАБАТЫВАЕМ POST ДАННЫЕ
   if (req.url === '/api/auth/login' && req.method === 'POST') {
-    res.writeHead(200, {
-      'Content-Type': 'application/json',
-      ...corsHeaders
+    let body = '';
+    req.on('data', chunk => {
+      body += chunk.toString();
     });
     
-    const loginResponse = JSON.stringify({
-      message: 'Login successful',
-      token: 'railway-token-' + Date.now(),
-      user: {
-        id: 1,
-        email: 'director@school.test',
-        name: 'Test Director',
-        role: 'DIRECTOR',
-        school_id: 1,
-        verified: true
+    req.on('end', () => {
+      try {
+        const { email, password } = JSON.parse(body);
+        console.log('📧 Login attempt:', email);
+        
+        // Проверяем учетные данные - ПОДДЕРЖКА ОБОИХ ПОЛЬЗОВАТЕЛЕЙ
+        let user = null;
+        
+        if (email === 'director@school.test' && password === 'P@ssw0rd1!') {
+          user = {
+            id: 1,
+            email: 'director@school.test',
+            name: 'Test Director',
+            role: 'DIRECTOR',
+            school_id: 1,
+            verified: true
+          };
+        } else if (email === 'parent@school.test' && password === 'P@ssw0rd1!') {
+          user = {
+            id: 2,
+            email: 'parent@school.test',
+            name: 'Test Parent',
+            role: 'PARENT',
+            school_id: 1,
+            verified: true
+          };
+        }
+        
+        if (user) {
+          res.writeHead(200, {
+            'Content-Type': 'application/json',
+            ...corsHeaders
+          });
+          
+          const loginResponse = JSON.stringify({
+            token: 'railway-token-' + Date.now(),
+            user: user
+          });
+          
+          res.end(loginResponse);
+          console.log('✅ LOGIN SUCCESS for:', email, 'as', user.role);
+        } else {
+          res.writeHead(401, {
+            'Content-Type': 'application/json',
+            ...corsHeaders
+          });
+          res.end(JSON.stringify({ error: 'Invalid credentials' }));
+          console.log('❌ LOGIN FAILED for:', email);
+        }
+      } catch (error) {
+        console.error('❌ LOGIN ERROR:', error);
+        res.writeHead(400, {
+          'Content-Type': 'application/json',
+          ...corsHeaders
+        });
+        res.end(JSON.stringify({ error: 'Invalid request data' }));
       }
     });
     
-    res.end(loginResponse);
-    console.log('✅ LOGIN response sent');
     return;
   }
   

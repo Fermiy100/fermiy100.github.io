@@ -3,95 +3,41 @@ import { createServer } from 'http';
 const PORT = process.env.PORT || 3000;
 
 console.log(`🚀 Starting server on port ${PORT}...`);
+console.log(`🔍 Process environment:`);
+console.log(`   NODE_ENV: ${process.env.NODE_ENV || 'undefined'}`);
+console.log(`   PORT: ${process.env.PORT || 'undefined'}`);
+console.log(`🎯 Server will respond to ANY request with health info`);
 
-// Простейший HTTP сервер без зависимостей
+// ПРОСТЕЙШИЙ HTTP СЕРВЕР - ВСЕ ЗАПРОСЫ = OK
 const server = createServer((req, res) => {
-  console.log(`📥 ${req.method} ${req.url}`);
+  const timestamp = new Date().toISOString();
+  console.log(`📥 [${timestamp}] ${req.method} ${req.url} from ${req.connection.remoteAddress}`);
   
-  // Быстрые заголовки
-  res.setHeader('Access-Control-Allow-Origin', '*');
-  res.setHeader('Content-Type', 'application/json');
-  
-  // Простейшая обработка URL
-  const path = req.url;
-  
-  // Health checks - все пути ведут к здоровью!
-  if (path === '/' || path === '/health' || path === '/api/health' || path.includes('health')) {
-    const response = {
-      status: 'OK',
-      service: 'School Meals API',
-      timestamp: new Date().toISOString(),
-      version: '4.2.6-docker',
-      port: PORT,
-      path: path,
-      method: req.method,
-      message: 'DOCKER BUILD SUCCESS - HEALTHCHECK WORKING!'
-    };
+  try {
+    // ЛЮБОЙ ЗАПРОС ВОЗВРАЩАЕТ OK
+    res.writeHead(200, {
+      'Content-Type': 'text/plain',
+      'Access-Control-Allow-Origin': '*',
+      'Cache-Control': 'no-cache',
+      'Connection': 'keep-alive'
+    });
     
-    res.writeHead(200);
-    res.end(JSON.stringify(response));
-    console.log(`✅ Health check successful: ${path}`);
-    return;
+    const response = `OK - Server Running
+Time: ${timestamp}
+Method: ${req.method}
+URL: ${req.url}
+Version: 4.2.6-ultra-simple`;
+    
+    res.end(response);
+    console.log(`✅ [${timestamp}] Response sent: 200 OK`);
+    
+  } catch (error) {
+    console.error(`❌ [${timestamp}] Error handling request:`, error);
+    res.writeHead(500);
+    res.end('Internal Server Error');
   }
   
-  // Login endpoint
-  if (path === '/api/auth/login' && req.method === 'POST') {
-    const response = {
-      message: 'Login successful',
-      token: 'test-token-' + Date.now(),
-      user: {
-        id: 1,
-        email: 'admin@test.com',
-        name: 'Test Admin',
-        role: 'admin',
-        school_id: 1
-      }
-    };
-    res.writeHead(200);
-    res.end(JSON.stringify(response));
-    console.log(`🔑 Login request handled`);
-    return;
-  }
-  
-  // Menu endpoint
-  if (path === '/api/menu' && req.method === 'GET') {
-    const response = {
-      menu: [
-        {
-          id: 1,
-          name: 'Каша овсяная молочная',
-          meal_type: 'завтрак',
-          day_of_week: 1,
-          price: 45,
-          weight: '200г'
-        },
-        {
-          id: 2,
-          name: 'Борщ украинский',
-          meal_type: 'обед',
-          day_of_week: 1,
-          price: 85,
-          weight: '300г'
-        },
-        {
-          id: 3,
-          name: 'Кефир',
-          meal_type: 'полдник',
-          day_of_week: 1,
-          price: 25,
-          weight: '200мл'
-        }
-      ]
-    };
-    res.writeHead(200);
-    res.end(JSON.stringify(response));
-    console.log(`🍽️ Menu request handled`);
-    return;
-  }
-  
-  // Default 404
-  res.writeHead(404);
-  res.end(JSON.stringify({ error: 'Not found' }));
+  // КОНЕЦ ОБРАБОТЧИКА - ВСЕ ЗАПРОСЫ УЖЕ ОБРАБОТАНЫ ВЫШЕ
 });
 
 // Настройки сервера для Railway

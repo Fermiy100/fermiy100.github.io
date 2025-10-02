@@ -2,18 +2,16 @@
 node = "18.x"
 
 [phases.setup]
-nixPkgs = ["nodejs_18", "npm"]
+nixPkgs = ["nodejs_18"]
 
 [phases.install]
 cmds = [
-  "npm cache clean --force",
-  "rm -rf node_modules",
-  "rm -f package-lock.json",
-  "npm install --no-audit --no-fund --production"
+  "cp package-minimal.json package.json",
+  "echo 'Using minimal package.json with no dependencies'"
 ]
 
 [phases.build]
-cmds = ["echo 'Build completed'"]
+cmds = ["echo 'No build needed - minimal server'"]
 
 [start]
-cmd = "node server.js"
+cmd = "node server-minimal.js"

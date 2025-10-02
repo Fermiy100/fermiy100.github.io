@@ -1,0 +1,19 @@
+EMERGENCY MINIMAL SERVER DEPLOYMENT
+
+Railway NPM cache is completely broken. Using ZERO dependencies approach.
+
+FILES:
+- server-minimal.js: Pure Node.js HTTP server, no external deps
+- package-minimal.json: Empty dependencies
+- nixpacks.toml: No npm install needed
+
+FEATURES:
+✅ Health checks: /, /health, /api/health
+✅ CORS enabled
+✅ Login endpoint: /api/auth/login
+✅ Menu endpoint: /api/menu
+✅ Port binding: 0.0.0.0
+
+NO DEPENDENCIES = NO NPM ERRORS = RAILWAY SUCCESS
+
+Deploy timestamp: 2025-10-02 20:00:00

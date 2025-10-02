@@ -1,0 +1,12 @@
+EMERGENCY DEPLOY: Fix Railway Healthcheck Failure
+
+Changes:
+- Added multiple health check endpoints: /, /health, /api/health
+- Fixed server binding to 0.0.0.0 for Railway compatibility
+- Added proper error handling for server startup
+- Added keepalive settings for Railway
+- Version updated to 4.2.3
+
+This file forces Railway to redeploy with healthcheck fixes.
+
+Deploy timestamp: 2025-10-02 19:30:00

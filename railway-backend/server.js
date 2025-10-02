@@ -253,21 +253,37 @@ const upload = multer({
 
 // Routes
 
-// Health check
+// Health check endpoints for Railway
+app.get('/', (req, res) => {
+  res.json({ 
+    status: 'OK',
+    service: 'School Meals API',
+    timestamp: new Date().toISOString(),
+    version: '4.2.3'
+  });
+});
+
+app.get('/health', (req, res) => {
+  res.json({ 
+    status: 'OK',
+    timestamp: new Date().toISOString(),
+    uptime: process.uptime(),
+    memory: process.memoryUsage()
+  });
+});
+
 app.get('/api/health', (req, res) => {
   res.json({ 
     status: 'OK', 
     timestamp: new Date().toISOString(),
-    version: '4.2.1',
+    version: '4.2.3',
     cors_fix: 'applied',
     menu_upload_fix: 'applied',
     database_fix: 'applied',
     variable_scope_fix: 'applied',
-    force_update: '2025-10-01-18-00',
+    force_update: '2025-10-02-19-00',
     ai_parser: 'active',
     new_features: 'maximized_features',
-    ai_parser: 'active',
-    new_features: 'menu_management',
     restart_forced: true
   });
 });
@@ -1721,12 +1737,28 @@ app.post('/api/users', authenticateToken, async (req, res) => {
   }
 });
 
-// Start server
-app.listen(PORT, () => {
-  console.log(` Сервер запущен на порту ${PORT}`);
+// Start server with improved error handling
+const server = app.listen(PORT, '0.0.0.0', () => {
+  console.log(`🚀 Сервер успешно запущен на порту ${PORT}`);
   console.log(`📝 API доступно по адресу: http://localhost:${PORT}/api`);
-  console.log(`🏥 Health check: http://localhost:${PORT}/api/health`);
+  console.log(`🏥 Health check endpoints:`);
+  console.log(`   - http://localhost:${PORT}/`);
+  console.log(`   - http://localhost:${PORT}/health`);
+  console.log(`   - http://localhost:${PORT}/api/health`);
+  console.log(`🎯 Сервер готов к работе! Версия: 4.2.3`);
 });
+
+server.on('error', (error) => {
+  console.error('❌ Ошибка запуска сервера:', error);
+  if (error.code === 'EADDRINUSE') {
+    console.error(`💥 Порт ${PORT} уже используется!`);
+  }
+  process.exit(1);
+});
+
+// Добавляем keepalive для Railway
+server.keepAliveTimeout = 61 * 1000;
+server.headersTimeout = 65 * 1000;
 
 // Поиск блюд
 app.get('/api/menu/search', authenticateToken, async (req, res) => {

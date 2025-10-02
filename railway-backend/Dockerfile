@@ -2,13 +2,22 @@ FROM node:18-alpine
 
 WORKDIR /app
 
-# Копируем только сервер - НЕТ package.json!
+# Устанавливаем bash для отладки
+RUN apk add --no-cache bash
+
+# Копируем файлы
 COPY server-minimal.js .
+COPY server-debug.js .
+COPY start.sh .
 
-# НЕТ npm install - НЕТ зависимостей!
-RUN echo "NO NPM INSTALL NEEDED - PURE NODE.JS"
+# Делаем скрипт исполняемым
+RUN chmod +x start.sh
 
-EXPOSE 3000
+# Показываем что скопировалось
+RUN echo "📁 Files copied:" && ls -la
 
-# Запускаем напрямую
-CMD ["node", "server-minimal.js"]
+# Порт будет динамический от Railway
+EXPOSE $PORT
+
+# Отладочный запуск
+CMD ["bash", "start.sh"]

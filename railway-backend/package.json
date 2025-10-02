@@ -6,35 +6,28 @@
   "type": "module",
   "scripts": {
     "start": "node server.js",
-    "start:force": "node server.js --force-restart",
-    "start:production": "node server-production.js",
+    "build": "npm ci --only=production",
+    "postinstall": "echo 'Dependencies installed successfully'",
+    "prestart": "echo 'Starting server...'",
     "dev": "nodemon server.js",
-    "build": "echo 'Backend build completed'",
-    "test": "echo 'Tests completed'",
-    "deploy": "node deploy.js",
-    "deploy:railway": "node quick-deploy.js",
-    "migrate": "node scripts/migrate.js",
-    "seed": "node scripts/seed.js"
+    "test": "echo 'Tests completed'"
   },
   "dependencies": {
-    "express": "^4.18.2",
-    "cors": "^2.8.5",
-    "bcryptjs": "^2.4.3",
-    "jsonwebtoken": "^9.0.2",
-    "sqlite3": "^5.1.6",
-    "pg": "^8.11.3",
-    "ioredis": "^5.3.2",
-    "multer": "^1.4.5-lts.1",
-    "xlsx": "^0.18.5",
-    "helmet": "^7.1.0",
-    "express-rate-limit": "^7.1.5",
-    "express-validator": "^7.0.1",
-    "dotenv": "^16.3.1",
-    "compression": "^1.7.4",
-    "cluster": "^0.7.7"
+    "express": "4.18.2",
+    "cors": "2.8.5",
+    "bcryptjs": "2.4.3",
+    "jsonwebtoken": "9.0.2",
+    "sqlite3": "5.1.6",
+    "multer": "1.4.5-lts.1",
+    "xlsx": "0.18.5",
+    "helmet": "7.1.0",
+    "express-rate-limit": "7.1.5",
+    "dotenv": "16.3.1",
+    "compression": "1.7.4"
   },
-  "devDependencies": {
-    "nodemon": "^3.0.2"
+  "engines": {
+    "node": ">=18.0.0",
+    "npm": ">=8.0.0"
   },
   "keywords": [
     "school",

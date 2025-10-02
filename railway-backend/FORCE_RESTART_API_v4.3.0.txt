@@ -1,0 +1,14 @@
+FORCE RESTART RAILWAY - API ENDPOINTS v4.3.0
+
+КРИТИЧЕСКОЕ ОБНОВЛЕНИЕ:
+- server-debug.js с полными API endpoints
+- POST /api/auth/login с обработкой JSON
+- Поддержка director@school.test и parent@school.test
+- CORS для fermiy.ru
+- Принудительный запуск через start.sh
+
+FRONTEND УЖЕ ОБНОВЛЕН НА fermiy.ru и ожидает JSON API!
+
+Необходим перезапуск для активации API endpoints.
+
+Timestamp: 2025-10-02 19:15:00

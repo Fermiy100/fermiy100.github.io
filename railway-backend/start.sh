@@ -12,10 +12,6 @@ ls -la
 echo "🌐 NETWORK TEST:"
 echo "  Testing port availability..."
 
-echo "🎯 STARTING DEBUG SERVER..."
-# Пробуем отладочный сервер
-node server-debug.js
-
-# Если не работает, пробуем обычный
-echo "🔄 Fallback to minimal server..."
-exec node server-minimal.js
+echo "🎯 STARTING DEBUG SERVER WITH API ENDPOINTS..."
+# Используем отладочный сервер с API endpoints
+exec node server-debug.js

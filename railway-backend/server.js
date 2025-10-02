@@ -573,17 +573,128 @@ app.post('/api/menu/upload', authenticateToken, upload.single('file'), async (re
       });
     }
     
-    // Валидация и улучшение данных блюд
+    // СТРОГАЯ ВАЛИДАЦИЯ И УЛУЧШЕНИЕ ДАННЫХ БЛЮД
     function validateAndEnhanceSchoolDishes(dishes) {
-      return dishes.map(dish => ({
-        ...dish,
-        name: cleanDishName(dish.name),
-        description: dish.description || generateBetterDescription(dish.name, dish.meal_type),
-        price: dish.price || generateRealisticSchoolPrice(dish.name, dish.meal_type),
-        weight: dish.weight || generateAccurateWeight(dish.name, dish.meal_type),
-        recipe_number: dish.recipe_number || `Р-${Math.floor(Math.random() * 900) + 100}`,
-        nutritional_value: generateNutritionalInfo(dish.name, dish.meal_type)
-      }));
+      return dishes.map(dish => {
+        // КРИТИЧЕСКИ ВАЖНО: Перепроверяем тип питания
+        const correctedMealType = strictMealTypeValidation(dish.name, dish.meal_type);
+        
+        return {
+          ...dish,
+          name: cleanDishName(dish.name),
+          meal_type: correctedMealType, // Используем исправленный тип
+          description: dish.description || generateBetterDescription(dish.name, correctedMealType),
+          price: dish.price || generateRealisticSchoolPrice(dish.name, correctedMealType),
+          weight: dish.weight || generateAccurateWeight(dish.name, correctedMealType),
+          recipe_number: dish.recipe_number || `Р-${Math.floor(Math.random() * 900) + 100}`,
+          nutritional_value: generateNutritionalInfo(dish.name, correctedMealType)
+        };
+      }).filter(dish => validateDishForMealType(dish.name, dish.meal_type)); // Убираем несовместимые блюда
+    }
+    
+    // ИДЕАЛЬНАЯ СИСТЕМА КОНТРОЛЯ ТИПОВ ПИТАНИЯ
+    function strictMealTypeValidation(dishName, currentMealType) {
+      const name = dishName.toLowerCase().trim();
+      
+      // АБСОЛЮТНЫЕ ПРАВИЛА - НЕ ПОДЛЕЖАТ ИЗМЕНЕНИЮ
+      
+      // 🌅 ЗАВТРАК - строго утренние блюда
+      const breakfastAbsolute = [
+        /каш[аи]/i, /омлет/i, /яичниц/i, /сырник/i, /творог/i, /оладь/i, 
+        /блинчик/i, /какао/i, /бутерброд/i, /запеканк[аи]\s+творожн/i
+      ];
+      
+      // 🍽️ ОБЕД - основные горячие блюда
+      const lunchAbsolute = [
+        /суп/i, /борщ/i, /щи/i, /котлет/i, /мясо\s+/i, /рыба\s+/i, 
+        /биточк/i, /тефтел/i, /пюре/i, /компот/i, /салат\s+(мясн|рыбн)/i
+      ];
+      
+      // 🥛 ПОЛДНИК - легкие перекусы
+      const snackAbsolute = [
+        /кефир/i, /ряженк/i, /йогурт/i, /печень/i, /пряник/i, /булочк/i,
+        /фрукт/i, /ягод/i, /сок/i, /нектар/i, /вафл/i
+      ];
+      
+      // Проверяем абсолютные правила
+      for (const pattern of breakfastAbsolute) {
+        if (pattern.test(name)) return 'завтрак';
+      }
+      
+      for (const pattern of lunchAbsolute) {
+        if (pattern.test(name)) return 'обед';
+      }
+      
+      for (const pattern of snackAbsolute) {
+        if (pattern.test(name)) return 'полдник';
+      }
+      
+      // ДОПОЛНИТЕЛЬНАЯ ЛОГИКА ДЛЯ СПОРНЫХ СЛУЧАЕВ
+      
+      // Молоко - зависит от контекста
+      if (/молоко/i.test(name)) {
+        if (/теплое|с\s+медом|какао/i.test(name)) return 'завтрак';
+        if (/холодное|парное/i.test(name)) return 'полдник';
+        return 'полдник'; // По умолчанию
+      }
+      
+      // Хлеб - зависит от подачи
+      if (/хлеб/i.test(name)) {
+        if (/с\s+(маслом|джемом|сыром)/i.test(name)) return 'завтрак';
+        return 'обед'; // Обычный хлеб к обеду
+      }
+      
+      // Чай - зависит от времени
+      if (/чай/i.test(name)) {
+        if (/с\s+молоком|утренн/i.test(name)) return 'завтрак';
+        if /(травян|фруктов|вечерн)/i.test(name)) return 'полдник';
+        return 'завтрак'; // По умолчанию утренний
+      }
+      
+      // Если не удалось определить точно, возвращаем текущий тип
+      return currentMealType || 'обед';
+    }
+    
+    // ПРОВЕРКА СОВМЕСТИМОСТИ БЛЮДА С ТИПОМ ПИТАНИЯ
+    function validateDishForMealType(dishName, mealType) {
+      const name = dishName.toLowerCase().trim();
+      
+      // ЧЕРНЫЙ СПИСОК - блюда, которые НИКОГДА не должны быть в определенных приемах пищи
+      
+      const forbiddenInBreakfast = [
+        /суп(?!ер)/i, /борщ/i, /щи/i, /рассольник/i, /солянк/i, // Супы
+        /котлет/i, /биточк/i, /тефтел/i, /отбивн/i, // Мясные блюда
+        /компот/i, /кисель/i, /морс/i, // Обеденные напитки
+        /салат\s+(овощн|мясн|рыбн)/i // Салаты (кроме фруктовых)
+      ];
+      
+      const forbiddenInLunch = [
+        /какао/i, /кефир/i, /ряженк/i, /йогурт/i, // Молочные напитки полдника
+        /печень(?!ка)/i, /пряник/i, /вафл/i, // Сладости
+        /фрукт(?!овый)/i, /ягод/i, /изюм/i, /курага/i // Фрукты и сухофрукты
+      ];
+      
+      const forbiddenInSnack = [
+        /суп/i, /борщ/i, /щи/i, /солянк/i, // Первые блюда
+        /котлет/i, /мясо\s+/i, /рыба\s+/i, /биточк/i, // Мясные/рыбные блюда
+        /пюре\s+(картофель|овощн)/i, /гречк/i, /рис\s+отварн/i, // Гарниры
+        /каш[аи]\s+молочн/i, /омлет/i, /сырник/i // Завтраки
+      ];
+      
+      // Проверяем запреты
+      if (mealType === 'завтрак') {
+        return !forbiddenInBreakfast.some(pattern => pattern.test(name));
+      }
+      
+      if (mealType === 'обед') {
+        return !forbiddenInLunch.some(pattern => pattern.test(name));
+      }
+      
+      if (mealType === 'полдник') {
+        return !forbiddenInSnack.some(pattern => pattern.test(name));
+      }
+      
+      return true; // Если тип не определен, пропускаем
     }
     
     function cleanDishName(name) {

@@ -356,21 +356,30 @@ export class SuperMenuParser {
   }
 
   determineMealTypeByContent(text) {
-    const normalizedText = text.toLowerCase();
+    const normalizedText = text.toLowerCase().trim();
     
-    // Завтрак
-    if (this.mealTypeKeywords.завтрак.some(keyword => normalizedText.includes(keyword))) {
+    // СТРОГИЕ ПРАВИЛА КЛАССИФИКАЦИИ
+    
+    // Завтрак - утренние блюда
+    if (/каш[аи]|омлет|сырник|творог|оладь|какао|бутерброд|яичниц/i.test(normalizedText)) {
       return 'завтрак';
     }
     
-    // Обед
-    if (this.mealTypeKeywords.обед.some(keyword => normalizedText.includes(keyword))) {
+    // Обед - основные горячие блюда
+    if (/суп|борщ|щи|котлет|мясо|рыба|биточк|тефтел|пюре|компот|салат/i.test(normalizedText)) {
       return 'обед';
     }
     
-    // Полдник
-    if (this.mealTypeKeywords.полдник.some(keyword => normalizedText.includes(keyword))) {
+    // Полдник - легкие перекусы
+    if (/кефир|ряженк|йогурт|печень|булочк|фрукт|сок|молоко/i.test(normalizedText)) {
       return 'полдник';
+    }
+    
+    // Проверяем по ключевым словам
+    for (const [mealType, keywords] of Object.entries(this.mealTypeKeywords)) {
+      if (keywords.some(keyword => normalizedText.includes(keyword))) {
+        return mealType;
+      }
     }
     
     return null;

@@ -1,8 +1,0 @@
-RAILWAY FORCE RESTART - ULTIMATE PARSER
-Timestamp: 2025-09-28 11:25
-Version: 2.0.1
-Parser: UltimateMenuParser
-Status: Active
-
-This file forces Railway to restart deployment.
-Ultimate parser is ready to work with your Excel files.

@@ -1,7 +1,0 @@
-RAILWAY FORCE RESTART
-Timestamp: 2025-09-28 11:20
-Version: 1.1.1
-Parser: PerfectMenuParser
-Status: Active
-
-This file forces Railway to restart deployment.

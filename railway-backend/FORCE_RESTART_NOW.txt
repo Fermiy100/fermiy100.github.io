@@ -1,4 +1,0 @@
-FORCE RESTART - API FIX v4.2.1
-Timestamp: 2025-10-01-19-15
-Status: All new buttons and functions added to director interface
-Version: 4.0.0

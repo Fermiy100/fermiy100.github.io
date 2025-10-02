@@ -1,9 +1,9 @@
 import express from 'express';
 import cors from 'cors';
-import helmet from 'helmet';
+// import helmet from 'helmet'; // Temporarily removed for Railway build
 import sqlite3 from 'sqlite3';
 import multer from 'multer';
-import { body, validationResult } from 'express-validator';
+// import { body, validationResult } from 'express-validator'; // Temporarily removed
 import path from 'path';
 import { fileURLToPath } from 'url';
 import fs from 'fs';
@@ -33,7 +33,8 @@ const __dirname = path.dirname(__filename);
 const app = express();
 const PORT = process.env.PORT || 3000;
 
-// Middleware безопасности
+// Middleware безопасности - temporarily disabled for Railway build
+/*
 app.use(helmet({
   contentSecurityPolicy: {
     directives: {
@@ -49,6 +50,7 @@ app.use(helmet({
     preload: true
   }
 }));
+*/
 
 // CORS настройки для fermiy.ru - ОБНОВЛЕНО
 app.use(cors({

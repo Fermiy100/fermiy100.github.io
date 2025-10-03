@@ -12,7 +12,7 @@ interface MenuItem {
   description?: string;
   price: number;
   portion?: string;
-  day_of_week: number;
+  day_of_week: number | string;
   meal_type: string;
   school_id: number;
   week_start: string;
@@ -43,7 +43,8 @@ const ParentMenuSelector: React.FC<ParentMenuSelectorProps> = ({ schoolId, weekS
     try {
       setLoading(true);
       const response = await apiClient.getMenu(weekStart);
-      setMenuItems(response.items);
+      // API теперь возвращает прямой массив блюд
+      setMenuItems(Array.isArray(response) ? response : response.items || []);
     } catch (error) {
       console.error('Ошибка загрузки меню:', error);
     } finally {
@@ -118,7 +119,14 @@ const ParentMenuSelector: React.FC<ParentMenuSelectorProps> = ({ schoolId, weekS
             <h3>Завтрак</h3>
             <span className="item-count">({breakfastItems.length} блюд)</span>
           </div>
-          <div className="meal-items">
+          <div className="meal-items" style={{
+            maxHeight: '400px',
+            overflowY: 'auto',
+            display: 'grid',
+            gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))',
+            gap: '12px',
+            padding: '10px'
+          }}>
             {breakfastItems.map(item => (
               <div 
                 key={item.id} 
@@ -156,7 +164,14 @@ const ParentMenuSelector: React.FC<ParentMenuSelectorProps> = ({ schoolId, weekS
             <h3>Обед</h3>
             <span className="item-count">({lunchItems.length} блюд)</span>
           </div>
-          <div className="meal-items">
+          <div className="meal-items" style={{
+            maxHeight: '400px',
+            overflowY: 'auto',
+            display: 'grid',
+            gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))',
+            gap: '12px',
+            padding: '10px'
+          }}>
             {lunchItems.map(item => (
               <div 
                 key={item.id} 
@@ -193,10 +208,17 @@ const ParentMenuSelector: React.FC<ParentMenuSelectorProps> = ({ schoolId, weekS
           <div className="meal-column">
             <div className="meal-header">
               <h3>Полдник</h3>
-              <span className="item-count">({snackItems.length} блюд)</span>
-            </div>
-            <div className="meal-items">
-              {snackItems.map(item => (
+            <span className="item-count">({snackItems.length} блюд)</span>
+          </div>
+          <div className="meal-items" style={{
+            maxHeight: '400px',
+            overflowY: 'auto',
+            display: 'grid',
+            gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))',
+            gap: '12px',
+            padding: '10px'
+          }}>
+            {snackItems.map(item => (
                 <div 
                   key={item.id} 
                   className={`menu-item-card ${selectedItems.has(item.id) ? 'selected' : ''}`}

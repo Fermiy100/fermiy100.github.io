@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Финальный тест API</title>
+    <style>
+        body { font-family: Arial; padding: 20px; }
+        .success { color: green; }
+        .error { color: red; }
+        .dish { margin: 10px 0; padding: 10px; border: 1px solid #ddd; }
+        button { padding: 10px; margin: 5px; font-size: 16px; }
+    </style>
+</head>
+<body>
+    <h1>🎯 Финальный тест системы</h1>
+    
+    <button onclick="testAPI()">Тест API /api/menu.php</button>
+    <button onclick="testDirect()">Тест файла напрямую</button>
+    <button onclick="clearCache()">Очистить кэш</button>
+    
+    <div id="results"></div>
+
+    <script>
+        async function testAPI() {
+            showLoading();
+            try {
+                const response = await fetch('/api/menu.php?' + Date.now()); // Кэш-бастер
+                const data = await response.json();
+                
+                showResults('API Test', {
+                    status: response.status,
+                    dataType: Array.isArray(data) ? 'array' : typeof data,
+                    itemsCount: Array.isArray(data) ? data.length : 'not array',
+                    firstItem: Array.isArray(data) && data[0] ? data[0] : null,
+                    sampleData: data
+                });
+            } catch (error) {
+                showError('API Test Failed: ' + error.message);
+            }
+        }
+        
+        async function testDirect() {
+            showLoading();
+            try {
+                const response = await fetch('/api/menu_data.json?' + Date.now());
+                const data = await response.json();
+                
+                showResults('Direct File Test', {
+                    status: response.status,
+                    itemsCount: Array.isArray(data) ? data.length : 'not array',
+                    firstItem: Array.isArray(data) && data[0] ? data[0] : null
+                });
+            } catch (error) {
+                showError('Direct Test Failed: ' + error.message);
+            }
+        }
+        
+        function clearCache() {
+            localStorage.clear();
+            sessionStorage.clear();
+            if ('caches' in window) {
+                caches.keys().then(names => {
+                    names.forEach(name => caches.delete(name));
+                });
+            }
+            location.reload(true);
+        }
+        
+        function showLoading() {
+            document.getElementById('results').innerHTML = '<p>⏳ Загрузка...</p>';
+        }
+        
+        function showResults(title, data) {
+            const div = document.getElementById('results');
+            div.innerHTML = `
+                <h2 class="success">✅ ${title}</h2>
+                <pre>${JSON.stringify(data, null, 2)}</pre>
+            `;
+        }
+        
+        function showError(message) {
+            document.getElementById('results').innerHTML = `
+                <h2 class="error">❌ ${message}</h2>
+            `;
+        }
+        
+        // Автоматический тест при загрузке
+        window.onload = function() {
+            setTimeout(testAPI, 1000);
+        };
+    </script>
+</body>
+</html>

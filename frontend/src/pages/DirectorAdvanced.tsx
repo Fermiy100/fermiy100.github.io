@@ -3,6 +3,7 @@ import { apiClient, User, MenuItem, School } from "../utils/api";
 import UserManagement from "./UserManagement";
 import MenuItemEditor from "../components/MenuItemEditor";
 import MenuItemCard from "../components/MenuItemCard";
+import AddItemForm from "../components/AddItemForm";
 
 export default function DirectorAdvanced({ token: _token }: any) {
   const [file, setFile] = useState<File | null>(null);
@@ -38,10 +39,11 @@ export default function DirectorAdvanced({ token: _token }: any) {
         
         // Загружаем меню
         const menuData = await apiClient.getMenu();
-        setMenuItems(menuData.items || []);
+        // API теперь возвращает прямой массив блюд
+        setMenuItems(Array.isArray(menuData) ? menuData : menuData.items || []);
       }
     } catch (error: any) {
-      setMsg(`❌ Ошибка загрузки: ${error.message}`);
+      setMsg(`Ошибка загрузки: ${error.message}`);
     } finally {
       setLoading(false);
     }
@@ -50,7 +52,7 @@ export default function DirectorAdvanced({ token: _token }: any) {
   const handleFileUpload = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!file) {
-      setMsg("❌ Выберите файл");
+      setMsg("Выберите файл");
       return;
     }
 
@@ -62,7 +64,7 @@ export default function DirectorAdvanced({ token: _token }: any) {
       const formData = new FormData();
       formData.append("file", file);
 
-      const response = await fetch("/api/menu/upload", {
+      const response = await fetch("/api/menu/upload.php", {
         method: "POST",
         headers: {
           Authorization: `Bearer ${localStorage.getItem("token")}`,
@@ -72,7 +74,7 @@ export default function DirectorAdvanced({ token: _token }: any) {
 
       if (response.ok) {
         const result = await response.json();
-        setMsg(`✅ Меню загружено! Добавлено ${result.addedCount} блюд`);
+        setMsg(`Меню загружено! Добавлено ${result.addedCount} блюд`);
         setFile(null);
         loadData();
       } else {
@@ -94,7 +96,7 @@ export default function DirectorAdvanced({ token: _token }: any) {
     }
     
     try {
-      const response = await fetch('/api/menu/clear', {
+      const response = await fetch('/api/menu/clear.php', {
         method: 'DELETE',
         headers: {
           'Authorization': `Bearer ${localStorage.getItem('token')}`,
@@ -105,6 +107,10 @@ export default function DirectorAdvanced({ token: _token }: any) {
       if (response.ok) {
         const result = await response.json();
         setMsg(`✅ Удалено ${result.deletedCount} блюд из меню`);
+        // Принудительно очищаем состояние
+        setMenuItems([]);
+        setBulkSelected(new Set());
+        // Затем загружаем актуальные данные
         loadData();
       } else {
         const error = await response.json();
@@ -127,7 +133,7 @@ export default function DirectorAdvanced({ token: _token }: any) {
     }
 
     try {
-      const response = await fetch('/api/menu/bulk-delete', {
+      const response = await fetch('/api/menu/bulk-delete.php', {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${localStorage.getItem('token')}`,
@@ -170,6 +176,56 @@ export default function DirectorAdvanced({ token: _token }: any) {
     setBulkSelected(new Set());
   };
 
+  const handleAddItem = async (formData: any) => {
+    try {
+      const response = await fetch('/api/menu/add.php', {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${localStorage.getItem('token')}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(formData)
+      });
+      
+      if (response.ok) {
+        const newItem = await response.json();
+        setMenuItems([...menuItems, newItem]);
+        setMsg(`✅ Блюдо "${newItem.name}" добавлено`);
+        setShowAddForm(false);
+      } else {
+        const error = await response.json();
+        setMsg(`❌ Ошибка добавления: ${error.error}`);
+      }
+    } catch (error: any) {
+      setMsg(`❌ Ошибка: ${error.message}`);
+    }
+  };
+
+  const handleDeleteItem = async (itemId: number) => {
+    if (!confirm('Удалить это блюдо?')) {
+      return;
+    }
+    
+    try {
+      const response = await fetch(`/api/menu/delete.php/${itemId}`, {
+        method: 'DELETE',
+        headers: {
+          'Authorization': `Bearer ${localStorage.getItem('token')}`,
+          'Content-Type': 'application/json'
+        }
+      });
+      
+      if (response.ok) {
+        setMenuItems(menuItems.filter(item => item.id !== itemId));
+        setMsg('✅ Блюдо удалено');
+      } else {
+        setMsg('❌ Ошибка при удалении блюда');
+      }
+    } catch (error: any) {
+      setMsg(`❌ Ошибка: ${error.message}`);
+    }
+  };
+
   if (loading && !menuItems.length) {
     return (
       <div style={{ textAlign: 'center', padding: '50px' }}>
@@ -180,7 +236,7 @@ export default function DirectorAdvanced({ token: _token }: any) {
 
   return (
     <div style={{ maxWidth: '1200px', margin: '0 auto', padding: '20px' }}>
-      <h1>🏫 Панель директора</h1>
+      <h1>Панель директора</h1>
       
       {msg && (
         <div style={{
@@ -209,7 +265,7 @@ export default function DirectorAdvanced({ token: _token }: any) {
             cursor: 'pointer'
           }}
         >
-          📋 Меню
+          Меню
         </button>
         <button
           onClick={() => setActiveTab('users')}
@@ -222,7 +278,7 @@ export default function DirectorAdvanced({ token: _token }: any) {
             cursor: 'pointer'
           }}
         >
-          👥 Пользователи
+          Пользователи
         </button>
       </div>
 
@@ -264,7 +320,7 @@ export default function DirectorAdvanced({ token: _token }: any) {
                     cursor: loading ? 'not-allowed' : 'pointer'
                   }}
                 >
-                  {loading ? '⏳ Загружаем...' : '📤 Загрузить'}
+                  {loading ? 'Загружаем...' : 'Загрузить'}
                 </button>
               </div>
               
@@ -316,7 +372,7 @@ export default function DirectorAdvanced({ token: _token }: any) {
                   fontSize: '14px'
                 }}
               >
-                ➕ Добавить блюдо
+                Добавить блюдо
               </button>
               
               <button
@@ -331,7 +387,7 @@ export default function DirectorAdvanced({ token: _token }: any) {
                   fontSize: '14px'
                 }}
               >
-                🗑️ Удалить все
+                Удалить все
               </button>
               
               <button
@@ -458,12 +514,7 @@ export default function DirectorAdvanced({ token: _token }: any) {
                     key={item.id}
                     item={item}
                     onEdit={setEditingItem}
-                    onDelete={() => {
-                      if (confirm('Удалить это блюдо?')) {
-                        // Здесь можно добавить удаление отдельного блюда
-                        setMsg('Функция удаления отдельного блюда будет добавлена');
-                      }
-                    }}
+                    onDelete={() => handleDeleteItem(item.id)}
                     showBulkSelection={true}
                     isBulkSelected={bulkSelected.has(item.id)}
                     onBulkSelect={() => toggleBulkSelection(item.id)}
@@ -482,6 +533,38 @@ export default function DirectorAdvanced({ token: _token }: any) {
             setMsg('✅ Пользователь создан');
           }}
         />
+      )}
+
+      {/* Форма добавления блюда */}
+      {showAddForm && (
+        <div style={{
+          position: 'fixed',
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: 0,
+          backgroundColor: 'rgba(0, 0, 0, 0.5)',
+          display: 'flex',
+          justifyContent: 'center',
+          alignItems: 'center',
+          zIndex: 1000
+        }}>
+          <div style={{
+            backgroundColor: 'white',
+            padding: '30px',
+            borderRadius: '10px',
+            width: '500px',
+            maxHeight: '80vh',
+            overflow: 'auto'
+          }}>
+            <h3 style={{ margin: '0 0 20px 0' }}>➕ Добавить новое блюдо</h3>
+            
+            <AddItemForm 
+              onAdd={handleAddItem}
+              onCancel={() => setShowAddForm(false)}
+            />
+          </div>
+        </div>
       )}
 
       {/* Модальные окна */}

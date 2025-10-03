@@ -14,6 +14,15 @@ interface MenuItemCardProps {
 }
 
 const dayNames = ['', 'Пн', 'Вт', 'Ср', 'Чт', 'Пт'];
+const dayNamesMap = {
+  'понедельник': 'Пн',
+  'вторник': 'Вт', 
+  'среда': 'Ср',
+  'четверг': 'Чт',
+  'пятница': 'Пт',
+  'суббота': 'Сб',
+  'воскресенье': 'Вс'
+};
 const mealTypeNames = {
   'завтрак': 'Завтрак',
   'обед': 'Обед',
@@ -78,12 +87,12 @@ export default function MenuItemCard({
       )}
       
       <div className="flex justify-between items-center mt-2">
-        <div className="flex gap-2">
-          <span className="menu-item-portion">
-            {dayNames[item.day_of_week]}
+        <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
+          <span className="menu-item-portion" style={{ backgroundColor: '#e0e7ff', padding: '2px 6px', borderRadius: '4px', fontSize: '12px' }}>
+            {typeof item.day_of_week === 'number' ? dayNames[item.day_of_week] : dayNamesMap[item.day_of_week as keyof typeof dayNamesMap] || item.day_of_week}
           </span>
-          <span className="menu-item-portion">
-            {mealTypeNames[item.meal_type as keyof typeof mealTypeNames]}
+          <span className="menu-item-portion" style={{ backgroundColor: '#dcfce7', padding: '2px 6px', borderRadius: '4px', fontSize: '12px' }}>
+            {mealTypeNames[item.meal_type as keyof typeof mealTypeNames] || item.meal_type}
           </span>
           {item.portion && (
             <span className="menu-item-portion">{item.portion}</span>

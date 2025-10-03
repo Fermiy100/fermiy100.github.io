@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Test Menu Upload</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; }
+        .result { margin-top: 20px; padding: 10px; border: 1px solid #ddd; }
+        .error { background-color: #ffebee; }
+        .success { background-color: #e8f5e8; }
+    </style>
+</head>
+<body>
+    <h1>Test Menu Upload</h1>
+    
+    <form id="uploadForm">
+        <input type="file" id="fileInput" accept=".xlsx,.xls" required>
+        <button type="submit">Upload Menu</button>
+    </form>
+    
+    <div id="result" class="result" style="display: none;"></div>
+    
+    <h2>Current Menu Items</h2>
+    <div id="menuItems"></div>
+
+    <script>
+        document.getElementById('uploadForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            
+            const fileInput = document.getElementById('fileInput');
+            const file = fileInput.files[0];
+            
+            if (!file) {
+                showResult('Please select a file', 'error');
+                return;
+            }
+            
+            const formData = new FormData();
+            formData.append('file', file);
+            
+            try {
+                showResult('Uploading...', 'success');
+                
+                const response = await fetch('/api/menu/upload.php', {
+                    method: 'POST',
+                    body: formData
+                });
+                
+                const data = await response.json();
+                
+                if (response.ok) {
+                    showResult(JSON.stringify(data, null, 2), 'success');
+                    loadMenuItems();
+                } else {
+                    showResult(JSON.stringify(data, null, 2), 'error');
+                }
+                
+            } catch (error) {
+                showResult('Error: ' + error.message, 'error');
+            }
+        });
+        
+        function showResult(message, type) {
+            const result = document.getElementById('result');
+            result.innerHTML = '<pre>' + message + '</pre>';
+            result.className = 'result ' + type;
+            result.style.display = 'block';
+        }
+        
+        async function loadMenuItems() {
+            try {
+                const response = await fetch('/api/menu.php');
+                const items = await response.json();
+                
+                document.getElementById('menuItems').innerHTML = 
+                    '<pre>' + JSON.stringify(items, null, 2) + '</pre>';
+                    
+            } catch (error) {
+                document.getElementById('menuItems').innerHTML = 
+                    '<p>Error loading menu: ' + error.message + '</p>';
+            }
+        }
+        
+        // Load menu items on page load
+        loadMenuItems();
+    </script>
+</body>
+</html>

@@ -36,7 +36,8 @@ export default function StatsDashboard({ currentUser }: StatsDashboardProps) {
         apiClient.getUserOrders()
       ]);
 
-      const menuItems: MenuItem[] = menuData.items;
+      // API теперь возвращает прямой массив блюд
+      const menuItems: MenuItem[] = Array.isArray(menuData) ? menuData : menuData.items || [];
       const orders: Order[] = ordersData;
 
       // Вычисляем статистику

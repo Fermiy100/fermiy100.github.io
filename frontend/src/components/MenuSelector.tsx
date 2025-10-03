@@ -50,7 +50,42 @@ export default function MenuSelector({ onSelectionChange }: MenuSelectorProps) {
   };
 
   const getItemsForMeal = (day: string, mealType: string) => {
-    return getItemsForDay(day).filter(item => item.meal_type === mealType);
+    return getItemsForDay(day)
+      .filter(item => item.meal_type === mealType)
+      .sort((a, b) => a.name.localeCompare(b.name, 'ru'));
+  };
+
+  const getMealTypeIcon = (mealType: string) => {
+    switch (mealType) {
+      case 'завтрак': return '🌅';
+      case 'обед': return '🍽️';
+      case 'полдник': return '🥛';
+      default: return '🍴';
+    }
+  };
+
+  const getMealTypeColor = (mealType: string) => {
+    switch (mealType) {
+      case 'завтрак': return '#FFE5B4';
+      case 'обед': return '#E5F3FF';
+      case 'полдник': return '#F0FFF0';
+      default: return '#F5F5F5';
+    }
+  };
+
+  const formatPrice = (price: number) => {
+    return price ? `${price} ₽` : '';
+  };
+
+
+  const getTotalByMealType = (mealType: string) => {
+    return Array.from(selectedItems).reduce((total, itemId) => {
+      const item = menuItems.find(m => m.id === itemId);
+      if (item?.meal_type === mealType) {
+        return total + (item?.price || 0);
+      }
+      return total;
+    }, 0);
   };
 
   const clearAllSelections = () => {
@@ -100,11 +135,32 @@ export default function MenuSelector({ onSelectionChange }: MenuSelectorProps) {
       {/* Меню на выбранный день */}
       <div className="menu-layout">
         {/* Завтрак */}
-        <div className="meal-column">
-          <div className="meal-header">
-            <h3>🌅 Завтрак</h3>
-            <div className="item-count">
-              {getItemsForMeal(selectedDay, 'завтрак').length}
+        <div className="meal-column" style={{ backgroundColor: getMealTypeColor('завтрак'), borderRadius: '10px', padding: '15px', boxShadow: '0 2px 8px rgba(0,0,0,0.1)' }}>
+          <div className="meal-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '15px' }}>
+            <h3 style={{ margin: 0, display: 'flex', alignItems: 'center', gap: '8px' }}>
+              {getMealTypeIcon('завтрак')} Завтрак
+            </h3>
+            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'end' }}>
+              <div className="item-count" style={{ 
+                backgroundColor: '#fff', 
+                padding: '4px 8px', 
+                borderRadius: '12px', 
+                fontSize: '12px',
+                marginBottom: '4px'
+              }}>
+                {getItemsForMeal(selectedDay, 'завтрак').length} блюд
+              </div>
+              {getTotalByMealType('завтрак') > 0 && (
+                <div style={{ 
+                  backgroundColor: '#4CAF50', 
+                  color: 'white', 
+                  padding: '2px 6px', 
+                  borderRadius: '8px', 
+                  fontSize: '11px'
+                }}>
+                  {getTotalByMealType('завтрак')} ₽
+                </div>
+              )}
             </div>
           </div>
           <div className="meal-items">
@@ -113,33 +169,82 @@ export default function MenuSelector({ onSelectionChange }: MenuSelectorProps) {
                 key={item.id}
                 className={`menu-item ${selectedItems.has(item.id) ? 'selected' : ''}`}
                 onClick={() => toggleItem(item.id)}
+                style={{
+                  backgroundColor: selectedItems.has(item.id) ? '#4CAF50' : '#fff',
+                  color: selectedItems.has(item.id) ? 'white' : 'black',
+                  border: `2px solid ${selectedItems.has(item.id) ? '#4CAF50' : '#ddd'}`,
+                  borderRadius: '8px',
+                  padding: '12px',
+                  margin: '8px 0',
+                  cursor: 'pointer',
+                  transition: 'all 0.3s ease',
+                  boxShadow: selectedItems.has(item.id) ? '0 4px 12px rgba(76,175,80,0.3)' : '0 2px 4px rgba(0,0,0,0.1)'
+                }}
               >
-                <div className="item-checkbox">
-                  {selectedItems.has(item.id) ? '✅' : '☐'}
-                </div>
-                <div className="item-content">
-                  <div className="item-name">{item.name}</div>
-                  {item.description && (
-                    <div className="item-description">{item.description}</div>
-                  )}
-                  {item.price && (
-                    <div className="item-price">{item.price} ₽</div>
-                  )}
+                <div style={{ display: 'flex', alignItems: 'flex-start', gap: '10px' }}>
+                  <div className="item-checkbox" style={{ fontSize: '18px', marginTop: '2px' }}>
+                    {selectedItems.has(item.id) ? '✅' : '☐'}
+                  </div>
+                  <div className="item-content" style={{ flex: 1 }}>
+                    <div className="item-name" style={{ fontWeight: 'bold', marginBottom: '4px' }}>{item.name}</div>
+                    {item.description && (
+                      <div className="item-description" style={{ fontSize: '13px', opacity: 0.8, marginBottom: '6px' }}>{item.description}</div>
+                    )}
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                      {item.weight && (
+                        <div style={{ fontSize: '12px', opacity: 0.7 }}>{item.weight}</div>
+                      )}
+                      {item.price && (
+                        <div className="item-price" style={{ fontWeight: 'bold', fontSize: '14px' }}>{formatPrice(item.price)}</div>
+                      )}
+                    </div>
+                  </div>
                 </div>
               </div>
             ))}
             {getItemsForMeal(selectedDay, 'завтрак').length === 0 && (
-              <div className="no-items">Нет блюд для завтрака</div>
+              <div className="no-items" style={{ 
+                textAlign: 'center', 
+                padding: '20px', 
+                color: '#666', 
+                fontStyle: 'italic',
+                backgroundColor: '#f9f9f9',
+                borderRadius: '8px',
+                border: '2px dashed #ddd'
+              }}>
+                Нет блюд для завтрака
+              </div>
             )}
           </div>
         </div>
 
         {/* Обед */}
-        <div className="meal-column">
-          <div className="meal-header">
-            <h3>🍽️ Обед</h3>
-            <div className="item-count">
-              {getItemsForMeal(selectedDay, 'обед').length}
+        <div className="meal-column" style={{ backgroundColor: getMealTypeColor('обед'), borderRadius: '10px', padding: '15px', boxShadow: '0 2px 8px rgba(0,0,0,0.1)' }}>
+          <div className="meal-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '15px' }}>
+            <h3 style={{ margin: 0, display: 'flex', alignItems: 'center', gap: '8px' }}>
+              {getMealTypeIcon('обед')} Обед
+            </h3>
+            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'end' }}>
+              <div className="item-count" style={{ 
+                backgroundColor: '#fff', 
+                padding: '4px 8px', 
+                borderRadius: '12px', 
+                fontSize: '12px',
+                marginBottom: '4px'
+              }}>
+                {getItemsForMeal(selectedDay, 'обед').length} блюд
+              </div>
+              {getTotalByMealType('обед') > 0 && (
+                <div style={{ 
+                  backgroundColor: '#2196F3', 
+                  color: 'white', 
+                  padding: '2px 6px', 
+                  borderRadius: '8px', 
+                  fontSize: '11px'
+                }}>
+                  {getTotalByMealType('обед')} ₽
+                </div>
+              )}
             </div>
           </div>
           <div className="meal-items">
@@ -148,33 +253,82 @@ export default function MenuSelector({ onSelectionChange }: MenuSelectorProps) {
                 key={item.id}
                 className={`menu-item ${selectedItems.has(item.id) ? 'selected' : ''}`}
                 onClick={() => toggleItem(item.id)}
+                style={{
+                  backgroundColor: selectedItems.has(item.id) ? '#2196F3' : '#fff',
+                  color: selectedItems.has(item.id) ? 'white' : 'black',
+                  border: `2px solid ${selectedItems.has(item.id) ? '#2196F3' : '#ddd'}`,
+                  borderRadius: '8px',
+                  padding: '12px',
+                  margin: '8px 0',
+                  cursor: 'pointer',
+                  transition: 'all 0.3s ease',
+                  boxShadow: selectedItems.has(item.id) ? '0 4px 12px rgba(33,150,243,0.3)' : '0 2px 4px rgba(0,0,0,0.1)'
+                }}
               >
-                <div className="item-checkbox">
-                  {selectedItems.has(item.id) ? '✅' : '☐'}
-                </div>
-                <div className="item-content">
-                  <div className="item-name">{item.name}</div>
-                  {item.description && (
-                    <div className="item-description">{item.description}</div>
-                  )}
-                  {item.price && (
-                    <div className="item-price">{item.price} ₽</div>
-                  )}
+                <div style={{ display: 'flex', alignItems: 'flex-start', gap: '10px' }}>
+                  <div className="item-checkbox" style={{ fontSize: '18px', marginTop: '2px' }}>
+                    {selectedItems.has(item.id) ? '✅' : '☐'}
+                  </div>
+                  <div className="item-content" style={{ flex: 1 }}>
+                    <div className="item-name" style={{ fontWeight: 'bold', marginBottom: '4px' }}>{item.name}</div>
+                    {item.description && (
+                      <div className="item-description" style={{ fontSize: '13px', opacity: 0.8, marginBottom: '6px' }}>{item.description}</div>
+                    )}
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                      {item.weight && (
+                        <div style={{ fontSize: '12px', opacity: 0.7 }}>{item.weight}</div>
+                      )}
+                      {item.price && (
+                        <div className="item-price" style={{ fontWeight: 'bold', fontSize: '14px' }}>{formatPrice(item.price)}</div>
+                      )}
+                    </div>
+                  </div>
                 </div>
               </div>
             ))}
             {getItemsForMeal(selectedDay, 'обед').length === 0 && (
-              <div className="no-items">Нет блюд для обеда</div>
+              <div className="no-items" style={{ 
+                textAlign: 'center', 
+                padding: '20px', 
+                color: '#666', 
+                fontStyle: 'italic',
+                backgroundColor: '#f9f9f9',
+                borderRadius: '8px',
+                border: '2px dashed #ddd'
+              }}>
+                Нет блюд для обеда
+              </div>
             )}
           </div>
         </div>
 
         {/* Полдник */}
-        <div className="meal-column">
-          <div className="meal-header">
-            <h3>🍎 Полдник</h3>
-            <div className="item-count">
-              {getItemsForMeal(selectedDay, 'полдник').length}
+        <div className="meal-column" style={{ backgroundColor: getMealTypeColor('полдник'), borderRadius: '10px', padding: '15px', boxShadow: '0 2px 8px rgba(0,0,0,0.1)' }}>
+          <div className="meal-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '15px' }}>
+            <h3 style={{ margin: 0, display: 'flex', alignItems: 'center', gap: '8px' }}>
+              {getMealTypeIcon('полдник')} Полдник
+            </h3>
+            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'end' }}>
+              <div className="item-count" style={{ 
+                backgroundColor: '#fff', 
+                padding: '4px 8px', 
+                borderRadius: '12px', 
+                fontSize: '12px',
+                marginBottom: '4px'
+              }}>
+                {getItemsForMeal(selectedDay, 'полдник').length} блюд
+              </div>
+              {getTotalByMealType('полдник') > 0 && (
+                <div style={{ 
+                  backgroundColor: '#FF9800', 
+                  color: 'white', 
+                  padding: '2px 6px', 
+                  borderRadius: '8px', 
+                  fontSize: '11px'
+                }}>
+                  {getTotalByMealType('полдник')} ₽
+                </div>
+              )}
             </div>
           </div>
           <div className="meal-items">
@@ -183,23 +337,51 @@ export default function MenuSelector({ onSelectionChange }: MenuSelectorProps) {
                 key={item.id}
                 className={`menu-item ${selectedItems.has(item.id) ? 'selected' : ''}`}
                 onClick={() => toggleItem(item.id)}
+                style={{
+                  backgroundColor: selectedItems.has(item.id) ? '#FF9800' : '#fff',
+                  color: selectedItems.has(item.id) ? 'white' : 'black',
+                  border: `2px solid ${selectedItems.has(item.id) ? '#FF9800' : '#ddd'}`,
+                  borderRadius: '8px',
+                  padding: '12px',
+                  margin: '8px 0',
+                  cursor: 'pointer',
+                  transition: 'all 0.3s ease',
+                  boxShadow: selectedItems.has(item.id) ? '0 4px 12px rgba(255,152,0,0.3)' : '0 2px 4px rgba(0,0,0,0.1)'
+                }}
               >
-                <div className="item-checkbox">
-                  {selectedItems.has(item.id) ? '✅' : '☐'}
-                </div>
-                <div className="item-content">
-                  <div className="item-name">{item.name}</div>
-                  {item.description && (
-                    <div className="item-description">{item.description}</div>
-                  )}
-                  {item.price && (
-                    <div className="item-price">{item.price} ₽</div>
-                  )}
+                <div style={{ display: 'flex', alignItems: 'flex-start', gap: '10px' }}>
+                  <div className="item-checkbox" style={{ fontSize: '18px', marginTop: '2px' }}>
+                    {selectedItems.has(item.id) ? '✅' : '☐'}
+                  </div>
+                  <div className="item-content" style={{ flex: 1 }}>
+                    <div className="item-name" style={{ fontWeight: 'bold', marginBottom: '4px' }}>{item.name}</div>
+                    {item.description && (
+                      <div className="item-description" style={{ fontSize: '13px', opacity: 0.8, marginBottom: '6px' }}>{item.description}</div>
+                    )}
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                      {item.weight && (
+                        <div style={{ fontSize: '12px', opacity: 0.7 }}>{item.weight}</div>
+                      )}
+                      {item.price && (
+                        <div className="item-price" style={{ fontWeight: 'bold', fontSize: '14px' }}>{formatPrice(item.price)}</div>
+                      )}
+                    </div>
+                  </div>
                 </div>
               </div>
             ))}
             {getItemsForMeal(selectedDay, 'полдник').length === 0 && (
-              <div className="no-items">Нет блюд для полдника</div>
+              <div className="no-items" style={{ 
+                textAlign: 'center', 
+                padding: '20px', 
+                color: '#666', 
+                fontStyle: 'italic',
+                backgroundColor: '#f9f9f9',
+                borderRadius: '8px',
+                border: '2px dashed #ddd'
+              }}>
+                Нет блюд для полдника
+              </div>
             )}
           </div>
         </div>

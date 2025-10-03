@@ -28,7 +28,8 @@ export default function ParentDemo({ token: _token }: ParentDemoProps) {
       
       // Загружаем меню
       const menuData = await apiClient.getMenu();
-      setMenuItems(menuData.items);
+      // API теперь возвращает прямой массив блюд
+      setMenuItems(Array.isArray(menuData) ? menuData : menuData.items || []);
       
       // Загружаем существующие заказы
       const userOrders = await apiClient.getUserOrders();

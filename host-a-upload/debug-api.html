@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Debug API</title>
+    <style>
+        body { font-family: monospace; padding: 20px; }
+        .test { margin: 20px 0; padding: 15px; border: 1px solid #ddd; }
+        .success { background: #e8f5e8; }
+        .error { background: #ffebee; }
+        pre { white-space: pre-wrap; word-wrap: break-word; }
+        button { padding: 10px; margin: 5px; font-size: 14px; }
+    </style>
+</head>
+<body>
+    <h1>🔍 API Debug Tool</h1>
+    
+    <button onclick="testMeEndpoint()">Test /api/auth/me.php</button>
+    <button onclick="testMenuEndpoint()">Test /api/menu.php</button>
+    <button onclick="testUploadCheck()">Test /api/menu/upload.php (GET)</button>
+    <button onclick="testSimpleUpload()">Test /api/menu/upload-simple.php (GET)</button>
+    
+    <div id="results"></div>
+
+    <script>
+        async function testEndpoint(url, options = {}) {
+            try {
+                console.log('Testing:', url);
+                const response = await fetch(url, options);
+                const data = await response.text();
+                
+                return {
+                    url: url,
+                    status: response.status,
+                    statusText: response.statusText,
+                    headers: Object.fromEntries(response.headers.entries()),
+                    data: data,
+                    isJSON: isValidJSON(data)
+                };
+            } catch (error) {
+                return {
+                    url: url,
+                    error: error.message
+                };
+            }
+        }
+        
+        function isValidJSON(str) {
+            try {
+                JSON.parse(str);
+                return true;
+            } catch {
+                return false;
+            }
+        }
+        
+        function showResult(result) {
+            const div = document.createElement('div');
+            div.className = `test ${result.error || result.status >= 400 ? 'error' : 'success'}`;
+            div.innerHTML = `
+                <h3>${result.url}</h3>
+                ${result.error ? `<p><strong>Error:</strong> ${result.error}</p>` : `
+                    <p><strong>Status:</strong> ${result.status} ${result.statusText}</p>
+                    <p><strong>Is JSON:</strong> ${result.isJSON}</p>
+                    <details>
+                        <summary>Response Data</summary>
+                        <pre>${result.data}</pre>
+                    </details>
+                    <details>
+                        <summary>Headers</summary>
+                        <pre>${JSON.stringify(result.headers, null, 2)}</pre>
+                    </details>
+                `}
+            `;
+            document.getElementById('results').appendChild(div);
+        }
+        
+        async function testMeEndpoint() {
+            const result = await testEndpoint('/api/auth/me.php', {
+                headers: {
+                    'Authorization': 'Bearer test-token'
+                }
+            });
+            showResult(result);
+        }
+        
+        async function testMenuEndpoint() {
+            const result = await testEndpoint('/api/menu.php');
+            showResult(result);
+        }
+        
+        async function testUploadCheck() {
+            const result = await testEndpoint('/api/menu/upload.php');
+            showResult(result);
+        }
+        
+        async function testSimpleUpload() {
+            const result = await testEndpoint('/api/menu/upload-simple.php');
+            showResult(result);
+        }
+        
+        // Автоматический тест при загрузке страницы
+        window.onload = function() {
+            setTimeout(() => {
+                testMenuEndpoint();
+                testUploadCheck();
+            }, 1000);
+        };
+    </script>
+</body>
+</html>

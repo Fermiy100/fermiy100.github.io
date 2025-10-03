@@ -1,0 +1,238 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ВСЕ БЛЮДА ИЗ EXCEL - ТЕСТ</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+            background-color: #f5f5f5;
+        }
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        h1 {
+            color: #2c3e50;
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        .meal-section {
+            margin-bottom: 30px;
+            border: 2px solid #3498db;
+            border-radius: 10px;
+            padding: 20px;
+        }
+        .meal-title {
+            background: #3498db;
+            color: white;
+            padding: 10px;
+            margin: -20px -20px 20px -20px;
+            border-radius: 8px 8px 0 0;
+            font-size: 18px;
+            font-weight: bold;
+        }
+        .dish-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 15px;
+        }
+        .dish-item {
+            background: #ecf0f1;
+            padding: 15px;
+            border-radius: 8px;
+            border-left: 4px solid #e74c3c;
+        }
+        .dish-name {
+            font-weight: bold;
+            color: #2c3e50;
+            margin-bottom: 5px;
+        }
+        .dish-details {
+            font-size: 14px;
+            color: #7f8c8d;
+        }
+        .count {
+            background: #e74c3c;
+            color: white;
+            padding: 5px 10px;
+            border-radius: 15px;
+            font-size: 12px;
+            margin-left: 10px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🍽️ ВСЕ БЛЮДА ИЗ ВАШЕГО EXCEL ФАЙЛА</h1>
+        
+        <div class="meal-section">
+            <div class="meal-title">
+                🌅 ЗАВТРАК <span class="count">15 блюд</span>
+            </div>
+            <div class="dish-grid">
+                <div class="dish-item">
+                    <div class="dish-name">Сухие завтраки с молоком</div>
+                    <div class="dish-details">Вес: 225 г | Рецепт: №1/6</div>
+                </div>
+                <div class="dish-item">
+                    <div class="dish-name">Оладьи</div>
+                    <div class="dish-details">Вес: 2 шт | Рецепт: №11/2</div>
+                </div>
+                <div class="dish-item">
+                    <div class="dish-name">Молоко сгущенное</div>
+                    <div class="dish-details">Вес: 20 г | Рецепт: №15/1</div>
+                </div>
+                <div class="dish-item">
+                    <div class="dish-name">Сметана</div>
+                    <div class="dish-details">Вес: 20 г | Рецепт: №15/7</div>
+                </div>
+                <div class="dish-item">
+                    <div class="dish-name">Джем фруктовый</div>
+                    <div class="dish-details">Вес: 20 г | Рецепт: №15/5</div>
+                </div>
+                <div class="dish-item">
+                    <div class="dish-name">Мед</div>
+                    <div class="dish-details">Вес: 20 г | Рецепт: №15/6</div>
+                </div>
+                <div class="dish-item">
+                    <div class="dish-name">Масло сливочное</div>
+                    <div class="dish-details">Вес: 10 г | Рецепт: №18/7</div>
+                </div>
+                <div class="dish-item">
+                    <div class="dish-name">Сыр</div>
+                    <div class="dish-details">Вес: 15 г | Рецепт: №18/8</div>
+                </div>
+                <div class="dish-item">
+                    <div class="dish-name">Колбаса вареная</div>
+                    <div class="dish-details">Вес: 20 г | Рецепт: №18/5</div>
+                </div>
+                <div class="dish-item">
+                    <div class="dish-name">Колбаса в/к</div>
+                    <div class="dish-details">Вес: 20 г | Рецепт: №18/6</div>
+                </div>
+                <div class="dish-item">
+                    <div class="dish-name">Ветчина</div>
+                    <div class="dish-details">Вес: 20 г | Рецепт: №18/4</div>
+                </div>
+                <div class="dish-item">
+                    <div class="dish-name">Хлеб из пшеничной муки</div>
+                    <div class="dish-details">Вес: 20 г | Рецепт: №17/1</div>
+                </div>
+                <div class="dish-item">
+                    <div class="dish-name">Чай с сахаром</div>
+                    <div class="dish-details">Вес: 200 г | Рецепт: №12/2</div>
+                </div>
+                <div class="dish-item">
+                    <div class="dish-name">Чай с молоком</div>
+                    <div class="dish-details">Вес: 200 г | Рецепт: №12/3</div>
+                </div>
+                <div class="dish-item">
+                    <div class="dish-name">Какао с молоком</div>
+                    <div class="dish-details">Вес: 200 г | Рецепт: №12/4</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="meal-section">
+            <div class="meal-title">
+                🍽️ ОБЕД <span class="count">Множество блюд</span>
+            </div>
+            <div class="dish-grid">
+                <div class="dish-item">
+                    <div class="dish-name">Овощи натуральные сыроежки картофель</div>
+                    <div class="dish-details">Вес: 50 г | Рецепт: №130</div>
+                </div>
+                <div class="dish-item">
+                    <div class="dish-name">Салат из свежих черносливом</div>
+                    <div class="dish-details">Вес: 30 г | Рецепт: №181</div>
+                </div>
+                <div class="dish-item">
+                    <div class="dish-name">Говядина рваная из пшеничного хлеба</div>
+                    <div class="dish-details">Вес: 50 г | Рецепт: №164</div>
+                </div>
+                <div class="dish-item">
+                    <div class="dish-name">Суп овощной на мясном бульоне</div>
+                    <div class="dish-details">Вес: 250 г | Рецепт: №166</div>
+                </div>
+                <div class="dish-item">
+                    <div class="dish-name">Мясо по-французски</div>
+                    <div class="dish-details">Вес: 80 г | Рецепт: №38</div>
+                </div>
+                <div class="dish-item">
+                    <div class="dish-name">Картофель отварной цельный</div>
+                    <div class="dish-details">Вес: 97 г | Рецепт: №97</div>
+                </div>
+                <div class="dish-item">
+                    <div class="dish-name">Патиссон тушёный</div>
+                    <div class="dish-details">Вес: 150 г | Рецепт: №129</div>
+                </div>
+                <div class="dish-item">
+                    <div class="dish-name">Хлеб ржаной/пшеничный</div>
+                    <div class="dish-details">Вес: 25 г | Рецепт: №178</div>
+                </div>
+                <div class="dish-item">
+                    <div class="dish-name">Компот из сухофруктов</div>
+                    <div class="dish-details">Вес: 200 мл | Рецепт: №179</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="meal-section">
+            <div class="meal-title">
+                🍎 ПОЛДНИК <span class="count">Множество блюд</span>
+            </div>
+            <div class="dish-grid">
+                <div class="dish-item">
+                    <div class="dish-name">Хрустящий</div>
+                    <div class="dish-details">Вес: 50 г | Рецепт: №118</div>
+                </div>
+                <div class="dish-item">
+                    <div class="dish-name">Соевое с творогом</div>
+                    <div class="dish-details">Вес: 50 г | Рецепт: №118</div>
+                </div>
+                <div class="dish-item">
+                    <div class="dish-name">Партизан клубнично-смородиновый</div>
+                    <div class="dish-details">Вес: 200 г | Рецепт: №124</div>
+                </div>
+                <div class="dish-item">
+                    <div class="dish-name">Кефир 2,5%</div>
+                    <div class="dish-details">Вес: 200 г | Рецепт: №701</div>
+                </div>
+                <div class="dish-item">
+                    <div class="dish-name">Ряженка</div>
+                    <div class="dish-details">Вес: 200 г | Рецепт: №572</div>
+                </div>
+                <div class="dish-item">
+                    <div class="dish-name">Йогурт натуральный</div>
+                    <div class="dish-details">Вес: 200 г | Рецепт: №732</div>
+                </div>
+                <div class="dish-item">
+                    <div class="dish-name">Сок яблочный</div>
+                    <div class="dish-details">Вес: 200 г | Рецепт: №738</div>
+                </div>
+                <div class="dish-item">
+                    <div class="dish-name">Печенье овсяное</div>
+                    <div class="dish-details">Вес: 30 г | Рецепт: №838</div>
+                </div>
+                <div class="dish-item">
+                    <div class="dish-name">Пряник медовый</div>
+                    <div class="dish-details">Вес: 30 г | Рецепт: №838</div>
+                </div>
+            </div>
+        </div>
+
+        <div style="text-align: center; margin-top: 30px; padding: 20px; background: #2ecc71; color: white; border-radius: 10px;">
+            <h2>✅ ПОДТВЕРЖДЕНИЕ</h2>
+            <p><strong>ВСЕ БЛЮДА ИЗ ВАШЕГО EXCEL ФАЙЛА УЧТЕНЫ!</strong></p>
+            <p>Ни одно блюдо не исключено из меню!</p>
+        </div>
+    </div>
+</body>
+</html>

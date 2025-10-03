@@ -1,7 +1,7 @@
 // API клиент для работы с backend
 
 const API_BASE_URL = import.meta.env.PROD 
-  ? 'https://fermiy100githubio-production.up.railway.app/api'  // Railway Backend URL
+  ? '/api'  // Используем PHP backend пока Railway не готов
   : 'http://localhost:3000/api';       // Development URL
 
 export interface User {
@@ -27,7 +27,9 @@ export interface MenuItem {
   description?: string;
   price: number;
   meal_type: string;
-  day_of_week: number;
+  day_of_week: number | string; // Поддержка обоих форматов
+  weight?: string;
+  recipe_number?: string;
   portion?: string;
   week_start: string;
 }
@@ -99,19 +101,19 @@ class ApiClient {
 
   // Auth methods
   async login(email: string, password: string): Promise<AuthResponse> {
-    return this.request<AuthResponse>('/auth/login', {
+    return this.request<AuthResponse>('/auth/login.php', {
       method: 'POST',
       body: JSON.stringify({ email, password }),
     });
   }
 
   async getCurrentUser(): Promise<User> {
-    return this.request<User>('/auth/me');
+    return this.request<User>('/auth/me.php');
   }
 
   // School methods
   async getSchool(schoolId: number): Promise<School> {
-    return this.request<School>(`/school/${schoolId}`);
+    return this.request<School>(`/school/${schoolId}.php`);
   }
 
   async getSchoolUsers(schoolId: number): Promise<User[]> {
@@ -125,7 +127,7 @@ class ApiClient {
     role: 'PARENT' | 'STUDENT';
     password: string;
   }): Promise<User> {
-    return this.request<User>('/users', {
+    return this.request<User>('/users.php', {
       method: 'POST',
       body: JSON.stringify(userData),
     });
@@ -142,7 +144,7 @@ class ApiClient {
     const formData = new FormData();
     formData.append('file', file);
 
-    const url = `${API_BASE_URL}/menu/upload`;
+    const url = `${API_BASE_URL}/menu/upload.php`;
     const headers: HeadersInit = {};
 
     if (this.token) {
@@ -165,7 +167,7 @@ class ApiClient {
 
   async getMenu(weekStart?: string): Promise<MenuResponse> {
     const params = weekStart ? `?week=${weekStart}` : '';
-    return this.request<MenuResponse>(`/menu${params}`);
+    return this.request<MenuResponse>(`/menu.php${params}`);
   }
 
   // Order methods
@@ -183,7 +185,7 @@ class ApiClient {
 
   // Health check
   async healthCheck(): Promise<{ status: string; timestamp: string }> {
-    return this.request<{ status: string; timestamp: string }>('/health');
+    return this.request<{ status: string; timestamp: string }>('/health.php');
   }
 
   // Menu editing methods

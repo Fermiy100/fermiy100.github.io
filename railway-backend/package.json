@@ -2,10 +2,10 @@
   "name": "school-meals-backend",
   "version": "1.0.0",
   "description": "School Meals Backend with Ultimate Excel Parser",
-  "main": "server.js",
+  "main": "app.js",
   "scripts": {
-    "start": "node server.js",
-    "dev": "node server.js"
+    "start": "node app.js",
+    "dev": "node app.js"
   },
   "engines": {
     "node": ">=18.0.0"

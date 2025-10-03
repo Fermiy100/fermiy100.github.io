@@ -2077,6 +2077,15 @@ app.get('/api/menu/weeks', authenticateToken, async (req, res) => {
 });
 
 // Graceful shutdown
+// Тестовый endpoint для проверки
+app.get('/api/test', (req, res) => {
+  res.json({ 
+    message: 'Railway сервер работает!', 
+    time: new Date().toISOString(),
+    version: '1.0.0'
+  });
+});
+
 // Принудительное обновление меню из Excel файла
 app.post('/api/force-update-menu', async (req, res) => {
   try {

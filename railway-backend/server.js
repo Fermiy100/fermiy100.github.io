@@ -189,7 +189,16 @@ db.serialize(() => {
       return;
     }
     
-    if (row.count === 0) {
+    // ПРИНУДИТЕЛЬНО ПЕРЕСОЗДАЕМ ДАННЫЕ КАЖДЫЙ РАЗ
+    console.log('🔄 ПРИНУДИТЕЛЬНО ПЕРЕСОЗДАЕМ ДАННЫЕ...');
+    
+    // Очищаем все таблицы
+    db.run("DELETE FROM menu_items");
+    db.run("DELETE FROM favorites");
+    db.run("DELETE FROM users");
+    db.run("DELETE FROM schools");
+    
+    if (row.count === 0 || true) { // Всегда пересоздаем
       // Create default school
       db.run(`INSERT INTO schools (name, address) VALUES (?, ?)`, 
         ['Средняя школа №123', 'г. Москва, ул. Примерная, д. 1'], async function(err) {

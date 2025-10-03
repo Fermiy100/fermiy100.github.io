@@ -223,31 +223,35 @@ db.serialize(() => {
         db.run(`UPDATE schools SET director_id = ? WHERE id = ?`, [1, schoolId]);
         
         // Читаем данные из реального Excel файла
-        console.log('🔍 Читаем данные из Excel файла...');
+        console.log('[server.js] 🔍 Читаем данные из Excel файла...');
         const realParser = new RealExcelParser();
         const initialMenuData = await realParser.parseExcelFile();
-        console.log(`📊 Прочитано ${initialMenuData.length} блюд из Excel файла`);
+        console.log(`[server.js] 📊 Парсер вернул ${initialMenuData.length} блюд.`);
         
         const weekStart = new Date().toISOString().split('T')[0];
         let addedCount = 0;
         
-        initialMenuData.forEach((dish, index) => {
-            db.run(`INSERT INTO menu_items (school_id, name, description, price, meal_type, day_of_week, portion, week_start, recipe_number, weight) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-                [schoolId, dish.name, dish.description, dish.price, dish.meal_type, dish.day_of_week, dish.portion, weekStart, dish.recipe_number, dish.weight],
-                function(err) {
-                    if (err) {
-                        console.error(`Ошибка добавления блюда ${index + 1} (${dish.name}):`, err);
-                    } else {
-                        addedCount++;
-                        console.log(`✅ Добавлено блюдо ${addedCount}: ${dish.name}`);
+        if (initialMenuData.length > 0) {
+            initialMenuData.forEach((dish, index) => {
+                db.run(`INSERT INTO menu_items (school_id, name, description, price, meal_type, day_of_week, portion, week_start, recipe_number, weight) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+                    [schoolId, dish.name, dish.description, dish.price, dish.meal_type, dish.day_of_week, dish.portion, weekStart, dish.recipe_number, dish.weight],
+                    function(err) {
+                        if (err) {
+                            console.error(`❌ Ошибка добавления блюда ${index + 1} (${dish.name}):`, err);
+                        } else {
+                            addedCount++;
+                            // console.log(`✅ Добавлено блюдо ${addedCount}: ${dish.name}`);
+                        }
+                        
+                        if (addedCount === initialMenuData.length) {
+                            console.log(`🎉 ВСЕ ${addedCount} БЛЮД ИЗ EXCEL УСПЕШНО ДОБАВЛЕНЫ В БАЗУ ДАННЫХ!`);
+                        }
                     }
-                    
-                    if (addedCount === initialMenuData.length) {
-                        console.log(`🎉 ВСЕ ${addedCount} БЛЮД ИЗ EXCEL УСПЕШНО ДОБАВЛЕНЫ!`);
-                    }
-                }
-            );
-        });
+                );
+            });
+        } else {
+            console.warn('[server.js] ⚠️ Парсер не вернул блюд. База данных меню будет пустой.');
+        }
         
         console.log('Default school, users and menu created');
       });

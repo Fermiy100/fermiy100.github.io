@@ -9,38 +9,43 @@ const __dirname = path.dirname(__filename);
 export class RealExcelParser {
     constructor() {
         this.excelFilePath = path.join(__dirname, 'menu.xlsx');
+        console.log(`[RealExcelParser] Конструктор: Путь к Excel файлу: ${this.excelFilePath}`);
     }
 
     async parseExcelFile() {
         try {
-            console.log('🔍 Читаем реальный Excel файл:', this.excelFilePath);
+            console.log('[RealExcelParser] 🔍 Читаем реальный Excel файл:', this.excelFilePath);
+            
+            // Проверяем существование файла
+            const fs = await import('fs/promises');
+            try {
+                await fs.access(this.excelFilePath);
+                console.log(`[RealExcelParser] ✅ Файл существует: ${this.excelFilePath}`);
+            } catch (error) {
+                console.error(`[RealExcelParser] ❌ Файл не найден или недоступен: ${this.excelFilePath}`, error);
+                return this.getFallbackData();
+            }
             
             // Читаем Excel файл
             const workbook = XLSX.readFile(this.excelFilePath);
             const sheetName = workbook.SheetNames[0];
             const worksheet = workbook.Sheets[sheetName];
             
-            console.log('📊 Лист Excel:', sheetName);
+            console.log('[RealExcelParser] 📊 Лист Excel:', sheetName);
             
             // Конвертируем в JSON
             const jsonData = XLSX.utils.sheet_to_json(worksheet, { header: 1 });
             
-            console.log('📋 Сырые данные Excel:', jsonData.length, 'строк');
+            console.log('[RealExcelParser] 📄 Данные Excel в JSON (первые 5 строк):', jsonData.slice(0, 5));
             
             // Парсим данные
             const dishes = this.parseMenuData(jsonData);
             
-            console.log('🍽️ Найдено блюд:', dishes.length);
-            dishes.forEach((dish, index) => {
-                console.log(`${index + 1}. ${dish.name} (${dish.meal_type}, ${dish.weight})`);
-            });
-            
+            console.log(`[RealExcelParser] 🎉 Успешно распарсено ${dishes.length} блюд из Excel.`);
             return dishes;
             
         } catch (error) {
-            console.error('❌ Ошибка чтения Excel файла:', error);
-            
-            // Fallback - возвращаем данные из вашего Excel файла
+            console.error('[RealExcelParser] ❌ Ошибка при парсинге Excel файла:', error);
             return this.getFallbackData();
         }
     }

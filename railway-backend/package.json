@@ -2,13 +2,10 @@
   "name": "school-meals-backend",
   "version": "1.0.0",
   "description": "School Meals Backend API",
-  "main": "server-simple.js",
+  "main": "index.js",
   "scripts": {
-    "start": "node server-simple.js",
-    "dev": "node server-simple.js",
-    "build": "echo 'No build step required'"
+    "start": "node index.js"
   },
-  "dependencies": {},
   "engines": {
     "node": "20.x"
   }

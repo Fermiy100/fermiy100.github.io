@@ -10,6 +10,7 @@ import fs from 'fs';
 import XLSX from 'xlsx';
 import { SuperMenuParser } from './superMenuParser.js';
 import { SchoolMenuSpecialParser } from './schoolMenuSpecialParser.js';
+import { RealExcelParser } from './real-excel-parser.js';
 import { 
   SECURITY_CONFIG, 
   hashPassword, 
@@ -182,7 +183,7 @@ db.serialize(() => {
   )`);
 
   // Create default school and users
-  db.get("SELECT COUNT(*) as count FROM schools", (err, row) => {
+  db.get("SELECT COUNT(*) as count FROM schools", async (err, row) => {
     if (err) {
       console.error('Error checking schools:', err);
       return;
@@ -191,7 +192,7 @@ db.serialize(() => {
     if (row.count === 0) {
       // Create default school
       db.run(`INSERT INTO schools (name, address) VALUES (?, ?)`, 
-        ['Средняя школа №123', 'г. Москва, ул. Примерная, д. 1'], function(err) {
+        ['Средняя школа №123', 'г. Москва, ул. Примерная, д. 1'], async function(err) {
         if (err) {
           console.error('Error creating school:', err);
           return;
@@ -212,24 +213,11 @@ db.serialize(() => {
         // Update school with director
         db.run(`UPDATE schools SET director_id = ? WHERE id = ?`, [1, schoolId]);
         
-        // Create initial menu data - ВСЕ БЛЮДА ИЗ EXCEL
-        const initialMenuData = [
-            { name: "Сухие завтраки с молоком", description: "Блюдо из школьного меню Excel файла", price: 0, meal_type: "завтрак", day_of_week: 1, weight: "225 г", recipe_number: "1/6", portion: "225 г" },
-            { name: "Оладьи", description: "Блюдо из школьного меню Excel файла", price: 0, meal_type: "завтрак", day_of_week: 1, weight: "2 шт", recipe_number: "11/2", portion: "2 шт" },
-            { name: "Молоко сгущенное", description: "Блюдо из школьного меню Excel файла", price: 0, meal_type: "завтрак", day_of_week: 1, weight: "20 г", recipe_number: "15/1", portion: "20 г" },
-            { name: "Сметана", description: "Блюдо из школьного меню Excel файла", price: 0, meal_type: "завтрак", day_of_week: 1, weight: "20 г", recipe_number: "15/7", portion: "20 г" },
-            { name: "Джем фруктовый", description: "Блюдо из школьного меню Excel файла", price: 0, meal_type: "завтрак", day_of_week: 1, weight: "20 г", recipe_number: "15/5", portion: "20 г" },
-            { name: "Мед", description: "Блюдо из школьного меню Excel файла", price: 0, meal_type: "завтрак", day_of_week: 1, weight: "20 г", recipe_number: "15/6", portion: "20 г" },
-            { name: "Масло сливочное", description: "Блюдо из школьного меню Excel файла", price: 0, meal_type: "завтрак", day_of_week: 1, weight: "10 г", recipe_number: "18/7", portion: "10 г" },
-            { name: "Сыр", description: "Блюдо из школьного меню Excel файла", price: 0, meal_type: "завтрак", day_of_week: 1, weight: "15 г", recipe_number: "18/8", portion: "15 г" },
-            { name: "Колбаса вареная", description: "Блюдо из школьного меню Excel файла", price: 0, meal_type: "завтрак", day_of_week: 1, weight: "20 г", recipe_number: "18/5", portion: "20 г" },
-            { name: "Колбаса в/к", description: "Блюдо из школьного меню Excel файла", price: 0, meal_type: "завтрак", day_of_week: 1, weight: "20 г", recipe_number: "18/6", portion: "20 г" },
-            { name: "Ветчина", description: "Блюдо из школьного меню Excel файла", price: 0, meal_type: "завтрак", day_of_week: 1, weight: "20 г", recipe_number: "18/4", portion: "20 г" },
-            { name: "Хлеб из пшеничной муки", description: "Блюдо из школьного меню Excel файла", price: 0, meal_type: "завтрак", day_of_week: 1, weight: "20 г", recipe_number: "17/1", portion: "20 г" },
-            { name: "Чай с сахаром", description: "Блюдо из школьного меню Excel файла", price: 0, meal_type: "завтрак", day_of_week: 1, weight: "200 г", recipe_number: "12/2", portion: "200 г" },
-            { name: "Чай с молоком", description: "Блюдо из школьного меню Excel файла", price: 0, meal_type: "завтрак", day_of_week: 1, weight: "200 г", recipe_number: "12/3", portion: "200 г" },
-            { name: "Какао с молоком", description: "Блюдо из школьного меню Excel файла", price: 0, meal_type: "завтрак", day_of_week: 1, weight: "200 г", recipe_number: "12/4", portion: "200 г" }
-        ];
+        // Читаем данные из реального Excel файла
+        console.log('🔍 Читаем данные из Excel файла...');
+        const realParser = new RealExcelParser();
+        const initialMenuData = await realParser.parseExcelFile();
+        console.log(`📊 Прочитано ${initialMenuData.length} блюд из Excel файла`);
         
         const weekStart = new Date().toISOString().split('T')[0];
         let addedCount = 0;

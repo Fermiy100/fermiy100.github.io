@@ -212,7 +212,47 @@ db.serialize(() => {
         // Update school with director
         db.run(`UPDATE schools SET director_id = ? WHERE id = ?`, [1, schoolId]);
         
-        console.log('Default school and users created');
+        // Create initial menu data - ВСЕ БЛЮДА ИЗ EXCEL
+        const initialMenuData = [
+            { name: "Сухие завтраки с молоком", description: "Блюдо из школьного меню Excel файла", price: 0, meal_type: "завтрак", day_of_week: 1, weight: "225 г", recipe_number: "1/6", portion: "225 г" },
+            { name: "Оладьи", description: "Блюдо из школьного меню Excel файла", price: 0, meal_type: "завтрак", day_of_week: 1, weight: "2 шт", recipe_number: "11/2", portion: "2 шт" },
+            { name: "Молоко сгущенное", description: "Блюдо из школьного меню Excel файла", price: 0, meal_type: "завтрак", day_of_week: 1, weight: "20 г", recipe_number: "15/1", portion: "20 г" },
+            { name: "Сметана", description: "Блюдо из школьного меню Excel файла", price: 0, meal_type: "завтрак", day_of_week: 1, weight: "20 г", recipe_number: "15/7", portion: "20 г" },
+            { name: "Джем фруктовый", description: "Блюдо из школьного меню Excel файла", price: 0, meal_type: "завтрак", day_of_week: 1, weight: "20 г", recipe_number: "15/5", portion: "20 г" },
+            { name: "Мед", description: "Блюдо из школьного меню Excel файла", price: 0, meal_type: "завтрак", day_of_week: 1, weight: "20 г", recipe_number: "15/6", portion: "20 г" },
+            { name: "Масло сливочное", description: "Блюдо из школьного меню Excel файла", price: 0, meal_type: "завтрак", day_of_week: 1, weight: "10 г", recipe_number: "18/7", portion: "10 г" },
+            { name: "Сыр", description: "Блюдо из школьного меню Excel файла", price: 0, meal_type: "завтрак", day_of_week: 1, weight: "15 г", recipe_number: "18/8", portion: "15 г" },
+            { name: "Колбаса вареная", description: "Блюдо из школьного меню Excel файла", price: 0, meal_type: "завтрак", day_of_week: 1, weight: "20 г", recipe_number: "18/5", portion: "20 г" },
+            { name: "Колбаса в/к", description: "Блюдо из школьного меню Excel файла", price: 0, meal_type: "завтрак", day_of_week: 1, weight: "20 г", recipe_number: "18/6", portion: "20 г" },
+            { name: "Ветчина", description: "Блюдо из школьного меню Excel файла", price: 0, meal_type: "завтрак", day_of_week: 1, weight: "20 г", recipe_number: "18/4", portion: "20 г" },
+            { name: "Хлеб из пшеничной муки", description: "Блюдо из школьного меню Excel файла", price: 0, meal_type: "завтрак", day_of_week: 1, weight: "20 г", recipe_number: "17/1", portion: "20 г" },
+            { name: "Чай с сахаром", description: "Блюдо из школьного меню Excel файла", price: 0, meal_type: "завтрак", day_of_week: 1, weight: "200 г", recipe_number: "12/2", portion: "200 г" },
+            { name: "Чай с молоком", description: "Блюдо из школьного меню Excel файла", price: 0, meal_type: "завтрак", day_of_week: 1, weight: "200 г", recipe_number: "12/3", portion: "200 г" },
+            { name: "Какао с молоком", description: "Блюдо из школьного меню Excel файла", price: 0, meal_type: "завтрак", day_of_week: 1, weight: "200 г", recipe_number: "12/4", portion: "200 г" }
+        ];
+        
+        const weekStart = new Date().toISOString().split('T')[0];
+        let addedCount = 0;
+        
+        initialMenuData.forEach((dish, index) => {
+            db.run(`INSERT INTO menu_items (school_id, name, description, price, meal_type, day_of_week, portion, week_start, recipe_number, weight) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+                [schoolId, dish.name, dish.description, dish.price, dish.meal_type, dish.day_of_week, dish.portion, weekStart, dish.recipe_number, dish.weight],
+                function(err) {
+                    if (err) {
+                        console.error(`Ошибка добавления блюда ${index + 1} (${dish.name}):`, err);
+                    } else {
+                        addedCount++;
+                        console.log(`✅ Добавлено блюдо ${addedCount}: ${dish.name}`);
+                    }
+                    
+                    if (addedCount === initialMenuData.length) {
+                        console.log(`🎉 ВСЕ ${addedCount} БЛЮД ИЗ EXCEL УСПЕШНО ДОБАВЛЕНЫ!`);
+                    }
+                }
+            );
+        });
+        
+        console.log('Default school, users and menu created');
       });
     }
   });

@@ -1,6 +1,5 @@
 import express from 'express';
 import cors from 'cors';
-import sqlite3 from 'sqlite3';
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -9,289 +8,220 @@ const PORT = process.env.PORT || 3000;
 app.use(cors());
 app.use(express.json());
 
-// Создаем базу данных
-const db = new sqlite3.Database(':memory:');
-
-// Создаем таблицы
-db.serialize(() => {
-  db.run(`CREATE TABLE IF NOT EXISTS schools (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    name TEXT NOT NULL,
-    address TEXT,
-    director_id INTEGER
-  )`);
-  
-  db.run(`CREATE TABLE IF NOT EXISTS users (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    email TEXT UNIQUE NOT NULL,
-    password TEXT NOT NULL,
-    name TEXT NOT NULL,
-    role TEXT NOT NULL,
-    school_id INTEGER,
-    verified INTEGER DEFAULT 0,
-    FOREIGN KEY (school_id) REFERENCES schools (id)
-  )`);
-  
-  db.run(`CREATE TABLE IF NOT EXISTS menu_items (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    school_id INTEGER NOT NULL,
-    name TEXT NOT NULL,
-    description TEXT,
-    price REAL DEFAULT 0,
-    meal_type TEXT NOT NULL,
-    day_of_week INTEGER NOT NULL,
-    portion TEXT,
-    week_start TEXT,
-    recipe_number TEXT,
-    weight TEXT,
-    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-    FOREIGN KEY (school_id) REFERENCES schools (id)
-  )`);
-  
-  // Создаем школу
-  db.run(`INSERT INTO schools (name, address) VALUES (?, ?)`, 
-    ['Средняя школа №123', 'г. Москва, ул. Примерная, д. 1'], function(err) {
-    if (err) {
-      console.error('Error creating school:', err);
-      return;
-    }
-    
-    const schoolId = this.lastID;
-    
-    // Создаем пользователей
-    db.run(`INSERT INTO users (email, password, name, role, school_id, verified) VALUES (?, ?, ?, ?, ?, ?)`,
-      ['director@school.test', 'hashed_password', 'Анна Петровна Иванова', 'DIRECTOR', schoolId, 1]);
-    
-    db.run(`INSERT INTO users (email, password, name, role, school_id, verified) VALUES (?, ?, ?, ?, ?, ?)`,
-      ['parent@school.test', 'hashed_password', 'Мария Сергеевна Сидорова', 'PARENT', schoolId, 1]);
-    
-    // ДОБАВЛЯЕМ РЕАЛЬНЫЕ БЛЮДА ИЗ ВАШЕГО EXCEL ФАЙЛА
-    console.log('🎯 ДОБАВЛЯЕМ РЕАЛЬНЫЕ БЛЮДА ИЗ EXCEL ФАЙЛА...');
-    
-    const realDishes = [
-      {
-        name: "Сухие завтраки с молоком",
-        description: "Блюдо из школьного меню Excel файла",
-        price: 0,
-        meal_type: "завтрак",
-        day_of_week: 1,
-        weight: "225 г",
-        recipe_number: "1/6",
-        portion: "225 г"
-      },
-      {
-        name: "Оладьи",
-        description: "Блюдо из школьного меню Excel файла",
-        price: 0,
-        meal_type: "завтрак",
-        day_of_week: 1,
-        weight: "2 шт",
-        recipe_number: "11/2",
-        portion: "2 шт"
-      },
-      {
-        name: "Молоко сгущенное",
-        description: "Блюдо из школьного меню Excel файла",
-        price: 0,
-        meal_type: "завтрак",
-        day_of_week: 1,
-        weight: "20 г",
-        recipe_number: "15/1",
-        portion: "20 г"
-      },
-      {
-        name: "Сметана",
-        description: "Блюдо из школьного меню Excel файла",
-        price: 0,
-        meal_type: "завтрак",
-        day_of_week: 1,
-        weight: "20 г",
-        recipe_number: "15/7",
-        portion: "20 г"
-      },
-      {
-        name: "Джем фруктовый",
-        description: "Блюдо из школьного меню Excel файла",
-        price: 0,
-        meal_type: "завтрак",
-        day_of_week: 1,
-        weight: "20 г",
-        recipe_number: "15/5",
-        portion: "20 г"
-      },
-      {
-        name: "Мед",
-        description: "Блюдо из школьного меню Excel файла",
-        price: 0,
-        meal_type: "завтрак",
-        day_of_week: 1,
-        weight: "20 г",
-        recipe_number: "15/6",
-        portion: "20 г"
-      },
-      {
-        name: "Масло сливочное",
-        description: "Блюдо из школьного меню Excel файла",
-        price: 0,
-        meal_type: "завтрак",
-        day_of_week: 1,
-        weight: "10 г",
-        recipe_number: "18/7",
-        portion: "10 г"
-      },
-      {
-        name: "Сыр",
-        description: "Блюдо из школьного меню Excel файла",
-        price: 0,
-        meal_type: "завтрак",
-        day_of_week: 1,
-        weight: "15 г",
-        recipe_number: "18/8",
-        portion: "15 г"
-      },
-      {
-        name: "Колбаса вареная",
-        description: "Блюдо из школьного меню Excel файла",
-        price: 0,
-        meal_type: "завтрак",
-        day_of_week: 1,
-        weight: "20 г",
-        recipe_number: "18/5",
-        portion: "20 г"
-      },
-      {
-        name: "Колбаса в/к",
-        description: "Блюдо из школьного меню Excel файла",
-        price: 0,
-        meal_type: "завтрак",
-        day_of_week: 1,
-        weight: "20 г",
-        recipe_number: "18/6",
-        portion: "20 г"
-      },
-      {
-        name: "Ветчина",
-        description: "Блюдо из школьного меню Excel файла",
-        price: 0,
-        meal_type: "завтрак",
-        day_of_week: 1,
-        weight: "20 г",
-        recipe_number: "18/4",
-        portion: "20 г"
-      },
-      {
-        name: "Хлеб из пшеничной муки",
-        description: "Блюдо из школьного меню Excel файла",
-        price: 0,
-        meal_type: "завтрак",
-        day_of_week: 1,
-        weight: "20 г",
-        recipe_number: "17/1",
-        portion: "20 г"
-      },
-      {
-        name: "Чай с сахаром",
-        description: "Блюдо из школьного меню Excel файла",
-        price: 0,
-        meal_type: "завтрак",
-        day_of_week: 1,
-        weight: "200 г",
-        recipe_number: "12/2",
-        portion: "200 г"
-      },
-      {
-        name: "Чай с молоком",
-        description: "Блюдо из школьного меню Excel файла",
-        price: 0,
-        meal_type: "завтрак",
-        day_of_week: 1,
-        weight: "200 г",
-        recipe_number: "12/3",
-        portion: "200 г"
-      },
-      {
-        name: "Какао с молоком",
-        description: "Блюдо из школьного меню Excel файла",
-        price: 0,
-        meal_type: "завтрак",
-        day_of_week: 1,
-        weight: "200 г",
-        recipe_number: "12/4",
-        portion: "200 г"
-      }
-    ];
-    
-    // Добавляем все блюда
-    realDishes.forEach((dish, index) => {
-      db.run(`INSERT INTO menu_items (school_id, name, description, price, meal_type, day_of_week, portion, week_start, recipe_number, weight) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-        [schoolId, dish.name, dish.description, dish.price, dish.meal_type, dish.day_of_week, dish.portion, new Date().toISOString().split('T')[0], dish.recipe_number, dish.weight],
-        function(err) {
-          if (err) {
-            console.error(`❌ Ошибка добавления блюда ${index + 1} (${dish.name}):`, err);
-          } else {
-            console.log(`✅ Добавлено блюдо ${index + 1}: ${dish.name}`);
-          }
-        }
-      );
-    });
-    
-    console.log('🎉 ВСЕ 15 РЕАЛЬНЫХ БЛЮД ИЗ EXCEL ФАЙЛА ДОБАВЛЕНЫ!');
-  });
-});
+// РЕАЛЬНЫЕ БЛЮДА ИЗ ВАШЕГО EXCEL ФАЙЛА
+const realMenuData = [
+  {
+    id: 1,
+    name: "Сухие завтраки с молоком",
+    description: "Блюдо из школьного меню Excel файла",
+    price: 0,
+    meal_type: "завтрак",
+    day_of_week: 1,
+    weight: "225 г",
+    recipe_number: "1/6",
+    portion: "225 г"
+  },
+  {
+    id: 2,
+    name: "Оладьи",
+    description: "Блюдо из школьного меню Excel файла",
+    price: 0,
+    meal_type: "завтрак",
+    day_of_week: 1,
+    weight: "2 шт",
+    recipe_number: "11/2",
+    portion: "2 шт"
+  },
+  {
+    id: 3,
+    name: "Молоко сгущенное",
+    description: "Блюдо из школьного меню Excel файла",
+    price: 0,
+    meal_type: "завтрак",
+    day_of_week: 1,
+    weight: "20 г",
+    recipe_number: "15/1",
+    portion: "20 г"
+  },
+  {
+    id: 4,
+    name: "Сметана",
+    description: "Блюдо из школьного меню Excel файла",
+    price: 0,
+    meal_type: "завтрак",
+    day_of_week: 1,
+    weight: "20 г",
+    recipe_number: "15/7",
+    portion: "20 г"
+  },
+  {
+    id: 5,
+    name: "Джем фруктовый",
+    description: "Блюдо из школьного меню Excel файла",
+    price: 0,
+    meal_type: "завтрак",
+    day_of_week: 1,
+    weight: "20 г",
+    recipe_number: "15/5",
+    portion: "20 г"
+  },
+  {
+    id: 6,
+    name: "Мед",
+    description: "Блюдо из школьного меню Excel файла",
+    price: 0,
+    meal_type: "завтрак",
+    day_of_week: 1,
+    weight: "20 г",
+    recipe_number: "15/6",
+    portion: "20 г"
+  },
+  {
+    id: 7,
+    name: "Масло сливочное",
+    description: "Блюдо из школьного меню Excel файла",
+    price: 0,
+    meal_type: "завтрак",
+    day_of_week: 1,
+    weight: "10 г",
+    recipe_number: "18/7",
+    portion: "10 г"
+  },
+  {
+    id: 8,
+    name: "Сыр",
+    description: "Блюдо из школьного меню Excel файла",
+    price: 0,
+    meal_type: "завтрак",
+    day_of_week: 1,
+    weight: "15 г",
+    recipe_number: "18/8",
+    portion: "15 г"
+  },
+  {
+    id: 9,
+    name: "Колбаса вареная",
+    description: "Блюдо из школьного меню Excel файла",
+    price: 0,
+    meal_type: "завтрак",
+    day_of_week: 1,
+    weight: "20 г",
+    recipe_number: "18/5",
+    portion: "20 г"
+  },
+  {
+    id: 10,
+    name: "Колбаса в/к",
+    description: "Блюдо из школьного меню Excel файла",
+    price: 0,
+    meal_type: "завтрак",
+    day_of_week: 1,
+    weight: "20 г",
+    recipe_number: "18/6",
+    portion: "20 г"
+  },
+  {
+    id: 11,
+    name: "Ветчина",
+    description: "Блюдо из школьного меню Excel файла",
+    price: 0,
+    meal_type: "завтрак",
+    day_of_week: 1,
+    weight: "20 г",
+    recipe_number: "18/4",
+    portion: "20 г"
+  },
+  {
+    id: 12,
+    name: "Хлеб из пшеничной муки",
+    description: "Блюдо из школьного меню Excel файла",
+    price: 0,
+    meal_type: "завтрак",
+    day_of_week: 1,
+    weight: "20 г",
+    recipe_number: "17/1",
+    portion: "20 г"
+  },
+  {
+    id: 13,
+    name: "Чай с сахаром",
+    description: "Блюдо из школьного меню Excel файла",
+    price: 0,
+    meal_type: "завтрак",
+    day_of_week: 1,
+    weight: "200 г",
+    recipe_number: "12/2",
+    portion: "200 г"
+  },
+  {
+    id: 14,
+    name: "Чай с молоком",
+    description: "Блюдо из школьного меню Excel файла",
+    price: 0,
+    meal_type: "завтрак",
+    day_of_week: 1,
+    weight: "200 г",
+    recipe_number: "12/3",
+    portion: "200 г"
+  },
+  {
+    id: 15,
+    name: "Какао с молоком",
+    description: "Блюдо из школьного меню Excel файла",
+    price: 0,
+    meal_type: "завтрак",
+    day_of_week: 1,
+    weight: "200 г",
+    recipe_number: "12/4",
+    portion: "200 г"
+  }
+];
 
 // API Routes
 app.get('/api/test', (req, res) => {
   res.json({ 
-    message: '🎯 Минимальный сервер работает!', 
+    message: '🎯 СЕРВЕР С РЕАЛЬНЫМИ ДАННЫМИ РАБОТАЕТ!', 
     time: new Date().toISOString(),
-    version: '2.0.0 - РЕАЛЬНЫЕ ДАННЫЕ'
+    version: '3.0.0 - ТОЛЬКО РЕАЛЬНЫЕ ДАННЫЕ ИЗ EXCEL',
+    dishes_count: realMenuData.length
   });
 });
 
 app.get('/api/menu', (req, res) => {
-  db.all("SELECT * FROM menu_items", (err, rows) => {
-    if (err) {
-      console.error('Error fetching menu:', err);
-      return res.status(500).json({ error: 'Database error' });
-    }
-    res.json(rows);
-  });
+  console.log('🎯 ВОЗВРАЩАЕМ РЕАЛЬНЫЕ БЛЮДА ИЗ EXCEL ФАЙЛА!');
+  console.log(`📊 Количество блюд: ${realMenuData.length}`);
+  res.json(realMenuData);
 });
 
 app.post('/api/menu', (req, res) => {
-  const { name, description, price, meal_type, day_of_week, portion, recipe_number, weight } = req.body;
-  
-  db.run(`INSERT INTO menu_items (school_id, name, description, price, meal_type, day_of_week, portion, week_start, recipe_number, weight) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-    [1, name, description, price, meal_type, day_of_week, portion, new Date().toISOString().split('T')[0], recipe_number, weight],
-    function(err) {
-      if (err) {
-        console.error('Error adding menu item:', err);
-        return res.status(500).json({ error: 'Database error' });
-      }
-      res.json({ id: this.lastID, message: 'Menu item added successfully' });
-    }
-  );
+  const newDish = {
+    id: realMenuData.length + 1,
+    ...req.body,
+    created_at: new Date().toISOString()
+  };
+  realMenuData.push(newDish);
+  res.json({ id: newDish.id, message: 'Menu item added successfully' });
 });
 
 app.delete('/api/menu/clear', (req, res) => {
-  db.run("DELETE FROM menu_items", (err) => {
-    if (err) {
-      console.error('Error clearing menu:', err);
-      return res.status(500).json({ error: 'Database error' });
-    }
-    res.json({ message: 'Menu cleared successfully' });
-  });
+  realMenuData.length = 0;
+  res.json({ message: 'Menu cleared successfully' });
 });
 
 // Health check
 app.get('/health', (req, res) => {
-  res.json({ status: 'OK', time: new Date().toISOString() });
+  res.json({ 
+    status: 'OK', 
+    time: new Date().toISOString(),
+    message: 'Реальные данные из Excel файла загружены!'
+  });
 });
 
 // Start server
 app.listen(PORT, () => {
-  console.log(`🎯 Минимальный сервер запущен на порту ${PORT}`);
-  console.log('🎉 РЕАЛЬНЫЕ ДАННЫЕ ИЗ EXCEL ФАЙЛА ЗАГРУЖЕНЫ!');
+  console.log(`🎯 СЕРВЕР С РЕАЛЬНЫМИ ДАННЫМИ ЗАПУЩЕН НА ПОРТУ ${PORT}`);
+  console.log('🎉 ВСЕ 15 РЕАЛЬНЫХ БЛЮД ИЗ EXCEL ФАЙЛА ЗАГРУЖЕНЫ!');
+  console.log('📊 Блюда:', realMenuData.map(d => d.name).join(', '));
 });
 
 export default app;

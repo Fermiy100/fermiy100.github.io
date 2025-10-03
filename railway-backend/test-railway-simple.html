@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Тест Railway API</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; }
+        .test-section { margin: 20px 0; padding: 15px; border: 1px solid #ddd; border-radius: 5px; }
+        .success { background-color: #d4edda; border-color: #c3e6cb; }
+        .error { background-color: #f8d7da; border-color: #f5c6cb; }
+        .info { background-color: #d1ecf1; border-color: #bee5eb; }
+        button { padding: 10px 20px; margin: 5px; background: #007bff; color: white; border: none; border-radius: 3px; cursor: pointer; }
+        button:hover { background: #0056b3; }
+        pre { background: #f8f9fa; padding: 10px; border-radius: 3px; overflow-x: auto; }
+    </style>
+</head>
+<body>
+    <h1>🚀 Тест Railway API</h1>
+    
+    <div class="test-section info">
+        <h3>📋 Информация о тесте</h3>
+        <p>Этот тест проверяет работу Railway API</p>
+        <p><strong>Railway URL:</strong> <span id="railway-url">https://fermiy100githubio-production.up.railway.app</span></p>
+    </div>
+
+    <div class="test-section">
+        <h3>🔧 Тесты API</h3>
+        <button onclick="testRoot()">Тест Root (/)</button>
+        <button onclick="testHealth()">Тест Health Check</button>
+        <button onclick="testMenu()">Тест Menu API</button>
+        <button onclick="runAllTests()">Запустить все тесты</button>
+    </div>
+
+    <div id="results"></div>
+
+    <script>
+        const RAILWAY_URL = 'https://fermiy100githubio-production.up.railway.app';
+        
+        function addResult(title, content, type = 'info') {
+            const results = document.getElementById('results');
+            const div = document.createElement('div');
+            div.className = `test-section ${type}`;
+            div.innerHTML = `<h3>${title}</h3><pre>${content}</pre>`;
+            results.appendChild(div);
+        }
+
+        async function testRoot() {
+            try {
+                const response = await fetch(`${RAILWAY_URL}/`);
+                const data = await response.text();
+                addResult('✅ Root Test', `Status: ${response.status}\nResponse: ${data}`, 'success');
+            } catch (error) {
+                addResult('❌ Root Test Error', error.message, 'error');
+            }
+        }
+
+        async function testHealth() {
+            try {
+                const response = await fetch(`${RAILWAY_URL}/health`);
+                const data = await response.text();
+                addResult('✅ Health Check', `Status: ${response.status}\nResponse: ${data}`, 'success');
+            } catch (error) {
+                addResult('❌ Health Check Error', error.message, 'error');
+            }
+        }
+
+        async function testMenu() {
+            try {
+                const response = await fetch(`${RAILWAY_URL}/api/menu`);
+                const data = await response.json();
+                addResult('✅ Menu API', `Status: ${response.status}\nDishes count: ${data.length}\nFirst dish: ${JSON.stringify(data[0], null, 2)}`, 'success');
+            } catch (error) {
+                addResult('❌ Menu API Error', error.message, 'error');
+            }
+        }
+
+        async function runAllTests() {
+            document.getElementById('results').innerHTML = '';
+            addResult('🚀 Запуск всех тестов', 'Начинаем тестирование Railway API...', 'info');
+            
+            await testRoot();
+            await testHealth();
+            await testMenu();
+            
+            addResult('🎉 Тестирование завершено', 'Все тесты выполнены!', 'success');
+        }
+    </script>
+</body>
+</html>

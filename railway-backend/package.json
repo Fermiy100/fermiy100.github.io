@@ -1,0 +1,20 @@
+{
+  "name": "school-meals-backend",
+  "version": "1.0.0",
+  "description": "School Meals Backend with Ultimate Excel Parser",
+  "main": "index.js",
+  "type": "module",
+  "scripts": {
+    "start": "node index.js",
+    "dev": "node index.js"
+  },
+  "dependencies": {
+    "xlsx": "^0.18.5"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  },
+  "keywords": ["school", "meals", "excel", "parser"],
+  "author": "School Meals Team",
+  "license": "MIT"
+}

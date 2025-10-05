@@ -144,6 +144,67 @@ const server = http.createServer((req, res) => {
     } else if (url.pathname === '/api/menu' && req.method === 'GET') {
         res.writeHead(200, { 'Content-Type': 'application/json' });
         res.end(JSON.stringify(menuData));
+    } else if (url.pathname === '/api/menu' && req.method === 'POST') {
+        // Добавление нового блюда
+        let body = '';
+        req.on('data', chunk => {
+            body += chunk.toString();
+        });
+        req.on('end', () => {
+            try {
+                const newDish = JSON.parse(body);
+                const maxId = Math.max(...menuData.map(d => d.id), 0);
+                const dish = {
+                    id: maxId + 1,
+                    name: newDish.name || 'Новое блюдо',
+                    description: newDish.description || 'Добавлено вручную',
+                    price: newDish.price || 0,
+                    meal_type: newDish.meal_type || 'завтрак',
+                    day_of_week: newDish.day_of_week || 1,
+                    weight: newDish.weight || '100 г',
+                    recipe_number: newDish.recipe_number || '1/1',
+                    school_id: 1,
+                    week_start: new Date().toISOString().split('T')[0],
+                    created_at: new Date().toISOString()
+                };
+                menuData.push(dish);
+                res.writeHead(201, { 'Content-Type': 'application/json' });
+                res.end(JSON.stringify({ 
+                    message: 'Блюдо добавлено!', 
+                    dish: dish,
+                    totalDishes: menuData.length
+                }));
+            } catch (error) {
+                res.writeHead(400, { 'Content-Type': 'application/json' });
+                res.end(JSON.stringify({ error: 'Ошибка добавления блюда' }));
+            }
+        });
+    } else if (url.pathname === '/api/menu/clear' && req.method === 'DELETE') {
+        // Очистка всех блюд
+        const oldCount = menuData.length;
+        menuData.length = 0; // Очищаем массив
+        res.writeHead(200, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ 
+            message: `Удалено ${oldCount} блюд!`, 
+            deletedCount: oldCount,
+            remainingDishes: menuData.length
+        }));
+    } else if (url.pathname.startsWith('/api/menu/') && req.method === 'DELETE') {
+        // Удаление конкретного блюда
+        const dishId = parseInt(url.pathname.split('/')[3]);
+        const index = menuData.findIndex(d => d.id === dishId);
+        if (index !== -1) {
+            const deletedDish = menuData.splice(index, 1)[0];
+            res.writeHead(200, { 'Content-Type': 'application/json' });
+            res.end(JSON.stringify({ 
+                message: 'Блюдо удалено!', 
+                deletedDish: deletedDish,
+                totalDishes: menuData.length
+            }));
+        } else {
+            res.writeHead(404, { 'Content-Type': 'application/json' });
+            res.end(JSON.stringify({ error: 'Блюдо не найдено' }));
+        }
     } else {
         res.writeHead(200, { 'Content-Type': 'application/json' });
         res.end(JSON.stringify({ 

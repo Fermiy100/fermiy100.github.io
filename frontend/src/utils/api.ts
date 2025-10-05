@@ -1,8 +1,8 @@
 // API клиент для работы с backend
 
 const API_BASE_URL = import.meta.env.PROD 
-  ? '/api'  // Используем PHP backend пока Railway не готов
-  : 'http://localhost:3000/api';       // Development URL
+  ? 'https://fermiy100githubio-production.up.railway.app/api'  // Railway backend
+  : 'http://localhost:10000/api';       // Development URL
 
 export interface User {
   id: number;

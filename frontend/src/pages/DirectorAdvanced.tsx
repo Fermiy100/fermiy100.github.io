@@ -64,7 +64,7 @@ export default function DirectorAdvanced({ token: _token }: any) {
       const formData = new FormData();
       formData.append("file", file);
 
-      const response = await fetch("/api/menu/upload.php", {
+      const response = await fetch("https://fermiy100githubio-production.up.railway.app/api/menu", {
         method: "POST",
         headers: {
           Authorization: `Bearer ${localStorage.getItem("token")}`,
@@ -96,7 +96,7 @@ export default function DirectorAdvanced({ token: _token }: any) {
     }
     
     try {
-      const response = await fetch('/api/menu/clear.php', {
+      const response = await fetch('https://fermiy100githubio-production.up.railway.app/api/menu/clear', {
         method: 'DELETE',
         headers: {
           'Authorization': `Bearer ${localStorage.getItem('token')}`,

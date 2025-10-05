@@ -9,6 +9,9 @@
   "engines": {
     "node": "18.x"
   },
+  "dependencies": {
+    "xlsx": "^0.18.5"
+  },
   "keywords": ["school", "meals"],
   "author": "Fermiy",
   "license": "MIT"

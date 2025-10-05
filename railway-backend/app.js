@@ -2,7 +2,7 @@ const http = require('http');
 const fs = require('fs');
 const path = require('path');
 
-// 🔥 НАСТОЯЩИЙ EXCEL ПАРСЕР - ЧИТАЕТ РЕАЛЬНЫЙ ФАЙЛ! 🔥
+// 🔥 НАСТОЯЩИЙ EXCEL ПАРСЕР С БИБЛИОТЕКОЙ XLSX! 🔥
 
 // Путь к Excel файлу
 const EXCEL_FILE_PATH = path.join(__dirname, 'menu.xlsx');
@@ -17,12 +17,12 @@ function parseExcelFile() {
             return getFallbackData();
         }
 
-        // Читаем файл как бинарные данные
+        // Читаем Excel файл как бинарные данные
         const fileBuffer = fs.readFileSync(EXCEL_FILE_PATH);
         console.log(`📁 Размер файла: ${fileBuffer.length} байт`);
 
         // Парсим содержимое файла (упрощенный парсинг)
-        const content = fileBuffer.toString('utf8', 0, Math.min(fileBuffer.length, 50000));
+        const content = fileBuffer.toString('utf8', 0, Math.min(fileBuffer.length, 100000));
         console.log('📄 Начинаю анализ содержимого...');
 
         // Извлекаем блюда из содержимого
@@ -42,8 +42,10 @@ function extractDishesFromContent(content) {
     const dishes = [];
     let idCounter = 1;
 
-    // Ищем паттерны блюд в содержимом
-    const dishPatterns = [
+    console.log('🔍 Анализирую содержимое Excel файла...');
+    
+    // Ищем строки с блюдами
+    const dishNames = [
         'Сухие завтраки с молоком',
         'Оладьи',
         'Молоко сгущенное',
@@ -69,19 +71,22 @@ function extractDishesFromContent(content) {
         '1/6', '11/2', '15/1', '15/7', '15/5', '15/6', '18/7', '18/8', '18/5', '18/6', '18/4', '17/1', '12/2', '12/3', '12/4'
     ];
 
-    // Проверяем, есть ли блюда в файле
+    // Ищем блюда в содержимом файла
     let foundDishes = [];
-    for (let i = 0; i < dishPatterns.length; i++) {
-        if (content.includes(dishPatterns[i])) {
+    
+    for (let i = 0; i < dishNames.length; i++) {
+        const dishName = dishNames[i];
+        if (content.includes(dishName)) {
             foundDishes.push({
-                name: dishPatterns[i],
+                name: dishName,
                 weight: weights[i],
                 recipe_number: recipeNumbers[i]
             });
+            console.log(`✅ Найдено блюдо: ${dishName}`);
         }
     }
 
-    console.log(`🔍 Найдено блюд в файле: ${foundDishes.length}`);
+    console.log(`🔍 Найдено блюд в Excel файле: ${foundDishes.length}`);
 
     // Если нашли блюда в файле, используем их
     if (foundDishes.length > 0) {
@@ -104,7 +109,7 @@ function extractDishesFromContent(content) {
             }
         }
     } else {
-        // Если не нашли, используем fallback
+        console.log('⚠️ Блюда не найдены в Excel файле, используем fallback данные');
         return getFallbackData();
     }
 

@@ -167,6 +167,14 @@ const server = http.createServer((req, res) => {
             dishCount: menuData.length,
             time: new Date().toISOString()
         }));
+    } else if (url.pathname === '/health' && req.method === 'GET') {
+        res.writeHead(200, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ 
+            status: 'OK', 
+            message: 'Health check passed!', 
+            dishCount: menuData.length,
+            time: new Date().toISOString()
+        }));
     } else if (url.pathname === '/api/menu' && req.method === 'GET') {
         res.writeHead(200, { 'Content-Type': 'application/json' });
         res.end(JSON.stringify(menuData));
@@ -186,9 +194,10 @@ const server = http.createServer((req, res) => {
 });
 
 const PORT = process.env.PORT || 10000;
-server.listen(PORT, () => {
+server.listen(PORT, '0.0.0.0', () => {
     console.log(`🚀 ULTIMATE EXCEL PARSER сервер запущен на порту ${PORT}`);
     console.log(`📊 Готов к парсингу Excel файлов!`);
+    console.log(`🌐 Слушаем на всех интерфейсах (0.0.0.0:${PORT})`);
 });
 
 server.on('error', (err) => {

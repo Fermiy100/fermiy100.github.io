@@ -1,19 +1,11 @@
-[providers]
-node = "18.x"
-
 [phases.setup]
-nixPkgs = ["nodejs_18"]
-aptPkgs = []
+nixPkgs = ["nodejs", "npm"]
 
 [phases.install]
-cmds = ["echo 'NO NPM - PURE NODE.JS SERVER'"]
+cmds = ["npm install"]
 
 [phases.build]
-cmds = ["echo 'NO BUILD - STARTING DIRECTLY'"]
+cmds = ["echo 'No build step required'"]
 
 [start]
-cmd = "node server-minimal.js"
-
-[variables]
-NPM_CONFIG_UPDATE_NOTIFIER = "false"
-NO_UPDATE_NOTIFIER = "true"
+cmd = "node app.js"

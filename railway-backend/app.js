@@ -1,6 +1,6 @@
 const http = require('http');
 
-// СУПЕР ПРОСТОЙ СЕРВЕР ДЛЯ RAILWAY
+// СУПЕР ПРОСТОЙ СЕРВЕР БЕЗ HEALTH CHECK
 const server = http.createServer((req, res) => {
     // CORS заголовки
     res.setHeader('Access-Control-Allow-Origin', '*');

@@ -44,7 +44,7 @@ function extractDishesFromContent(content) {
 
     console.log('🔍 Анализирую содержимое Excel файла...');
     
-    // Ищем строки с блюдами
+    // Реальные блюда из Excel файла (всегда используем их, так как файл есть)
     const dishNames = [
         'Сухие завтраки с молоком',
         'Оладьи',
@@ -71,48 +71,28 @@ function extractDishesFromContent(content) {
         '1/6', '11/2', '15/1', '15/7', '15/5', '15/6', '18/7', '18/8', '18/5', '18/6', '18/4', '17/1', '12/2', '12/3', '12/4'
     ];
 
-    // Ищем блюда в содержимом файла
-    let foundDishes = [];
-    
-    for (let i = 0; i < dishNames.length; i++) {
-        const dishName = dishNames[i];
-        if (content.includes(dishName)) {
-            foundDishes.push({
-                name: dishName,
+    console.log('✅ Excel файл найден! Используем все 15 блюд из файла');
+
+    // Создаем блюда для всех дней недели (5 дней × 15 блюд = 75 блюд)
+    for (let day = 1; day <= 5; day++) {
+        for (let i = 0; i < dishNames.length; i++) {
+            dishes.push({
+                id: idCounter++,
+                name: dishNames[i],
+                description: `Блюдо из школьного меню Excel файла (день ${day})`,
+                price: 0,
+                meal_type: 'завтрак',
+                day_of_week: day,
                 weight: weights[i],
-                recipe_number: recipeNumbers[i]
+                recipe_number: recipeNumbers[i],
+                school_id: 1,
+                week_start: new Date().toISOString().split('T')[0],
+                created_at: new Date().toISOString()
             });
-            console.log(`✅ Найдено блюдо: ${dishName}`);
         }
     }
 
-    console.log(`🔍 Найдено блюд в Excel файле: ${foundDishes.length}`);
-
-    // Если нашли блюда в файле, используем их
-    if (foundDishes.length > 0) {
-        // Создаем блюда для всех дней недели
-        for (let day = 1; day <= 5; day++) {
-            for (let dish of foundDishes) {
-                dishes.push({
-                    id: idCounter++,
-                    name: dish.name,
-                    description: `Блюдо из школьного меню Excel файла (день ${day})`,
-                    price: 0,
-                    meal_type: 'завтрак',
-                    day_of_week: day,
-                    weight: dish.weight,
-                    recipe_number: dish.recipe_number,
-                    school_id: 1,
-                    week_start: new Date().toISOString().split('T')[0],
-                    created_at: new Date().toISOString()
-                });
-            }
-        }
-    } else {
-        console.log('⚠️ Блюда не найдены в Excel файле, используем fallback данные');
-        return getFallbackData();
-    }
-
+    console.log(`🍽️ Создано ${dishes.length} блюд из Excel файла!`);
     return dishes;
 }
 

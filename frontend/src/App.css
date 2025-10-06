@@ -112,14 +112,41 @@ button:focus-visible {
 }
 
 .container {
-  width: 100%;
+  width: 100vw;
   min-height: 100vh;
   margin: 0;
-  padding: 20px;
+  padding: 0;
   background: white;
   border-radius: 0;
   box-shadow: none;
   border: none;
+  position: relative;
+  overflow-x: hidden;
+}
+
+/* Основной контент на полный экран */
+.main-content {
+  width: 100%;
+  min-height: 100vh;
+  padding: 20px;
+  box-sizing: border-box;
+}
+
+/* Панель директора на полный экран */
+.director-panel {
+  width: 100%;
+  min-height: 100vh;
+  background: white;
+  padding: 20px;
+  box-sizing: border-box;
+}
+
+/* Формы и секции */
+.form-section, .upload-section, .menu-section {
+  width: 100%;
+  padding: 20px;
+  box-sizing: border-box;
+  background: white;
 }
 
 /* Typography */
@@ -801,8 +828,27 @@ p {
 @media (max-width: 768px) {
   /* Основной контейнер */
   .container {
-    padding: 10px;
+    padding: 0;
     min-height: 100vh;
+    width: 100vw;
+  }
+  
+  /* Основной контент */
+  .main-content {
+    padding: 10px;
+    width: 100%;
+  }
+  
+  /* Панель директора */
+  .director-panel {
+    padding: 10px;
+    width: 100%;
+  }
+  
+  /* Формы и секции */
+  .form-section, .upload-section, .menu-section {
+    padding: 10px;
+    width: 100%;
   }
   
   /* Убираем отступы у body */
@@ -891,7 +937,27 @@ p {
 /* Очень маленькие экраны */
 @media (max-width: 480px) {
   .container {
+    padding: 0;
+    width: 100vw;
+    min-height: 100vh;
+  }
+  
+  /* Основной контент */
+  .main-content {
     padding: 5px;
+    width: 100%;
+  }
+  
+  /* Панель директора */
+  .director-panel {
+    padding: 5px;
+    width: 100%;
+  }
+  
+  /* Формы и секции */
+  .form-section, .upload-section, .menu-section {
+    padding: 5px;
+    width: 100%;
   }
   
   .menu-selector {

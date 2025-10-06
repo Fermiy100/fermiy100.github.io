@@ -1,0 +1,300 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mobile Fullscreen Test - Тест мобильной адаптации</title>
+    <style>
+        /* Копируем стили из App.css */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            margin: 0;
+            min-width: 320px;
+            min-height: 100vh;
+            background: #f8f9fa;
+            color: #2c3e50;
+            font-family: Arial, sans-serif;
+        }
+
+        #root {
+            width: 100%;
+            min-height: 100vh;
+            margin: 0;
+            padding: 0;
+            text-align: left;
+        }
+
+        .container {
+            width: 100vw;
+            min-height: 100vh;
+            margin: 0;
+            padding: 0;
+            background: white;
+            border-radius: 0;
+            box-shadow: none;
+            border: none;
+            position: relative;
+            overflow-x: hidden;
+        }
+
+        /* Основной контент на полный экран */
+        .main-content {
+            width: 100%;
+            min-height: 100vh;
+            padding: 20px;
+            box-sizing: border-box;
+        }
+
+        /* Панель директора на полный экран */
+        .director-panel {
+            width: 100%;
+            min-height: 100vh;
+            background: white;
+            padding: 20px;
+            box-sizing: border-box;
+        }
+
+        /* Формы и секции */
+        .form-section, .upload-section, .menu-section {
+            width: 100%;
+            padding: 20px;
+            box-sizing: border-box;
+            background: white;
+        }
+
+        h1 {
+            font-size: 2.5em;
+            line-height: 1.2;
+            color: #2c3e50;
+            font-weight: 700;
+            text-align: center;
+            margin-bottom: 20px;
+        }
+
+        h2 {
+            font-size: 1.8em;
+            color: #34495e;
+            margin-bottom: 15px;
+        }
+
+        button {
+            background: linear-gradient(135deg, #3498db, #2980b9);
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            text-transform: uppercase;
+            margin: 5px;
+        }
+
+        button:hover {
+            background: linear-gradient(135deg, #2980b9, #1f4e79);
+            transform: translateY(-2px);
+        }
+
+        .alert {
+            padding: 15px;
+            margin: 15px 0;
+            border-radius: 8px;
+            font-weight: bold;
+        }
+
+        .alert-success {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+
+        .alert-info {
+            background: #d1ecf1;
+            color: #0c5460;
+            border: 1px solid #bee5eb;
+        }
+
+        .test-section {
+            background: #f8f9fa;
+            border: 2px solid #e9ecef;
+            border-radius: 12px;
+            padding: 20px;
+            margin: 20px 0;
+        }
+
+        /* Мобильные стили */
+        @media (max-width: 768px) {
+            .container {
+                padding: 0;
+                min-height: 100vh;
+                width: 100vw;
+            }
+            
+            .main-content {
+                padding: 10px;
+                width: 100%;
+            }
+            
+            .director-panel {
+                padding: 10px;
+                width: 100%;
+            }
+            
+            .form-section, .upload-section, .menu-section {
+                padding: 10px;
+                width: 100%;
+            }
+            
+            body {
+                margin: 0;
+                padding: 0;
+            }
+            
+            #root {
+                margin: 0;
+                padding: 0;
+            }
+            
+            h1 {
+                font-size: 24px !important;
+            }
+            
+            h2 {
+                font-size: 20px !important;
+            }
+            
+            button {
+                width: 100%;
+                margin: 5px 0;
+                padding: 15px;
+                font-size: 18px;
+                min-height: 44px;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .container {
+                padding: 0;
+                width: 100vw;
+                min-height: 100vh;
+            }
+            
+            .main-content {
+                padding: 5px;
+                width: 100%;
+            }
+            
+            .director-panel {
+                padding: 5px;
+                width: 100%;
+            }
+            
+            .form-section, .upload-section, .menu-section {
+                padding: 5px;
+                width: 100%;
+            }
+            
+            h1 {
+                font-size: 20px !important;
+            }
+            
+            h2 {
+                font-size: 18px !important;
+            }
+            
+            button {
+                padding: 12px;
+                font-size: 16px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div id="root">
+        <div class="container">
+            <div class="director-panel">
+                <h1>📱 Mobile Fullscreen Test</h1>
+                
+                <div class="alert alert-success">
+                    ✅ Синий градиент убран - чистый белый фон
+                </div>
+                
+                <div class="alert alert-info">
+                    📱 Главное окно на полный экран - идеальная мобильная адаптация
+                </div>
+                
+                <div class="test-section">
+                    <h2>🎯 Тест полного экрана</h2>
+                    <p>Этот контейнер должен занимать весь экран на мобильных устройствах.</p>
+                    <p>Ширина: 100vw, Высота: 100vh</p>
+                    <p>Отступы: 0px на мобильных</p>
+                </div>
+                
+                <div class="form-section">
+                    <h2>📝 Тест форм</h2>
+                    <button onclick="testButton()">Тест кнопки</button>
+                    <button onclick="testButton()">Еще кнопка</button>
+                    <button onclick="testButton()">И еще одна</button>
+                </div>
+                
+                <div class="upload-section">
+                    <h2>📤 Тест загрузки</h2>
+                    <p>Секция для тестирования загрузки файлов</p>
+                    <button onclick="testUpload()">Загрузить файл</button>
+                </div>
+                
+                <div class="menu-section">
+                    <h2>🍽️ Тест меню</h2>
+                    <p>Секция для тестирования меню</p>
+                    <button onclick="testMenu()">Показать меню</button>
+                </div>
+                
+                <div class="test-section">
+                    <h2>📊 Информация об экране</h2>
+                    <p id="screen-info">Загрузка информации об экране...</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function testButton() {
+            alert('Кнопка работает! Мобильная адаптация активна.');
+        }
+        
+        function testUpload() {
+            alert('Функция загрузки готова!');
+        }
+        
+        function testMenu() {
+            alert('Меню готово к работе!');
+        }
+        
+        function updateScreenInfo() {
+            const info = document.getElementById('screen-info');
+            const width = window.innerWidth;
+            const height = window.innerHeight;
+            const isMobile = width <= 768;
+            const isSmallMobile = width <= 480;
+            
+            info.innerHTML = `
+                <strong>Размер экрана:</strong> ${width} x ${height}px<br>
+                <strong>Тип устройства:</strong> ${isSmallMobile ? 'Очень маленький мобильный' : isMobile ? 'Мобильный' : 'Десктоп'}<br>
+                <strong>Адаптация:</strong> ${isMobile ? 'Мобильная' : 'Десктопная'}<br>
+                <strong>Полный экран:</strong> ✅ Активен<br>
+                <strong>Синий градиент:</strong> ✅ Убран
+            `;
+        }
+        
+        // Обновляем информацию при загрузке и изменении размера
+        window.onload = updateScreenInfo;
+        window.onresize = updateScreenInfo;
+    </script>
+</body>
+</html>

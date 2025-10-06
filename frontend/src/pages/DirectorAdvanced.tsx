@@ -178,7 +178,7 @@ export default function DirectorAdvanced({ token: _token }: any) {
 
   const handleAddItem = async (formData: any) => {
     try {
-      const response = await apiClient.addMenuItem(formData);
+      await apiClient.addMenuItem(formData);
       setMsg(`✅ Блюдо "${formData.name}" добавлено`);
       setShowAddForm(false);
       loadData(); // Перезагружаем данные

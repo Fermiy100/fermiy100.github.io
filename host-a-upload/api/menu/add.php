@@ -1,42 +1,41 @@
 <?php
 header('Content-Type: application/json');
 header('Access-Control-Allow-Origin: *');
-header('Access-Control-Allow-Methods: GET, POST, PUT, DELETE, OPTIONS');
+header('Access-Control-Allow-Methods: GET, POST, OPTIONS');
 header('Access-Control-Allow-Headers: Content-Type, Authorization');
 
 if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
-    http_response_code(200);
+    http_response_code(204);
     exit();
 }
 
-if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
-    http_response_code(405);
-    echo json_encode(['error' => 'Method not allowed']);
+// Проксируем запрос к Railway API
+$railway_url = 'https://fermiy100githubio-production.up.railway.app/api/menu';
+
+$ch = curl_init();
+curl_setopt($ch, CURLOPT_URL, $railway_url);
+curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+curl_setopt($ch, CURLOPT_TIMEOUT, 30);
+curl_setopt($ch, CURLOPT_POST, true);
+curl_setopt($ch, CURLOPT_HTTPHEADER, [
+    'Content-Type: application/json',
+    'User-Agent: fermiy.ru-proxy'
+]);
+
+// Передаем данные из POST запроса
+$post_data = file_get_contents('php://input');
+curl_setopt($ch, CURLOPT_POSTFIELDS, $post_data);
+
+$response = curl_exec($ch);
+$http_code = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+curl_close($ch);
+
+if ($response === false) {
+    http_response_code(500);
+    echo json_encode(['error' => 'Railway API недоступен']);
     exit();
 }
 
-$input = json_decode(file_get_contents('php://input'), true);
-
-if (!$input || !isset($input['name']) || !isset($input['meal_type']) || !isset($input['day_of_week'])) {
-    http_response_code(400);
-    echo json_encode(['error' => 'Все поля обязательны']);
-    exit();
-}
-
-// Создаем новое блюдо
-$newItem = [
-    'id' => rand(1000, 9999),
-    'name' => $input['name'],
-    'description' => isset($input['description']) ? $input['description'] : '',
-    'price' => isset($input['price']) ? floatval($input['price']) : 0,
-    'meal_type' => $input['meal_type'],
-    'day_of_week' => $input['day_of_week'],
-    'weight' => isset($input['weight']) ? $input['weight'] : '',
-    'recipe_number' => isset($input['recipe_number']) ? $input['recipe_number'] : '',
-    'school_id' => 1,
-    'week_start' => date('Y-m-d'),
-    'created_at' => date('c')
-];
-
-echo json_encode($newItem);
+http_response_code($http_code);
+echo $response;
 ?>

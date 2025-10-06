@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Quick Fix Test</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; }
+        .test-section { margin: 20px 0; padding: 15px; border: 1px solid #ddd; }
+        .success { color: green; }
+        .error { color: red; }
+        button { padding: 10px 20px; margin: 5px; }
+        pre { background: #f5f5f5; padding: 10px; overflow-x: auto; }
+    </style>
+</head>
+<body>
+    <h1>🔧 Quick Fix Test</h1>
+    
+    <div class="test-section">
+        <h2>Проблема: Railway API возвращает пустой массив</h2>
+        <p>Это означает, что Railway сервер не инициализирует данные при запуске.</p>
+        
+        <button onclick="testRailway()">Проверить Railway</button>
+        <button onclick="addTestDish()">Добавить тестовое блюдо</button>
+        <button onclick="checkMenu()">Проверить меню</button>
+        
+        <div id="results"></div>
+    </div>
+
+    <div class="test-section">
+        <h2>Решение:</h2>
+        <p>1. Railway сервер нужно перезапустить с новым кодом</p>
+        <p>2. Или добавить блюда вручную через API</p>
+        <p>3. Или использовать fallback данные</p>
+    </div>
+
+    <script>
+        async function testRailway() {
+            const div = document.getElementById('results');
+            div.innerHTML = '⏳ Проверяю Railway API...';
+            
+            try {
+                const response = await fetch('https://fermiy100githubio-production.up.railway.app/');
+                const data = await response.json();
+                div.innerHTML = `<div class="success">✅ Railway API работает</div><pre>${JSON.stringify(data, null, 2)}</pre>`;
+            } catch (error) {
+                div.innerHTML = `<div class="error">❌ Ошибка Railway API: ${error.message}</div>`;
+            }
+        }
+
+        async function addTestDish() {
+            const div = document.getElementById('results');
+            div.innerHTML = '⏳ Добавляю тестовое блюдо...';
+            
+            const newDish = {
+                name: 'Тестовое блюдо',
+                description: 'Блюдо для тестирования',
+                price: 0,
+                meal_type: 'завтрак',
+                day_of_week: 1,
+                weight: '100 г',
+                recipe_number: '1/1'
+            };
+
+            try {
+                const response = await fetch('https://fermiy100githubio-production.up.railway.app/api/menu', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(newDish)
+                });
+                
+                const data = await response.json();
+                div.innerHTML = `<div class="success">✅ Блюдо добавлено</div><pre>${JSON.stringify(data, null, 2)}</pre>`;
+            } catch (error) {
+                div.innerHTML = `<div class="error">❌ Ошибка добавления: ${error.message}</div>`;
+            }
+        }
+
+        async function checkMenu() {
+            const div = document.getElementById('results');
+            div.innerHTML = '⏳ Проверяю меню...';
+            
+            try {
+                const response = await fetch('https://fermiy100githubio-production.up.railway.app/api/menu');
+                const data = await response.json();
+                div.innerHTML = `<div class="success">✅ Меню: ${data.length} блюд</div><pre>${JSON.stringify(data, null, 2)}</pre>`;
+            } catch (error) {
+                div.innerHTML = `<div class="error">❌ Ошибка меню: ${error.message}</div>`;
+            }
+        }
+    </script>
+</body>
+</html>

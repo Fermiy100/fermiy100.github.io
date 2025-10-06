@@ -1,0 +1,162 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Final Test All Functions</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; }
+        .test-section { margin: 20px 0; padding: 15px; border: 1px solid #ddd; }
+        .success { color: green; }
+        .error { color: red; }
+        button { padding: 10px 20px; margin: 5px; }
+        pre { background: #f5f5f5; padding: 10px; overflow-x: auto; }
+    </style>
+</head>
+<body>
+    <h1>🎯 Final Test All Functions</h1>
+    
+    <div class="test-section">
+        <h2>1. Проверка Railway API</h2>
+        <button onclick="testRailwayStatus()">Проверить статус</button>
+        <button onclick="testRailwayMenu()">Проверить меню</button>
+        <div id="railway-results"></div>
+    </div>
+
+    <div class="test-section">
+        <h2>2. Тест добавления блюда</h2>
+        <button onclick="testAddDish()">Добавить блюдо</button>
+        <div id="add-results"></div>
+    </div>
+
+    <div class="test-section">
+        <h2>3. Тест удаления блюда</h2>
+        <button onclick="testDeleteDish()">Удалить блюдо</button>
+        <div id="delete-results"></div>
+    </div>
+
+    <div class="test-section">
+        <h2>4. Тест очистки меню</h2>
+        <button onclick="testClearMenu()">Очистить меню</button>
+        <div id="clear-results"></div>
+    </div>
+
+    <div class="test-section">
+        <h2>5. Тест прокси</h2>
+        <button onclick="testProxy()">Проверить прокси</button>
+        <div id="proxy-results"></div>
+    </div>
+
+    <script>
+        let lastDishId = null;
+
+        async function testRailwayStatus() {
+            const div = document.getElementById('railway-results');
+            div.innerHTML = '⏳ Проверяю Railway API...';
+            
+            try {
+                const response = await fetch('https://fermiy100githubio-production.up.railway.app/');
+                const data = await response.json();
+                div.innerHTML = `<div class="success">✅ Railway API работает</div><pre>${JSON.stringify(data, null, 2)}</pre>`;
+            } catch (error) {
+                div.innerHTML = `<div class="error">❌ Ошибка Railway API: ${error.message}</div>`;
+            }
+        }
+
+        async function testRailwayMenu() {
+            const div = document.getElementById('railway-results');
+            div.innerHTML = '⏳ Проверяю меню Railway...';
+            
+            try {
+                const response = await fetch('https://fermiy100githubio-production.up.railway.app/api/menu');
+                const data = await response.json();
+                div.innerHTML = `<div class="success">✅ Меню Railway: ${data.length} блюд</div><pre>${JSON.stringify(data.slice(0, 3), null, 2)}</pre>`;
+            } catch (error) {
+                div.innerHTML = `<div class="error">❌ Ошибка меню Railway: ${error.message}</div>`;
+            }
+        }
+
+        async function testAddDish() {
+            const div = document.getElementById('add-results');
+            div.innerHTML = '⏳ Добавляю блюдо...';
+            
+            const newDish = {
+                name: 'Тестовое блюдо',
+                description: 'Блюдо для тестирования',
+                price: 0,
+                meal_type: 'завтрак',
+                day_of_week: 1,
+                weight: '100 г',
+                recipe_number: '1/1'
+            };
+
+            try {
+                const response = await fetch('https://fermiy100githubio-production.up.railway.app/api/menu', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(newDish)
+                });
+                
+                const data = await response.json();
+                lastDishId = data.dish?.id;
+                div.innerHTML = `<div class="success">✅ Блюдо добавлено</div><pre>${JSON.stringify(data, null, 2)}</pre>`;
+            } catch (error) {
+                div.innerHTML = `<div class="error">❌ Ошибка добавления: ${error.message}</div>`;
+            }
+        }
+
+        async function testDeleteDish() {
+            const div = document.getElementById('delete-results');
+            div.innerHTML = '⏳ Удаляю блюдо...';
+            
+            if (!lastDishId) {
+                div.innerHTML = '<div class="error">❌ Нет блюда для удаления. Сначала добавьте блюдо.</div>';
+                return;
+            }
+
+            try {
+                const response = await fetch(`https://fermiy100githubio-production.up.railway.app/api/menu/${lastDishId}`, {
+                    method: 'DELETE'
+                });
+                
+                const data = await response.json();
+                div.innerHTML = `<div class="success">✅ Блюдо удалено</div><pre>${JSON.stringify(data, null, 2)}</pre>`;
+                lastDishId = null;
+            } catch (error) {
+                div.innerHTML = `<div class="error">❌ Ошибка удаления: ${error.message}</div>`;
+            }
+        }
+
+        async function testClearMenu() {
+            const div = document.getElementById('clear-results');
+            div.innerHTML = '⏳ Очищаю меню...';
+            
+            try {
+                const response = await fetch('https://fermiy100githubio-production.up.railway.app/api/menu/clear', {
+                    method: 'DELETE'
+                });
+                
+                const data = await response.json();
+                div.innerHTML = `<div class="success">✅ Меню очищено</div><pre>${JSON.stringify(data, null, 2)}</pre>`;
+            } catch (error) {
+                div.innerHTML = `<div class="error">❌ Ошибка очистки: ${error.message}</div>`;
+            }
+        }
+
+        async function testProxy() {
+            const div = document.getElementById('proxy-results');
+            div.innerHTML = '⏳ Проверяю прокси...';
+            
+            try {
+                const response = await fetch('/api/menu.php');
+                const data = await response.json();
+                div.innerHTML = `<div class="success">✅ Прокси работает: ${data.length} блюд</div><pre>${JSON.stringify(data.slice(0, 3), null, 2)}</pre>`;
+            } catch (error) {
+                div.innerHTML = `<div class="error">❌ Ошибка прокси: ${error.message}</div>`;
+            }
+        }
+    </script>
+</body>
+</html>

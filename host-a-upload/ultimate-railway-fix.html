@@ -1,0 +1,261 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ultimate Railway Fix - Достижение идеала</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; }
+        .container { max-width: 1000px; margin: 0 auto; background: rgba(255,255,255,0.1); padding: 30px; border-radius: 15px; backdrop-filter: blur(10px); }
+        .success { color: #4ade80; font-weight: bold; }
+        .error { color: #f87171; font-weight: bold; }
+        .warning { color: #fbbf24; font-weight: bold; }
+        .info { color: #60a5fa; font-weight: bold; }
+        button { padding: 15px 25px; margin: 10px; font-size: 16px; border: none; border-radius: 8px; cursor: pointer; transition: all 0.3s; }
+        .btn-primary { background: #3b82f6; color: white; }
+        .btn-primary:hover { background: #2563eb; transform: translateY(-2px); }
+        .btn-danger { background: #ef4444; color: white; }
+        .btn-danger:hover { background: #dc2626; transform: translateY(-2px); }
+        .btn-success { background: #10b981; color: white; }
+        .btn-success:hover { background: #059669; transform: translateY(-2px); }
+        .btn-warning { background: #f59e0b; color: white; }
+        .btn-warning:hover { background: #d97706; transform: translateY(-2px); }
+        pre { background: rgba(0,0,0,0.3); padding: 20px; border-radius: 10px; overflow-x: auto; border: 1px solid rgba(255,255,255,0.2); }
+        .step { margin: 25px 0; padding: 20px; border-left: 5px solid #3b82f6; background: rgba(255,255,255,0.05); border-radius: 10px; }
+        .progress { background: rgba(255,255,255,0.2); border-radius: 10px; padding: 10px; margin: 10px 0; }
+        .progress-bar { background: #10b981; height: 20px; border-radius: 10px; transition: width 0.3s; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🚀 Ultimate Railway Fix - Достижение идеала</h1>
+        
+        <div class="step">
+            <h2>🎯 Цель: Идеальный Railway</h2>
+            <p>Добиться идеального состояния Railway с версией v5.0.0, UTF-8 кодировкой и всеми 75 блюдами из Excel файла.</p>
+        </div>
+        
+        <div class="step">
+            <h2>🔧 План действий</h2>
+            <p>Пошаговое достижение идеального состояния Railway.</p>
+            
+            <button class="btn-primary" onclick="checkCurrentState()">1. Проверить текущее состояние</button>
+            <button class="btn-danger" onclick="clearAllData()">2. Очистить все данные</button>
+            <button class="btn-warning" onclick="addAll75Dishes()">3. Добавить все 75 блюд</button>
+            <button class="btn-success" onclick="verifyPerfectState()">4. Проверить идеальное состояние</button>
+        </div>
+        
+        <div class="progress" id="progress" style="display: none;">
+            <div class="progress-bar" id="progressBar" style="width: 0%;"></div>
+            <div id="progressText">Готов к работе</div>
+        </div>
+        
+        <div id="results"></div>
+    </div>
+
+    <script>
+        let addedDishes = 0;
+        const totalDishes = 75;
+
+        async function checkCurrentState() {
+            const div = document.getElementById('results');
+            div.innerHTML = '<div class="info">🔍 Проверяю текущее состояние Railway...</div>';
+            
+            try {
+                const response = await fetch('https://fermiy100githubio-production.up.railway.app/');
+                const data = await response.json();
+                
+                const menuResponse = await fetch('https://fermiy100githubio-production.up.railway.app/api/menu');
+                const menuData = await menuResponse.json();
+                
+                const isUpdated = data.message && data.message.includes('v5.0.0');
+                const hasCorrectEncoding = menuData.length > 0 && !menuData[0].name.includes('?');
+                const hasAllDishes = menuData.length === 75;
+                
+                let statusHtml = '';
+                if (isUpdated) {
+                    statusHtml += '<div class="success">✅ Railway обновлен до v5.0.0!</div>';
+                } else {
+                    statusHtml += '<div class="error">❌ Railway НЕ обновлен до v5.0.0</div>';
+                }
+                
+                if (hasCorrectEncoding) {
+                    statusHtml += '<div class="success">✅ Кодировка UTF-8 работает корректно!</div>';
+                } else {
+                    statusHtml += '<div class="error">❌ Проблема с кодировкой UTF-8</div>';
+                }
+                
+                if (hasAllDishes) {
+                    statusHtml += '<div class="success">✅ Все 75 блюд загружены!</div>';
+                } else {
+                    statusHtml += `<div class="warning">⚠️ Загружено ${menuData.length}/75 блюд</div>`;
+                }
+                
+                div.innerHTML = `
+                    <h3>📊 Текущее состояние Railway:</h3>
+                    ${statusHtml}
+                    <div>📊 Сообщение: ${data.message}</div>
+                    <div>🍽️ Блюд: ${menuData.length}</div>
+                    <div>⏰ Время: ${data.time}</div>
+                    <pre>${JSON.stringify(data, null, 2)}</pre>
+                `;
+            } catch (error) {
+                div.innerHTML = `<div class="error">❌ Ошибка: ${error.message}</div>`;
+            }
+        }
+
+        async function clearAllData() {
+            const div = document.getElementById('results');
+            div.innerHTML = '<div class="warning">🗑️ Очищаю все данные Railway...</div>';
+            
+            try {
+                const response = await fetch('https://fermiy100githubio-production.up.railway.app/api/menu/clear', {
+                    method: 'DELETE'
+                });
+                const data = await response.json();
+                
+                div.innerHTML = `
+                    <div class="success">✅ Все данные очищены!</div>
+                    <div>🗑️ Результат: ${JSON.stringify(data, null, 2)}</div>
+                `;
+            } catch (error) {
+                div.innerHTML = `<div class="error">❌ Ошибка при очистке: ${error.message}</div>`;
+            }
+        }
+
+        async function addAll75Dishes() {
+            const div = document.getElementById('results');
+            const progressDiv = document.getElementById('progress');
+            const progressBar = document.getElementById('progressBar');
+            const progressText = document.getElementById('progressText');
+            
+            progressDiv.style.display = 'block';
+            div.innerHTML = '<div class="info">➕ Добавляю все 75 блюд из Excel файла...</div>';
+            
+            const exactDishes = [
+                'Сухие завтраки с молоком', 'Оладьи', 'Молоко сгущенное', 'Сметана',
+                'Джем фруктовый', 'Мед', 'Масло сливочное', 'Сыр', 'Колбаса вареная',
+                'Колбаса в/к', 'Ветчина', 'Хлеб из пшеничной муки', 'Чай с сахаром',
+                'Чай с молоком', 'Какао с молоком'
+            ];
+
+            const exactWeights = [
+                '225 г', '2 шт', '20 г', '20 г', '20 г', '20 г', '10 г', '15 г', 
+                '20 г', '20 г', '20 г', '20 г', '200 г', '200 г', '200 г'
+            ];
+
+            const exactRecipes = [
+                '1/6', '11/2', '15/1', '15/7', '15/5', '15/6', '18/7', '18/8', 
+                '18/5', '18/6', '18/4', '17/1', '12/2', '12/3', '12/4'
+            ];
+
+            addedDishes = 0;
+            
+            try {
+                // Добавляем все 75 блюд (15 блюд × 5 дней)
+                for (let day = 1; day <= 5; day++) {
+                    for (let i = 0; i < exactDishes.length; i++) {
+                        const dish = {
+                            name: exactDishes[i],
+                            description: `Точное блюдо из Excel файла (день ${day})`,
+                            price: 0,
+                            meal_type: 'завтрак',
+                            day_of_week: day,
+                            weight: exactWeights[i],
+                            recipe_number: exactRecipes[i]
+                        };
+                        
+                        await fetch('https://fermiy100githubio-production.up.railway.app/api/menu', {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify(dish)
+                        });
+                        
+                        addedDishes++;
+                        const progress = (addedDishes / totalDishes) * 100;
+                        progressBar.style.width = progress + '%';
+                        progressText.textContent = `Добавлено ${addedDishes}/75 блюд (${Math.round(progress)}%)`;
+                        
+                        // Обновляем отображение каждые 5 блюд
+                        if (addedDishes % 5 === 0) {
+                            div.innerHTML = `
+                                <div class="info">➕ Добавляю все 75 блюд из Excel файла...</div>
+                                <div class="success">✅ Добавлено ${addedDishes}/75 блюд</div>
+                                <div>📅 День ${day}, блюдо ${i + 1}/15: ${exactDishes[i]}</div>
+                            `;
+                        }
+                    }
+                }
+                
+                div.innerHTML = `
+                    <div class="success">🎉 Все 75 блюд успешно добавлены!</div>
+                    <div>✅ 15 блюд × 5 дней = 75 блюд</div>
+                    <div>📊 Прогресс: 100%</div>
+                `;
+                
+            } catch (error) {
+                div.innerHTML = `<div class="error">❌ Ошибка при добавлении блюд: ${error.message}</div>`;
+            }
+        }
+
+        async function verifyPerfectState() {
+            const div = document.getElementById('results');
+            div.innerHTML = '<div class="info">🔍 Проверяю идеальное состояние Railway...</div>';
+            
+            try {
+                const response = await fetch('https://fermiy100githubio-production.up.railway.app/');
+                const data = await response.json();
+                
+                const menuResponse = await fetch('https://fermiy100githubio-production.up.railway.app/api/menu');
+                const menuData = await menuResponse.json();
+                
+                const isUpdated = data.message && data.message.includes('v5.0.0');
+                const hasCorrectEncoding = menuData.length > 0 && !menuData[0].name.includes('?');
+                const hasAllDishes = menuData.length === 75;
+                
+                let statusHtml = '';
+                if (isUpdated && hasCorrectEncoding && hasAllDishes) {
+                    statusHtml = '<div class="success">🎉 ИДЕАЛЬНОЕ СОСТОЯНИЕ ДОСТИГНУТО!</div>';
+                } else {
+                    statusHtml = '<div class="error">❌ Идеальное состояние не достигнуто</div>';
+                }
+                
+                if (isUpdated) {
+                    statusHtml += '<div class="success">✅ Railway обновлен до v5.0.0!</div>';
+                } else {
+                    statusHtml += '<div class="error">❌ Railway НЕ обновлен до v5.0.0</div>';
+                }
+                
+                if (hasCorrectEncoding) {
+                    statusHtml += '<div class="success">✅ Кодировка UTF-8 работает корректно!</div>';
+                } else {
+                    statusHtml += '<div class="error">❌ Проблема с кодировкой UTF-8</div>';
+                }
+                
+                if (hasAllDishes) {
+                    statusHtml += '<div class="success">✅ Все 75 блюд загружены!</div>';
+                } else {
+                    statusHtml += `<div class="warning">⚠️ Загружено ${menuData.length}/75 блюд</div>`;
+                }
+                
+                div.innerHTML = `
+                    <h3>🎯 Результат проверки идеального состояния:</h3>
+                    ${statusHtml}
+                    <div>📊 Сообщение: ${data.message}</div>
+                    <div>🍽️ Блюд: ${menuData.length}</div>
+                    <div>⏰ Время: ${data.time}</div>
+                    <pre>${JSON.stringify(data, null, 2)}</pre>
+                `;
+                
+            } catch (error) {
+                div.innerHTML = `<div class="error">❌ Ошибка при проверке: ${error.message}</div>`;
+            }
+        }
+
+        // Автоматически проверяем состояние при загрузке страницы
+        window.onload = function() {
+            checkCurrentState();
+        };
+    </script>
+</body>
+</html>

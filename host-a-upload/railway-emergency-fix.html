@@ -1,0 +1,183 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Экстренное исправление Railway</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; background: #f5f5f5; }
+        .container { max-width: 800px; margin: 0 auto; background: white; padding: 20px; border-radius: 10px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
+        .success { color: green; font-weight: bold; }
+        .error { color: red; font-weight: bold; }
+        .warning { color: orange; font-weight: bold; }
+        .info { color: blue; font-weight: bold; }
+        button { padding: 15px 25px; margin: 10px; font-size: 16px; border: none; border-radius: 5px; cursor: pointer; }
+        .btn-primary { background: #007bff; color: white; }
+        .btn-danger { background: #dc3545; color: white; }
+        .btn-success { background: #28a745; color: white; }
+        .btn-warning { background: #ffc107; color: black; }
+        pre { background: #f8f9fa; padding: 15px; border-radius: 5px; overflow-x: auto; border: 1px solid #dee2e6; }
+        .step { margin: 20px 0; padding: 15px; border-left: 4px solid #007bff; background: #f8f9fa; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🚨 Экстренное исправление Railway</h1>
+        
+        <div class="step">
+            <h2>Проблема</h2>
+            <p>Railway не обновился с новым кодом v5.0.0 и возвращает данные с неправильной кодировкой UTF-8.</p>
+            <p class="error">Кириллица отображается как "??N?N????" вместо правильных символов.</p>
+        </div>
+        
+        <div class="step">
+            <h2>Решение</h2>
+            <p>Принудительно обновить Railway через API вызовы.</p>
+            
+            <button class="btn-primary" onclick="checkStatus()">1. Проверить статус</button>
+            <button class="btn-danger" onclick="clearMenu()">2. Очистить меню</button>
+            <button class="btn-warning" onclick="addTestDish()">3. Добавить тестовое блюдо</button>
+            <button class="btn-success" onclick="verifyFix()">4. Проверить исправление</button>
+        </div>
+        
+        <div id="results"></div>
+    </div>
+
+    <script>
+        let testDishId = null;
+
+        async function checkStatus() {
+            const div = document.getElementById('results');
+            div.innerHTML = '<div class="info">⏳ Проверяю статус Railway...</div>';
+            
+            try {
+                const response = await fetch('https://fermiy100githubio-production.up.railway.app/');
+                const data = await response.json();
+                
+                const isUpdated = data.message && data.message.includes('v5.0.0');
+                const statusClass = isUpdated ? 'success' : 'error';
+                const statusText = isUpdated ? '✅ Railway обновлен до v5.0.0!' : '❌ Railway НЕ обновлен до v5.0.0!';
+                
+                div.innerHTML = `
+                    <div class="${statusClass}">${statusText}</div>
+                    <div>📊 Сообщение: ${data.message}</div>
+                    <div>🍽️ Блюд: ${data.dishCount}</div>
+                    <div>⏰ Время: ${data.time}</div>
+                    <pre>${JSON.stringify(data, null, 2)}</pre>
+                `;
+            } catch (error) {
+                div.innerHTML = `<div class="error">❌ Ошибка: ${error.message}</div>`;
+            }
+        }
+
+        async function clearMenu() {
+            const div = document.getElementById('results');
+            div.innerHTML = '<div class="warning">🗑️ Очищаю меню...</div>';
+            
+            try {
+                const response = await fetch('https://fermiy100githubio-production.up.railway.app/api/menu/clear', {
+                    method: 'DELETE'
+                });
+                const data = await response.json();
+                
+                div.innerHTML = `
+                    <div class="success">✅ Меню очищено!</div>
+                    <div>🗑️ Удалено блюд: ${data.deletedCount}</div>
+                    <div>🍽️ Осталось блюд: ${data.remainingDishes}</div>
+                    <pre>${JSON.stringify(data, null, 2)}</pre>
+                `;
+            } catch (error) {
+                div.innerHTML = `<div class="error">❌ Ошибка при очистке: ${error.message}</div>`;
+            }
+        }
+
+        async function addTestDish() {
+            const div = document.getElementById('results');
+            div.innerHTML = '<div class="warning">➕ Добавляю тестовое блюдо с UTF-8...</div>';
+            
+            try {
+                const testDish = {
+                    name: 'Тестовое блюдо UTF-8 v5.0.0',
+                    description: 'Проверка кодировки кириллицы v5.0.0',
+                    price: 0,
+                    meal_type: 'завтрак',
+                    day_of_week: 1,
+                    weight: '100 г',
+                    recipe_number: 'v5.0.0/1'
+                };
+                
+                const response = await fetch('https://fermiy100githubio-production.up.railway.app/api/menu', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(testDish)
+                });
+                
+                const data = await response.json();
+                testDishId = data.dish?.id;
+                
+                div.innerHTML = `
+                    <div class="success">✅ Тестовое блюдо добавлено!</div>
+                    <div>🆔 ID блюда: ${testDishId}</div>
+                    <div>🍽️ Всего блюд: ${data.totalDishes}</div>
+                    <pre>${JSON.stringify(data, null, 2)}</pre>
+                `;
+            } catch (error) {
+                div.innerHTML = `<div class="error">❌ Ошибка при добавлении: ${error.message}</div>`;
+            }
+        }
+
+        async function verifyFix() {
+            const div = document.getElementById('results');
+            div.innerHTML = '<div class="info">🔍 Проверяю исправление...</div>';
+            
+            try {
+                // Проверяем статус
+                const statusResponse = await fetch('https://fermiy100githubio-production.up.railway.app/');
+                const statusData = await statusResponse.json();
+                
+                // Проверяем меню
+                const menuResponse = await fetch('https://fermiy100githubio-production.up.railway.app/api/menu');
+                const menuData = await menuResponse.json();
+                
+                let statusHtml = '';
+                if (statusData.message && statusData.message.includes('v5.0.0')) {
+                    statusHtml = '<div class="success">✅ Railway обновлен до v5.0.0!</div>';
+                } else {
+                    statusHtml = '<div class="error">❌ Railway все еще не обновлен до v5.0.0</div>';
+                }
+                
+                let encodingHtml = '';
+                if (menuData.length > 0) {
+                    const firstDish = menuData[0];
+                    if (firstDish.name.includes('?')) {
+                        encodingHtml = '<div class="error">❌ Проблема с кодировкой все еще есть</div>';
+                        encodingHtml += `<div>🔍 Первое блюдо: "${firstDish.name}"</div>`;
+                    } else {
+                        encodingHtml = '<div class="success">✅ Кодировка исправлена!</div>';
+                        encodingHtml += `<div>🔍 Первое блюдо: "${firstDish.name}"</div>`;
+                    }
+                }
+                
+                div.innerHTML = `
+                    <h3>📊 Результат проверки:</h3>
+                    <div><strong>Статус Railway:</strong></div>
+                    ${statusHtml}
+                    <div><strong>Кодировка UTF-8:</strong></div>
+                    ${encodingHtml}
+                    <div>🍽️ Блюд в меню: ${menuData.length}</div>
+                    <div>⏰ Время: ${statusData.time}</div>
+                    <pre>${JSON.stringify(statusData, null, 2)}</pre>
+                `;
+                
+            } catch (error) {
+                div.innerHTML = `<div class="error">❌ Ошибка при проверке: ${error.message}</div>`;
+            }
+        }
+
+        // Автоматически проверяем статус при загрузке страницы
+        window.onload = function() {
+            checkStatus();
+        };
+    </script>
+</body>
+</html>

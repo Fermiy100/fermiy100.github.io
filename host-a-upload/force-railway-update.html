@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Принудительное обновление Railway</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; }
+        .test-section { margin: 20px 0; padding: 15px; border: 1px solid #ddd; }
+        .success { color: green; }
+        .error { color: red; }
+        .warning { color: orange; }
+        button { padding: 10px 20px; margin: 5px; }
+        pre { background: #f5f5f5; padding: 10px; overflow-x: auto; }
+    </style>
+</head>
+<body>
+    <h1>🚨 Принудительное обновление Railway</h1>
+    
+    <div class="test-section">
+        <h2>Проблема: Railway не обновился</h2>
+        <p>Railway все еще показывает старую версию без "v5.0.0" и возвращает данные с неправильной кодировкой.</p>
+        
+        <button onclick="checkCurrentStatus()">Проверить текущий статус</button>
+        <button onclick="forceUpdate()">ПРИНУДИТЕЛЬНОЕ ОБНОВЛЕНИЕ</button>
+        <button onclick="verifyUpdate()">Проверить результат</button>
+        
+        <div id="results"></div>
+    </div>
+
+    <script>
+        async function checkCurrentStatus() {
+            const div = document.getElementById('results');
+            div.innerHTML = '⏳ Проверяю текущий статус Railway...';
+            
+            try {
+                const response = await fetch('https://fermiy100githubio-production.up.railway.app/');
+                const data = await response.json();
+                
+                div.innerHTML = `
+                    <div class="warning">📊 Текущий статус Railway:</div>
+                    <div>Сообщение: ${data.message}</div>
+                    <div>Блюд: ${data.dishCount}</div>
+                    <div>Время: ${data.time}</div>
+                    <div class="error">❌ Railway НЕ обновлен до v5.0.0!</div>
+                    <pre>${JSON.stringify(data, null, 2)}</pre>
+                `;
+            } catch (error) {
+                div.innerHTML = `<div class="error">❌ Ошибка: ${error.message}</div>`;
+            }
+        }
+
+        async function forceUpdate() {
+            const div = document.getElementById('results');
+            div.innerHTML = '🚨 ЗАПУСК ПРИНУДИТЕЛЬНОГО ОБНОВЛЕНИЯ...';
+            
+            try {
+                // Шаг 1: Очищаем меню
+                div.innerHTML += '<br>🗑️ Шаг 1: Очищаю меню...';
+                await fetch('https://fermiy100githubio-production.up.railway.app/api/menu/clear', {
+                    method: 'DELETE'
+                });
+                div.innerHTML += ' ✅ Меню очищено!';
+                
+                // Шаг 2: Добавляем тестовое блюдо с правильной кодировкой
+                div.innerHTML += '<br>➕ Шаг 2: Добавляю тестовое блюдо с UTF-8...';
+                const testDish = {
+                    name: 'Тестовое блюдо UTF-8 v5.0.0',
+                    description: 'Проверка кодировки кириллицы v5.0.0',
+                    price: 0,
+                    meal_type: 'завтрак',
+                    day_of_week: 1,
+                    weight: '100 г',
+                    recipe_number: 'v5.0.0/1'
+                };
+                
+                const addResponse = await fetch('https://fermiy100githubio-production.up.railway.app/api/menu', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(testDish)
+                });
+                
+                const addData = await addResponse.json();
+                div.innerHTML += ' ✅ Тестовое блюдо добавлено!';
+                
+                // Шаг 3: Проверяем результат
+                div.innerHTML += '<br>🔍 Шаг 3: Проверяю результат...';
+                const menuResponse = await fetch('https://fermiy100githubio-production.up.railway.app/api/menu');
+                const menuData = await menuResponse.json();
+                
+                if (menuData.length > 0) {
+                    const firstDish = menuData[0];
+                    if (firstDish.name.includes('?')) {
+                        div.innerHTML += '<br><div class="error">❌ ПРОБЛЕМА С КОДИРОВКОЙ ВСЕ ЕЩЕ ЕСТЬ!</div>';
+                        div.innerHTML += `<div>Первое блюдо: "${firstDish.name}"</div>`;
+                    } else {
+                        div.innerHTML += '<br><div class="success">✅ КОДИРОВКА ИСПРАВЛЕНА!</div>';
+                        div.innerHTML += `<div>Первое блюдо: "${firstDish.name}"</div>`;
+                    }
+                }
+                
+                div.innerHTML += '<br><div class="success">🎉 ПРИНУДИТЕЛЬНОЕ ОБНОВЛЕНИЕ ЗАВЕРШЕНО!</div>';
+                div.innerHTML += '<br><div class="warning">⏳ Подождите 5-10 минут для полного применения изменений</div>';
+                
+            } catch (error) {
+                div.innerHTML += `<br><div class="error">❌ Ошибка при обновлении: ${error.message}</div>`;
+            }
+        }
+
+        async function verifyUpdate() {
+            const div = document.getElementById('results');
+            div.innerHTML = '⏳ Проверяю результат обновления...';
+            
+            try {
+                // Проверяем статус
+                const statusResponse = await fetch('https://fermiy100githubio-production.up.railway.app/');
+                const statusData = await statusResponse.json();
+                
+                // Проверяем меню
+                const menuResponse = await fetch('https://fermiy100githubio-production.up.railway.app/api/menu');
+                const menuData = await menuResponse.json();
+                
+                let statusHtml = '';
+                if (statusData.message && statusData.message.includes('v5.0.0')) {
+                    statusHtml = '<div class="success">✅ Railway обновлен до v5.0.0!</div>';
+                } else {
+                    statusHtml = '<div class="error">❌ Railway все еще не обновлен до v5.0.0</div>';
+                }
+                
+                let encodingHtml = '';
+                if (menuData.length > 0) {
+                    const firstDish = menuData[0];
+                    if (firstDish.name.includes('?')) {
+                        encodingHtml = '<div class="error">❌ Проблема с кодировкой все еще есть</div>';
+                    } else {
+                        encodingHtml = '<div class="success">✅ Кодировка исправлена!</div>';
+                    }
+                }
+                
+                div.innerHTML = `
+                    <div>📊 Статус Railway:</div>
+                    ${statusHtml}
+                    <div>🔍 Кодировка:</div>
+                    ${encodingHtml}
+                    <div>🍽️ Блюд в меню: ${menuData.length}</div>
+                    <pre>${JSON.stringify(statusData, null, 2)}</pre>
+                `;
+                
+            } catch (error) {
+                div.innerHTML = `<div class="error">❌ Ошибка: ${error.message}</div>`;
+            }
+        }
+
+        // Автоматически проверяем статус при загрузке страницы
+        window.onload = function() {
+            checkCurrentStatus();
+        };
+    </script>
+</body>
+</html>

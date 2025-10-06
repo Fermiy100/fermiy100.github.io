@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Тест всех функций</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; }
+        .result { background: #f0f0f0; padding: 10px; margin: 10px 0; border-radius: 5px; }
+        .success { background: #d4edda; color: #155724; }
+        .error { background: #f8d7da; color: #721c24; }
+        button { padding: 10px 20px; margin: 5px; background: #007bff; color: white; border: none; border-radius: 5px; cursor: pointer; }
+        button:hover { background: #0056b3; }
+        .dish { background: #e9ecef; padding: 5px; margin: 2px 0; border-radius: 3px; }
+    </style>
+</head>
+<body>
+    <h1>🔥 Тест всех функций Railway API</h1>
+    
+    <button onclick="testGetMenu()">📋 Получить меню</button>
+    <button onclick="testAddDish()">➕ Добавить блюдо</button>
+    <button onclick="testDeleteDish()">🗑️ Удалить блюдо</button>
+    <button onclick="testClearAll()">🧹 Очистить все</button>
+    
+    <div id="results"></div>
+
+    <script>
+        const RAILWAY_URL = 'https://fermiy100githubio-production.up.railway.app';
+        let currentDishes = [];
+        
+        function addResult(message, isSuccess = true) {
+            const div = document.createElement('div');
+            div.className = `result ${isSuccess ? 'success' : 'error'}`;
+            div.innerHTML = message;
+            document.getElementById('results').appendChild(div);
+        }
+        
+        async function testGetMenu() {
+            try {
+                addResult('🔄 Получаю меню...');
+                const response = await fetch(`${RAILWAY_URL}/api/menu`);
+                const data = await response.json();
+                currentDishes = data;
+                addResult(`✅ Меню получено: ${data.length} блюд<br>Первое блюдо: ${data[0]?.name || 'Нет данных'}`);
+                
+                // Показываем первые 3 блюда
+                let dishesHtml = '<h4>Первые 3 блюда:</h4>';
+                for (let i = 0; i < Math.min(3, data.length); i++) {
+                    dishesHtml += `<div class="dish">${i+1}. ${data[i].name} (ID: ${data[i].id})</div>`;
+                }
+                addResult(dishesHtml);
+            } catch (error) {
+                addResult(`❌ Ошибка получения меню: ${error.message}`, false);
+            }
+        }
+        
+        async function testAddDish() {
+            try {
+                addResult('🔄 Добавляю тестовое блюдо...');
+                const newDish = {
+                    name: 'Тестовое блюдо',
+                    description: 'Добавлено через тест',
+                    price: 100,
+                    meal_type: 'завтрак',
+                    day_of_week: 1,
+                    weight: '200 г',
+                    recipe_number: 'TEST/1'
+                };
+                
+                const response = await fetch(`${RAILWAY_URL}/api/menu`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(newDish)
+                });
+                
+                const data = await response.json();
+                addResult(`✅ Блюдо добавлено: ${data.message}<br>Всего блюд: ${data.totalDishes}`);
+            } catch (error) {
+                addResult(`❌ Ошибка добавления: ${error.message}`, false);
+            }
+        }
+        
+        async function testDeleteDish() {
+            try {
+                if (currentDishes.length === 0) {
+                    addResult('⚠️ Сначала получите меню!', false);
+                    return;
+                }
+                
+                const dishToDelete = currentDishes[currentDishes.length - 1];
+                addResult(`🔄 Удаляю блюдо: ${dishToDelete.name} (ID: ${dishToDelete.id})...`);
+                
+                const response = await fetch(`${RAILWAY_URL}/api/menu/${dishToDelete.id}`, {
+                    method: 'DELETE'
+                });
+                
+                const data = await response.json();
+                addResult(`✅ Блюдо удалено: ${data.message}<br>Осталось блюд: ${data.totalDishes}`);
+            } catch (error) {
+                addResult(`❌ Ошибка удаления: ${error.message}`, false);
+            }
+        }
+        
+        async function testClearAll() {
+            try {
+                addResult('🔄 Очищаю все блюда...');
+                const response = await fetch(`${RAILWAY_URL}/api/menu/clear`, {
+                    method: 'DELETE'
+                });
+                
+                const data = await response.json();
+                addResult(`✅ Все блюда удалены: ${data.message}<br>Удалено: ${data.deletedCount} блюд`);
+            } catch (error) {
+                addResult(`❌ Ошибка очистки: ${error.message}`, false);
+            }
+        }
+        
+        // Автоматически тестируем при загрузке
+        window.onload = function() {
+            addResult('🚀 Страница загружена! Нажмите кнопки для тестирования функций.');
+        };
+    </script>
+</body>
+</html>

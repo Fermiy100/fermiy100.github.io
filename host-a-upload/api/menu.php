@@ -1,32 +1,36 @@
 <?php
 header('Content-Type: application/json');
 header('Access-Control-Allow-Origin: *');
-header('Access-Control-Allow-Methods: GET, POST, PUT, DELETE, OPTIONS');
+header('Access-Control-Allow-Methods: GET, POST, OPTIONS');
 header('Access-Control-Allow-Headers: Content-Type, Authorization');
 
 if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
-    http_response_code(200);
+    http_response_code(204);
     exit();
 }
 
-// Читаем данные из файла (если существует), иначе используем mock данные
-$dataFile = __DIR__ . '/menu_data.json';
-$menuItems = [];
+// Проксируем запрос к Railway API
+$railway_url = 'https://fermiy100githubio-production.up.railway.app/api/menu';
 
-if (file_exists($dataFile)) {
-    $jsonData = file_get_contents($dataFile);
-    $menuItems = json_decode($jsonData, true);
-    
-    if (!$menuItems || !is_array($menuItems)) {
-        $menuItems = [];
-    }
-} 
+$ch = curl_init();
+curl_setopt($ch, CURLOPT_URL, $railway_url);
+curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+curl_setopt($ch, CURLOPT_TIMEOUT, 30);
+curl_setopt($ch, CURLOPT_HTTPHEADER, [
+    'Content-Type: application/json',
+    'User-Agent: fermiy.ru-proxy'
+]);
 
-// Если файл пустой или нет данных, возвращаем пустой массив
-if (empty($menuItems)) {
-    $menuItems = [];
+$response = curl_exec($ch);
+$http_code = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+curl_close($ch);
+
+if ($response === false) {
+    http_response_code(500);
+    echo json_encode(['error' => 'Railway API недоступен']);
+    exit();
 }
 
-// Возвращаем прямой массив блюд как ожидает frontend
-echo json_encode($menuItems);
+http_response_code($http_code);
+echo $response;
 ?>

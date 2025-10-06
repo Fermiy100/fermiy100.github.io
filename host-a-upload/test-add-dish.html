@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Debug API</title>
+    <title>Тест добавления блюда</title>
     <style>
         body { font-family: Arial, sans-serif; margin: 20px; }
         .test-section { margin: 20px 0; padding: 15px; border: 1px solid #ddd; }
@@ -14,48 +14,43 @@
     </style>
 </head>
 <body>
-    <h1>🔍 Debug API</h1>
+    <h1>🧪 Тест добавления блюда</h1>
     
     <div class="test-section">
-        <h2>1. Railway API Status</h2>
-        <button onclick="checkRailwayStatus()">Проверить статус</button>
-        <div id="status-result"></div>
+        <h2>1. Проверка Railway API</h2>
+        <button onclick="testRailwayStatus()">Проверить статус Railway</button>
+        <button onclick="testRailwayMenu()">Проверить меню Railway</button>
+        <div id="railway-status"></div>
     </div>
 
     <div class="test-section">
-        <h2>2. Railway API Menu</h2>
-        <button onclick="checkRailwayMenu()">Проверить меню</button>
-        <div id="menu-result"></div>
-    </div>
-
-    <div class="test-section">
-        <h2>3. Добавить блюдо в Railway</h2>
-        <button onclick="addDishToRailway()">Добавить блюдо</button>
+        <h2>2. Тест добавления блюда</h2>
+        <button onclick="testAddDish()">Добавить тестовое блюдо</button>
         <div id="add-result"></div>
     </div>
 
     <div class="test-section">
-        <h2>4. Проверить прокси</h2>
-        <button onclick="checkProxy()">Проверить прокси</button>
+        <h2>3. Тест через прокси</h2>
+        <button onclick="testAddDishProxy()">Добавить через прокси</button>
         <div id="proxy-result"></div>
     </div>
 
     <script>
-        async function checkRailwayStatus() {
-            const div = document.getElementById('status-result');
+        async function testRailwayStatus() {
+            const div = document.getElementById('railway-status');
             div.innerHTML = '⏳ Проверяю Railway API...';
             
             try {
                 const response = await fetch('https://fermiy100githubio-production.up.railway.app/');
                 const data = await response.json();
-                div.innerHTML = `<div class="success">✅ Railway API работает</div><pre>${JSON.stringify(data, null, 2)}</pre>`;
+                div.innerHTML = `<div class="success">✅ Railway API работает: ${JSON.stringify(data, null, 2)}</div>`;
             } catch (error) {
                 div.innerHTML = `<div class="error">❌ Ошибка Railway API: ${error.message}</div>`;
             }
         }
 
-        async function checkRailwayMenu() {
-            const div = document.getElementById('menu-result');
+        async function testRailwayMenu() {
+            const div = document.getElementById('railway-status');
             div.innerHTML = '⏳ Проверяю меню Railway...';
             
             try {
@@ -67,9 +62,9 @@
             }
         }
 
-        async function addDishToRailway() {
+        async function testAddDish() {
             const div = document.getElementById('add-result');
-            div.innerHTML = '⏳ Добавляю блюдо в Railway...';
+            div.innerHTML = '⏳ Добавляю блюдо напрямую в Railway...';
             
             const newDish = {
                 name: 'Тестовое блюдо',
@@ -91,22 +86,39 @@
                 });
                 
                 const data = await response.json();
-                div.innerHTML = `<div class="success">✅ Блюдо добавлено в Railway</div><pre>${JSON.stringify(data, null, 2)}</pre>`;
+                div.innerHTML = `<div class="success">✅ Блюдо добавлено: ${JSON.stringify(data, null, 2)}</div>`;
             } catch (error) {
-                div.innerHTML = `<div class="error">❌ Ошибка добавления в Railway: ${error.message}</div>`;
+                div.innerHTML = `<div class="error">❌ Ошибка добавления: ${error.message}</div>`;
             }
         }
 
-        async function checkProxy() {
+        async function testAddDishProxy() {
             const div = document.getElementById('proxy-result');
-            div.innerHTML = '⏳ Проверяю прокси...';
+            div.innerHTML = '⏳ Добавляю блюдо через прокси...';
             
+            const newDish = {
+                name: 'Тестовое блюдо через прокси',
+                description: 'Блюдо для тестирования прокси',
+                price: 0,
+                meal_type: 'завтрак',
+                day_of_week: 1,
+                weight: '100 г',
+                recipe_number: '1/1'
+            };
+
             try {
-                const response = await fetch('/api/menu.php');
+                const response = await fetch('/api/menu/add.php', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(newDish)
+                });
+                
                 const data = await response.json();
-                div.innerHTML = `<div class="success">✅ Прокси работает: ${data.length} блюд</div><pre>${JSON.stringify(data.slice(0, 3), null, 2)}</pre>`;
+                div.innerHTML = `<div class="success">✅ Блюдо добавлено через прокси: ${JSON.stringify(data, null, 2)}</div>`;
             } catch (error) {
-                div.innerHTML = `<div class="error">❌ Ошибка прокси: ${error.message}</div>`;
+                div.innerHTML = `<div class="error">❌ Ошибка добавления через прокси: ${error.message}</div>`;
             }
         }
     </script>

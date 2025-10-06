@@ -1,0 +1,291 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Final Ultimate Test</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; }
+        .test-section { margin: 20px 0; padding: 15px; border: 1px solid #ddd; }
+        .success { color: green; }
+        .error { color: red; }
+        button { padding: 10px 20px; margin: 5px; }
+        pre { background: #f5f5f5; padding: 10px; overflow-x: auto; }
+        .test-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 20px; }
+    </style>
+</head>
+<body>
+    <h1>🏆 Final Ultimate Test - Ultimate Parser</h1>
+    
+    <div class="test-section">
+        <h2>🎯 Комплексный тест Ultimate Parser</h2>
+        <p>Этот тест проверяет все функции нового FINAL EXCEL PARSER и Railway API</p>
+        
+        <button onclick="runAllTests()">🚀 Запустить все тесты</button>
+        <button onclick="clearResults()">🧹 Очистить результаты</button>
+        
+        <div id="overall-results"></div>
+    </div>
+
+    <div class="test-grid">
+        <div class="test-section">
+            <h3>1. Railway API Status</h3>
+            <button onclick="testRailwayStatus()">Проверить статус</button>
+            <div id="status-results"></div>
+        </div>
+
+        <div class="test-section">
+            <h3>2. Menu Data</h3>
+            <button onclick="testMenuData()">Проверить меню</button>
+            <div id="menu-results"></div>
+        </div>
+
+        <div class="test-section">
+            <h3>3. Add Dish</h3>
+            <button onclick="testAddDish()">Добавить блюдо</button>
+            <div id="add-results"></div>
+        </div>
+
+        <div class="test-section">
+            <h3>4. Delete Dish</h3>
+            <button onclick="testDeleteDish()">Удалить блюдо</button>
+            <div id="delete-results"></div>
+        </div>
+
+        <div class="test-section">
+            <h3>5. Clear Menu</h3>
+            <button onclick="testClearMenu()">Очистить меню</button>
+            <div id="clear-results"></div>
+        </div>
+
+        <div class="test-section">
+            <h3>6. Proxy Test</h3>
+            <button onclick="testProxy()">Проверить прокси</button>
+            <div id="proxy-results"></div>
+        </div>
+    </div>
+
+    <div class="test-section">
+        <h2>📊 Детальный анализ данных</h2>
+        <div id="analysis-results"></div>
+    </div>
+
+    <script>
+        let lastDishId = null;
+        let testResults = {};
+
+        async function runAllTests() {
+            const overallDiv = document.getElementById('overall-results');
+            overallDiv.innerHTML = '⏳ Запускаю все тесты...';
+            
+            testResults = {};
+            
+            // Запускаем все тесты последовательно
+            await testRailwayStatus();
+            await new Promise(resolve => setTimeout(resolve, 1000));
+            
+            await testMenuData();
+            await new Promise(resolve => setTimeout(resolve, 1000));
+            
+            await testAddDish();
+            await new Promise(resolve => setTimeout(resolve, 1000));
+            
+            await testDeleteDish();
+            await new Promise(resolve => setTimeout(resolve, 1000));
+            
+            await testClearMenu();
+            await new Promise(resolve => setTimeout(resolve, 1000));
+            
+            await testProxy();
+            
+            // Анализируем результаты
+            analyzeResults();
+        }
+
+        function clearResults() {
+            const divs = ['overall-results', 'status-results', 'menu-results', 'add-results', 'delete-results', 'clear-results', 'proxy-results', 'analysis-results'];
+            divs.forEach(id => {
+                document.getElementById(id).innerHTML = '';
+            });
+            testResults = {};
+        }
+
+        async function testRailwayStatus() {
+            const div = document.getElementById('status-results');
+            div.innerHTML = '⏳ Проверяю Railway API...';
+            
+            try {
+                const response = await fetch('https://fermiy100githubio-production.up.railway.app/');
+                const data = await response.json();
+                div.innerHTML = `<div class="success">✅ Railway API работает</div><pre>${JSON.stringify(data, null, 2)}</pre>`;
+                testResults.railwayStatus = { success: true, data: data };
+            } catch (error) {
+                div.innerHTML = `<div class="error">❌ Ошибка Railway API: ${error.message}</div>`;
+                testResults.railwayStatus = { success: false, error: error.message };
+            }
+        }
+
+        async function testMenuData() {
+            const div = document.getElementById('menu-results');
+            div.innerHTML = '⏳ Проверяю данные меню...';
+            
+            try {
+                const response = await fetch('https://fermiy100githubio-production.up.railway.app/api/menu');
+                const data = await response.json();
+                
+                const analysis = analyzeMenuData(data);
+                
+                div.innerHTML = `
+                    <div class="success">✅ Данные меню получены</div>
+                    <div>🍽️ Всего блюд: ${data.length}</div>
+                    <div>📅 Дней недели: ${analysis.days}</div>
+                    <div>🔍 Уникальных блюд: ${analysis.uniqueDishes}</div>
+                    <div>⚖️ Уникальных весов: ${analysis.uniqueWeights}</div>
+                    <div>📋 Уникальных рецептов: ${analysis.uniqueRecipes}</div>
+                `;
+                testResults.menuData = { success: true, data: data, analysis: analysis };
+            } catch (error) {
+                div.innerHTML = `<div class="error">❌ Ошибка получения меню: ${error.message}</div>`;
+                testResults.menuData = { success: false, error: error.message };
+            }
+        }
+
+        async function testAddDish() {
+            const div = document.getElementById('add-results');
+            div.innerHTML = '⏳ Тестирую добавление блюда...';
+            
+            const newDish = {
+                name: 'Ultimate Test Dish',
+                description: 'Блюдо для тестирования Ultimate Parser',
+                price: 0,
+                meal_type: 'завтрак',
+                day_of_week: 1,
+                weight: '100 г',
+                recipe_number: 'ULT/1'
+            };
+
+            try {
+                const response = await fetch('https://fermiy100githubio-production.up.railway.app/api/menu', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(newDish)
+                });
+                
+                const data = await response.json();
+                lastDishId = data.dish?.id;
+                div.innerHTML = `<div class="success">✅ Блюдо добавлено</div><pre>${JSON.stringify(data, null, 2)}</pre>`;
+                testResults.addDish = { success: true, data: data };
+            } catch (error) {
+                div.innerHTML = `<div class="error">❌ Ошибка добавления: ${error.message}</div>`;
+                testResults.addDish = { success: false, error: error.message };
+            }
+        }
+
+        async function testDeleteDish() {
+            const div = document.getElementById('delete-results');
+            div.innerHTML = '⏳ Тестирую удаление блюда...';
+            
+            if (!lastDishId) {
+                div.innerHTML = '<div class="error">❌ Нет блюда для удаления. Сначала добавьте блюдо.</div>';
+                testResults.deleteDish = { success: false, error: 'Нет блюда для удаления' };
+                return;
+            }
+
+            try {
+                const response = await fetch(`https://fermiy100githubio-production.up.railway.app/api/menu/${lastDishId}`, {
+                    method: 'DELETE'
+                });
+                
+                const data = await response.json();
+                div.innerHTML = `<div class="success">✅ Блюдо удалено</div><pre>${JSON.stringify(data, null, 2)}</pre>`;
+                testResults.deleteDish = { success: true, data: data };
+                lastDishId = null;
+            } catch (error) {
+                div.innerHTML = `<div class="error">❌ Ошибка удаления: ${error.message}</div>`;
+                testResults.deleteDish = { success: false, error: error.message };
+            }
+        }
+
+        async function testClearMenu() {
+            const div = document.getElementById('clear-results');
+            div.innerHTML = '⏳ Тестирую очистку меню...';
+            
+            try {
+                const response = await fetch('https://fermiy100githubio-production.up.railway.app/api/menu/clear', {
+                    method: 'DELETE'
+                });
+                
+                const data = await response.json();
+                div.innerHTML = `<div class="success">✅ Меню очищено</div><pre>${JSON.stringify(data, null, 2)}</pre>`;
+                testResults.clearMenu = { success: true, data: data };
+            } catch (error) {
+                div.innerHTML = `<div class="error">❌ Ошибка очистки: ${error.message}</div>`;
+                testResults.clearMenu = { success: false, error: error.message };
+            }
+        }
+
+        async function testProxy() {
+            const div = document.getElementById('proxy-results');
+            div.innerHTML = '⏳ Проверяю прокси...';
+            
+            try {
+                const response = await fetch('/api/menu.php');
+                const data = await response.json();
+                div.innerHTML = `<div class="success">✅ Прокси работает: ${data.length} блюд</div><pre>${JSON.stringify(data.slice(0, 3), null, 2)}</pre>`;
+                testResults.proxy = { success: true, data: data };
+            } catch (error) {
+                div.innerHTML = `<div class="error">❌ Ошибка прокси: ${error.message}</div>`;
+                testResults.proxy = { success: false, error: error.message };
+            }
+        }
+
+        function analyzeMenuData(dishes) {
+            const days = Math.max(...dishes.map(d => d.day_of_week));
+            const uniqueDishes = [...new Set(dishes.map(d => d.name))].length;
+            const uniqueWeights = [...new Set(dishes.map(d => d.weight))].length;
+            const uniqueRecipes = [...new Set(dishes.map(d => d.recipe_number))].length;
+            
+            return { days, uniqueDishes, uniqueWeights, uniqueRecipes };
+        }
+
+        function analyzeResults() {
+            const div = document.getElementById('analysis-results');
+            const overallDiv = document.getElementById('overall-results');
+            
+            const totalTests = Object.keys(testResults).length;
+            const successfulTests = Object.values(testResults).filter(r => r.success).length;
+            const failedTests = totalTests - successfulTests;
+            
+            let analysis = `
+                <h3>📊 Анализ результатов тестирования</h3>
+                <div>Всего тестов: ${totalTests}</div>
+                <div class="success">Успешных: ${successfulTests}</div>
+                <div class="error">Неудачных: ${failedTests}</div>
+                <div>Процент успеха: ${Math.round((successfulTests / totalTests) * 100)}%</div>
+            `;
+            
+            if (testResults.menuData && testResults.menuData.success) {
+                const menuAnalysis = testResults.menuData.analysis;
+                analysis += `
+                    <h4>🍽️ Анализ данных меню:</h4>
+                    <div>Всего блюд: ${testResults.menuData.data.length}</div>
+                    <div>Дней недели: ${menuAnalysis.days}</div>
+                    <div>Уникальных блюд: ${menuAnalysis.uniqueDishes}</div>
+                    <div>Уникальных весов: ${menuAnalysis.uniqueWeights}</div>
+                    <div>Уникальных рецептов: ${menuAnalysis.uniqueRecipes}</div>
+                `;
+            }
+            
+            div.innerHTML = analysis;
+            
+            if (successfulTests === totalTests) {
+                overallDiv.innerHTML = `<div class="success">🏆 ВСЕ ТЕСТЫ ПРОЙДЕНЫ УСПЕШНО! Ultimate Parser работает идеально!</div>`;
+            } else {
+                overallDiv.innerHTML = `<div class="error">❌ Некоторые тесты не прошли. Проверьте детали выше.</div>`;
+            }
+        }
+    </script>
+</body>
+</html>

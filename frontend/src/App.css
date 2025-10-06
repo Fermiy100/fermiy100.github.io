@@ -32,7 +32,7 @@ body {
   margin: 0;
   min-width: 320px;
   min-height: 100vh;
-  background: linear-gradient(135deg, #74b9ff 0%, #0984e3 50%, #00b894 100%);
+  background: #f8f9fa;
   color: #2c3e50;
 }
 
@@ -105,20 +105,21 @@ button:focus-visible {
 /* App Specific Styles */
 #root {
   width: 100%;
-  max-width: 1200px;
-  margin: 0 auto;
-  padding: 2rem;
+  min-height: 100vh;
+  margin: 0;
+  padding: 0;
   text-align: left;
 }
 
 .container {
-  max-width: 1200px;
-  margin: 20px auto;
-  padding: 30px;
+  width: 100%;
+  min-height: 100vh;
+  margin: 0;
+  padding: 20px;
   background: white;
-  border-radius: 20px;
-  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
-  border: 3px solid #f39c12;
+  border-radius: 0;
+  box-shadow: none;
+  border: none;
 }
 
 /* Typography */
@@ -518,8 +519,8 @@ p {
 @media (max-width: 768px) {
   .menu-selector {
     padding: 10px;
-    margin: 10px;
-    border-radius: 4px;
+    margin: 0;
+    border-radius: 0;
   }
 }
 
@@ -801,6 +802,19 @@ p {
   /* Основной контейнер */
   .container {
     padding: 10px;
+    min-height: 100vh;
+  }
+  
+  /* Убираем отступы у body */
+  body {
+    margin: 0;
+    padding: 0;
+  }
+  
+  /* Убираем отступы у root */
+  #root {
+    margin: 0;
+    padding: 0;
   }
   
   /* Заголовки */
@@ -876,9 +890,13 @@ p {
 
 /* Очень маленькие экраны */
 @media (max-width: 480px) {
+  .container {
+    padding: 5px;
+  }
+  
   .menu-selector {
     padding: 8px;
-    margin: 5px;
+    margin: 0;
   }
   
   .menu-header h2 {
@@ -1044,7 +1062,8 @@ p {
 @media (max-width: 768px) {
   .simple-menu-selector {
     padding: 20px;
-    margin: 10px;
+    margin: 0;
+    border-radius: 0;
   }
   
   .day-circles {
@@ -1355,7 +1374,8 @@ p {
 @media (max-width: 768px) {
   .parent-menu-selector {
     padding: 15px;
-    margin: 10px;
+    margin: 0;
+    border-radius: 0;
   }
 }
 
@@ -1756,7 +1776,7 @@ p {
 @media (max-width: 480px) {
   .parent-menu-selector {
     padding: 10px;
-    margin: 5px;
+    margin: 0;
   }
   
   .day-buttons {

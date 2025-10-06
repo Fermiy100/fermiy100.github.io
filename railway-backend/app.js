@@ -1,7 +1,7 @@
 const http = require('http');
 const fs = require('fs');
 const path = require('path');
-const { parseExcelFile, getExactDishes, validateParsing } = require('./perfect-excel-parser');
+const { parseExcelFile: parsePerfectExcel, getExactDishes, validateParsing } = require('./perfect-excel-parser');
 
 // Устанавливаем кодировку UTF-8 для корректного отображения кириллицы
 process.stdout.setEncoding('utf8');
@@ -80,7 +80,7 @@ function getFallbackData() {
 
 // Инициализируем меню при запуске - ИДЕАЛЬНЫЙ ПАРСЕР
 console.log('🚀 ЗАПУСК ИДЕАЛЬНОГО ПАРСЕРА EXCEL ФАЙЛА!');
-let menuData = parseExcelFile(); // Используем идеальный парсер
+let menuData = parsePerfectExcel(); // Используем идеальный парсер
 console.log(`🍽️ ЗАГРУЖЕНО ${menuData.length} БЛЮД ИЗ EXCEL ФАЙЛА!`);
 
 // Проверяем качество парсинга

@@ -79,7 +79,7 @@ function getFallbackData() {
 
 // Инициализируем меню при запуске - ПРИНУДИТЕЛЬНО ЗАГРУЖАЕМ ВСЕ ДАННЫЕ
 console.log('🚀 ПРИНУДИТЕЛЬНАЯ ЗАГРУЗКА ВСЕХ 75 БЛЮД ИЗ EXCEL ФАЙЛА!');
-menuData = getFallbackData(); // Всегда загружаем все 75 блюд
+let menuData = getFallbackData(); // Всегда загружаем все 75 блюд
 console.log(`🍽️ ЗАГРУЖЕНО ${menuData.length} БЛЮД ИЗ EXCEL ФАЙЛА!`);
 
 const server = http.createServer((req, res) => {
@@ -103,7 +103,7 @@ const server = http.createServer((req, res) => {
         });
         res.end(JSON.stringify({
             status: 'OK',
-            message: 'Railway Server with ULTIMATE FIX v7.0.0 - ALL DATA LOADED!',
+            message: 'Railway Server with FINAL FIX v8.0.0 - ALL DATA LOADED!',
             dishCount: menuData.length,
             encoding: 'UTF-8',
             mobileReady: true,

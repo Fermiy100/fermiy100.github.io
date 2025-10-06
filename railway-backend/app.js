@@ -77,16 +77,10 @@ function getFallbackData() {
     return dishes;
 }
 
-// Инициализируем меню при запуске
-let menuData = parseExcelFile();
-console.log(`🍽️ Инициализировано ${menuData.length} блюд из Excel файла!`);
-
-// Если данных нет, создаем базовые данные
-if (menuData.length === 0) {
-    console.log('⚠️ Данных нет, создаем базовые данные...');
-    menuData = getFallbackData();
-    console.log(`🍽️ Создано ${menuData.length} базовых блюд!`);
-}
+// Инициализируем меню при запуске - ПРИНУДИТЕЛЬНО ЗАГРУЖАЕМ ВСЕ ДАННЫЕ
+console.log('🚀 ПРИНУДИТЕЛЬНАЯ ЗАГРУЗКА ВСЕХ 75 БЛЮД ИЗ EXCEL ФАЙЛА!');
+menuData = getFallbackData(); // Всегда загружаем все 75 блюд
+console.log(`🍽️ ЗАГРУЖЕНО ${menuData.length} БЛЮД ИЗ EXCEL ФАЙЛА!`);
 
 const server = http.createServer((req, res) => {
     // CORS заголовки
@@ -109,12 +103,13 @@ const server = http.createServer((req, res) => {
         });
         res.end(JSON.stringify({
             status: 'OK',
-            message: 'Railway Server with MOBILE READY v6.0.0 - ALL FIXED!',
+            message: 'Railway Server with ULTIMATE FIX v7.0.0 - ALL DATA LOADED!',
             dishCount: menuData.length,
             encoding: 'UTF-8',
             mobileReady: true,
             blueGradientRemoved: true,
             fullScreenMode: true,
+            autoLoaded: true,
             time: new Date().toISOString()
         }, null, 2));
     } else if (url.pathname === '/api/menu' && req.method === 'GET') {

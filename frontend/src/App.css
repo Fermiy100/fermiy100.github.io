@@ -1439,9 +1439,46 @@ p {
 /* Мобильная адаптация для родительского меню */
 @media (max-width: 768px) {
   .parent-menu-selector {
-    padding: 15px;
+    padding: 10px;
     margin: 0;
     border-radius: 0;
+    width: 100vw;
+    min-height: 100vh;
+    box-sizing: border-box;
+  }
+  
+  .menu-layout {
+    flex-direction: column;
+    gap: 20px;
+  }
+  
+  .meal-column {
+    width: 100%;
+    margin-bottom: 20px;
+  }
+  
+  .meal-items {
+    grid-template-columns: 1fr !important;
+    gap: 10px !important;
+    padding: 10px !important;
+  }
+  
+  .menu-item-card {
+    width: 100%;
+    padding: 15px;
+    margin: 0;
+  }
+  
+  .day-buttons {
+    flex-wrap: wrap;
+    gap: 10px;
+  }
+  
+  .day-button {
+    flex: 1;
+    min-width: 120px;
+    padding: 12px 8px;
+    font-size: 14px;
   }
 }
 
@@ -1841,16 +1878,42 @@ p {
 
 @media (max-width: 480px) {
   .parent-menu-selector {
-    padding: 10px;
+    padding: 5px;
     margin: 0;
+    width: 100vw;
+    min-height: 100vh;
   }
   
   .day-buttons {
     flex-direction: column;
+    gap: 8px;
   }
   
   .day-button {
     width: 100%;
+    padding: 15px;
+    font-size: 16px;
+    min-height: 44px;
+  }
+  
+  .meal-items {
+    grid-template-columns: 1fr !important;
+    gap: 8px !important;
+    padding: 8px !important;
+  }
+  
+  .menu-item-card {
+    padding: 12px;
+    font-size: 14px;
+  }
+  
+  .item-name {
+    font-size: 16px !important;
+  }
+  
+  .item-weight, .item-recipe, .item-description {
+    font-size: 12px;
+  }
     text-align: center;
   }
   

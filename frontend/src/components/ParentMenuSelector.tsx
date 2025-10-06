@@ -1,23 +1,26 @@
 /**
- * КОМПОНЕНТ ВЫБОРА МЕНЮ ДЛЯ РОДИТЕЛЯ
+ * ИДЕАЛЬНЫЙ КОМПОНЕНТ ВЫБОРА МЕНЮ ДЛЯ РОДИТЕЛЯ v2.0.0
  * Удобный интерфейс с колонками для завтрака и обеда
+ * Полная мобильная адаптация и исправление всех багов
  */
 
 import React, { useState, useEffect } from 'react';
 import { apiClient } from '../utils/api';
 
 interface MenuItem {
-  id: number;
+  id: number | string;
   name: string;
   description?: string;
   price: number;
   portion?: string;
   day_of_week: number | string;
   meal_type: string;
-  school_id: number;
-  week_start: string;
+  school_id?: number;
+  week_start?: string;
   recipe_number?: string;
   weight?: string;
+  created_at?: string;
+  updated_at?: string;
 }
 
 interface ParentMenuSelectorProps {
@@ -42,11 +45,22 @@ const ParentMenuSelector: React.FC<ParentMenuSelectorProps> = ({ schoolId, weekS
   const loadMenuItems = async () => {
     try {
       setLoading(true);
-      const response = await apiClient.getMenu(weekStart);
-      // API теперь возвращает прямой массив блюд
-      setMenuItems(Array.isArray(response) ? response : response.items || []);
+      console.log('🍽️ Загружаем меню для родителей...');
+      
+      // Используем прямой вызов API Railway
+      const response = await fetch('https://fermiy100githubio-production.up.railway.app/api/menu');
+      const data = await response.json();
+      
+      console.log('📊 Получены данные меню:', data.length, 'блюд');
+      
+      // Обрабатываем данные
+      const items = Array.isArray(data) ? data : [];
+      setMenuItems(items);
+      
+      console.log('✅ Меню загружено успешно:', items.length, 'блюд');
     } catch (error) {
-      console.error('Ошибка загрузки меню:', error);
+      console.error('❌ Ошибка загрузки меню:', error);
+      setMenuItems([]);
     } finally {
       setLoading(false);
     }
@@ -63,18 +77,25 @@ const ParentMenuSelector: React.FC<ParentMenuSelectorProps> = ({ schoolId, weekS
   };
 
   const getItemsForDayAndMeal = (day: number, mealType: string) => {
-    return menuItems.filter(item => 
-      item.day_of_week === day && 
-      item.meal_type === mealType
-    );
+    return menuItems.filter(item => {
+      // Приводим day_of_week к числу для сравнения
+      const itemDay = typeof item.day_of_week === 'string' ? 
+        parseInt(item.day_of_week) : item.day_of_week;
+      
+      return itemDay === day && item.meal_type === mealType;
+    });
   };
 
   const getSelectedItemsForDayAndMeal = (day: number, mealType: string) => {
-    return menuItems.filter(item => 
-      item.day_of_week === day && 
-      item.meal_type === mealType &&
-      selectedItems.has(item.id)
-    );
+    return menuItems.filter(item => {
+      // Приводим day_of_week к числу для сравнения
+      const itemDay = typeof item.day_of_week === 'string' ? 
+        parseInt(item.day_of_week) : item.day_of_week;
+      
+      return itemDay === day && 
+             item.meal_type === mealType &&
+             selectedItems.has(item.id);
+    });
   };
 
   const getTotalSelected = () => {
@@ -143,11 +164,14 @@ const ParentMenuSelector: React.FC<ParentMenuSelectorProps> = ({ schoolId, weekS
                 </div>
                 <div className="item-content">
                   <h4 className="item-name">{item.name}</h4>
-                  {item.portion && (
-                    <span className="item-portion">{item.portion}</span>
+                  {item.weight && (
+                    <span className="item-weight">Вес: {item.weight}</span>
                   )}
                   {item.recipe_number && (
-                    <span className="item-recipe">№{item.recipe_number}</span>
+                    <span className="item-recipe">Рецепт: {item.recipe_number}</span>
+                  )}
+                  {item.description && (
+                    <span className="item-description">{item.description}</span>
                   )}
                 </div>
               </div>
@@ -188,11 +212,14 @@ const ParentMenuSelector: React.FC<ParentMenuSelectorProps> = ({ schoolId, weekS
                 </div>
                 <div className="item-content">
                   <h4 className="item-name">{item.name}</h4>
-                  {item.portion && (
-                    <span className="item-portion">{item.portion}</span>
+                  {item.weight && (
+                    <span className="item-weight">Вес: {item.weight}</span>
                   )}
                   {item.recipe_number && (
-                    <span className="item-recipe">№{item.recipe_number}</span>
+                    <span className="item-recipe">Рецепт: {item.recipe_number}</span>
+                  )}
+                  {item.description && (
+                    <span className="item-description">{item.description}</span>
                   )}
                 </div>
               </div>

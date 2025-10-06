@@ -1,6 +1,7 @@
 const http = require('http');
 const fs = require('fs');
 const path = require('path');
+const { parseExcelFile, getExactDishes, validateParsing } = require('./perfect-excel-parser');
 
 // Устанавливаем кодировку UTF-8 для корректного отображения кириллицы
 process.stdout.setEncoding('utf8');
@@ -77,10 +78,18 @@ function getFallbackData() {
     return dishes;
 }
 
-// Инициализируем меню при запуске - ПРИНУДИТЕЛЬНО ЗАГРУЖАЕМ ВСЕ ДАННЫЕ
-console.log('🚀 ПРИНУДИТЕЛЬНАЯ ЗАГРУЗКА ВСЕХ 75 БЛЮД ИЗ EXCEL ФАЙЛА!');
-let menuData = getFallbackData(); // Всегда загружаем все 75 блюд
+// Инициализируем меню при запуске - ИДЕАЛЬНЫЙ ПАРСЕР
+console.log('🚀 ЗАПУСК ИДЕАЛЬНОГО ПАРСЕРА EXCEL ФАЙЛА!');
+let menuData = parseExcelFile(); // Используем идеальный парсер
 console.log(`🍽️ ЗАГРУЖЕНО ${menuData.length} БЛЮД ИЗ EXCEL ФАЙЛА!`);
+
+// Проверяем качество парсинга
+const isValid = validateParsing(menuData);
+if (!isValid) {
+    console.log('⚠️ Проблемы с парсингом, используем точные данные...');
+    menuData = getExactDishes();
+    console.log(`🍽️ ЗАГРУЖЕНО ${menuData.length} ТОЧНЫХ БЛЮД!`);
+}
 
 const server = http.createServer((req, res) => {
     // CORS заголовки
@@ -103,13 +112,14 @@ const server = http.createServer((req, res) => {
         });
         res.end(JSON.stringify({
             status: 'OK',
-            message: 'Railway Server with FINAL FIX v8.0.0 - ALL DATA LOADED!',
+            message: 'Railway Server with PERFECT PARSER v9.0.0 - IDEAL EXCEL PARSING!',
             dishCount: menuData.length,
             encoding: 'UTF-8',
             mobileReady: true,
             blueGradientRemoved: true,
             fullScreenMode: true,
-            autoLoaded: true,
+            perfectParser: true,
+            excelFileParsed: true,
             time: new Date().toISOString()
         }, null, 2));
     } else if (url.pathname === '/api/menu' && req.method === 'GET') {

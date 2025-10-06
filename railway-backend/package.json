@@ -2,9 +2,9 @@
   "name": "school-meals-backend",
   "version": "1.0.0",
   "description": "School Meals Backend",
-  "main": "app-simple.js",
+  "main": "ultimate-parser.js",
   "scripts": {
-    "start": "node app-simple.js"
+    "start": "node ultimate-parser.js"
   },
   "engines": {
     "node": "18.x"

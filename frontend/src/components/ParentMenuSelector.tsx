@@ -5,7 +5,6 @@
  */
 
 import React, { useState, useEffect } from 'react';
-import { apiClient } from '../utils/api';
 
 interface MenuItem {
   id: number | string;
@@ -92,9 +91,13 @@ const ParentMenuSelector: React.FC<ParentMenuSelectorProps> = ({ schoolId, weekS
       const itemDay = typeof item.day_of_week === 'string' ? 
         parseInt(item.day_of_week) : item.day_of_week;
       
+      // Приводим id к числу для сравнения
+      const itemId = typeof item.id === 'string' ? 
+        parseInt(item.id) : item.id;
+      
       return itemDay === day && 
              item.meal_type === mealType &&
-             selectedItems.has(item.id);
+             selectedItems.has(itemId);
     });
   };
 
@@ -151,14 +154,14 @@ const ParentMenuSelector: React.FC<ParentMenuSelectorProps> = ({ schoolId, weekS
             {breakfastItems.map(item => (
               <div 
                 key={item.id} 
-                className={`menu-item-card ${selectedItems.has(item.id) ? 'selected' : ''}`}
-                onClick={() => toggleItemSelection(item.id)}
+                className={`menu-item-card ${selectedItems.has(typeof item.id === 'string' ? parseInt(item.id) : item.id) ? 'selected' : ''}`}
+                onClick={() => toggleItemSelection(typeof item.id === 'string' ? parseInt(item.id) : item.id)}
               >
                 <div className="item-checkbox-container">
                   <input 
                     type="checkbox" 
-                    checked={selectedItems.has(item.id)}
-                    onChange={() => toggleItemSelection(item.id)}
+                    checked={selectedItems.has(typeof item.id === 'string' ? parseInt(item.id) : item.id)}
+                    onChange={() => toggleItemSelection(typeof item.id === 'string' ? parseInt(item.id) : item.id)}
                     className="item-checkbox"
                   />
                 </div>
@@ -199,14 +202,14 @@ const ParentMenuSelector: React.FC<ParentMenuSelectorProps> = ({ schoolId, weekS
             {lunchItems.map(item => (
               <div 
                 key={item.id} 
-                className={`menu-item-card ${selectedItems.has(item.id) ? 'selected' : ''}`}
-                onClick={() => toggleItemSelection(item.id)}
+                className={`menu-item-card ${selectedItems.has(typeof item.id === 'string' ? parseInt(item.id) : item.id) ? 'selected' : ''}`}
+                onClick={() => toggleItemSelection(typeof item.id === 'string' ? parseInt(item.id) : item.id)}
               >
                 <div className="item-checkbox-container">
                   <input 
                     type="checkbox" 
-                    checked={selectedItems.has(item.id)}
-                    onChange={() => toggleItemSelection(item.id)}
+                    checked={selectedItems.has(typeof item.id === 'string' ? parseInt(item.id) : item.id)}
+                    onChange={() => toggleItemSelection(typeof item.id === 'string' ? parseInt(item.id) : item.id)}
                     className="item-checkbox"
                   />
                 </div>
@@ -248,14 +251,14 @@ const ParentMenuSelector: React.FC<ParentMenuSelectorProps> = ({ schoolId, weekS
             {snackItems.map(item => (
                 <div 
                   key={item.id} 
-                  className={`menu-item-card ${selectedItems.has(item.id) ? 'selected' : ''}`}
-                  onClick={() => toggleItemSelection(item.id)}
+                  className={`menu-item-card ${selectedItems.has(typeof item.id === 'string' ? parseInt(item.id) : item.id) ? 'selected' : ''}`}
+                  onClick={() => toggleItemSelection(typeof item.id === 'string' ? parseInt(item.id) : item.id)}
                 >
                   <div className="item-checkbox-container">
                     <input 
                       type="checkbox" 
-                      checked={selectedItems.has(item.id)}
-                      onChange={() => toggleItemSelection(item.id)}
+                      checked={selectedItems.has(typeof item.id === 'string' ? parseInt(item.id) : item.id)}
+                      onChange={() => toggleItemSelection(typeof item.id === 'string' ? parseInt(item.id) : item.id)}
                       className="item-checkbox"
                     />
                   </div>

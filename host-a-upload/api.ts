@@ -117,7 +117,7 @@ class ApiClient {
   }
 
   async getSchoolUsers(schoolId: number): Promise<User[]> {
-    return this.request<User[]>(`/school/${schoolId}/users`);
+    return this.request<User[]>('/users.php');
   }
 
   // User management

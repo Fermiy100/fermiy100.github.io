@@ -39,6 +39,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET') {
             'school_id' => 1,
             'verified' => false,
             'created_at' => '2025-10-07T10:00:00Z'
+        ],
+        [
+            'id' => 4,
+            'email' => 'student@school.test',
+            'name' => 'Ученик',
+            'role' => 'student',
+            'school_id' => 1,
+            'verified' => true,
+            'created_at' => '2025-10-07T10:00:00Z'
         ]
     ];
     
@@ -46,30 +55,32 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET') {
     exit();
 }
 
-if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
-    http_response_code(405);
-    echo json_encode(['error' => 'Method not allowed']);
+// Обработка POST запроса для создания пользователя
+if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    $input = json_decode(file_get_contents('php://input'), true);
+
+    if (!$input || !isset($input['email']) || !isset($input['name']) || !isset($input['role']) || !isset($input['password'])) {
+        http_response_code(400);
+        echo json_encode(['error' => 'Все поля обязательны']);
+        exit();
+    }
+
+    // Mock successful user creation
+    $newUser = [
+        'id' => rand(100, 999),
+        'email' => $input['email'],
+        'name' => $input['name'],
+        'role' => $input['role'],
+        'school_id' => 1,
+        'verified' => false,
+        'created_at' => date('c')
+    ];
+
+    echo json_encode($newUser);
     exit();
 }
 
-$input = json_decode(file_get_contents('php://input'), true);
-
-if (!$input || !isset($input['email']) || !isset($input['name']) || !isset($input['role']) || !isset($input['password'])) {
-    http_response_code(400);
-    echo json_encode(['error' => 'Все поля обязательны']);
-    exit();
-}
-
-// Mock successful user creation
-$newUser = [
-    'id' => rand(100, 999),
-    'email' => $input['email'],
-    'name' => $input['name'],
-    'role' => $input['role'],
-    'school_id' => 1,
-    'verified' => false,
-    'created_at' => date('c')
-];
-
-echo json_encode($newUser);
+// Если метод не поддерживается
+http_response_code(405);
+echo json_encode(['error' => 'Method not allowed']);
 ?>

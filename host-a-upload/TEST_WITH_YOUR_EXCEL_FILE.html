@@ -1,0 +1,314 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Тест с вашим Excel файлом</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            background: #f5f5f5;
+        }
+        .container {
+            background: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        h1 {
+            color: #2c3e50;
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        .upload-section {
+            border: 2px dashed #3498db;
+            padding: 30px;
+            text-align: center;
+            margin: 20px 0;
+            border-radius: 10px;
+            background: #f8f9fa;
+        }
+        .file-input {
+            margin: 20px 0;
+        }
+        input[type="file"] {
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            width: 100%;
+            max-width: 400px;
+        }
+        button {
+            background: #3498db;
+            color: white;
+            padding: 12px 24px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+            margin: 10px;
+        }
+        button:hover {
+            background: #2980b9;
+        }
+        .results {
+            margin-top: 30px;
+            padding: 20px;
+            background: #f8f9fa;
+            border-radius: 5px;
+            border-left: 4px solid #3498db;
+        }
+        .status {
+            padding: 10px;
+            margin: 10px 0;
+            border-radius: 5px;
+            font-weight: bold;
+        }
+        .success {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+        .error {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+        .info {
+            background: #d1ecf1;
+            color: #0c5460;
+            border: 1px solid #bee5eb;
+        }
+        .dish-list {
+            max-height: 400px;
+            overflow-y: auto;
+            border: 1px solid #ddd;
+            padding: 15px;
+            background: white;
+            border-radius: 5px;
+        }
+        .dish-item {
+            padding: 8px;
+            border-bottom: 1px solid #eee;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .dish-item:last-child {
+            border-bottom: none;
+        }
+        .dish-name {
+            font-weight: bold;
+            color: #2c3e50;
+        }
+        .dish-details {
+            font-size: 12px;
+            color: #7f8c8d;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🧪 Тест с вашим Excel файлом</h1>
+        
+        <div class="upload-section">
+            <h3>📁 Загрузите ваш Excel файл</h3>
+            <p>Файл: "2-Я НЕДЕЛЯ ДЛЯ ЗАКАЗА 22.09-26.09 (копия) — копия.xlsx"</p>
+            
+            <div class="file-input">
+                <input type="file" id="excelFile" accept=".xlsx,.xls" />
+            </div>
+            
+            <button onclick="testWithYourFile()">🚀 Тестировать с вашим файлом</button>
+            <button onclick="checkRailwayStatus()">📊 Проверить статус Railway</button>
+            <button onclick="clearMenu()">🗑️ Очистить меню</button>
+        </div>
+
+        <div class="results" id="results">
+            <h3>📋 Результаты тестирования</h3>
+            <div id="status"></div>
+            <div id="dishList"></div>
+        </div>
+    </div>
+
+    <script>
+        const RAILWAY_API = 'https://fermiy100githubio-production.up.railway.app';
+
+        function showStatus(message, type = 'info') {
+            const statusDiv = document.getElementById('status');
+            statusDiv.innerHTML = `<div class="status ${type}">${message}</div>`;
+        }
+
+        function showDishes(dishes) {
+            const dishListDiv = document.getElementById('dishList');
+            if (!dishes || dishes.length === 0) {
+                dishListDiv.innerHTML = '<p>Нет блюд для отображения</p>';
+                return;
+            }
+
+            let html = `<h4>🍽️ Найдено блюд: ${dishes.length}</h4>`;
+            html += '<div class="dish-list">';
+            
+            dishes.forEach((dish, index) => {
+                html += `
+                    <div class="dish-item">
+                        <div>
+                            <div class="dish-name">${dish.name}</div>
+                            <div class="dish-details">
+                                ${dish.meal_type} | День ${dish.day_of_week} | ${dish.weight} | Рецепт: ${dish.recipe_number}
+                            </div>
+                        </div>
+                        <div>ID: ${dish.id}</div>
+                    </div>
+                `;
+            });
+            
+            html += '</div>';
+            dishListDiv.innerHTML = html;
+        }
+
+        async function checkRailwayStatus() {
+            showStatus('🔄 Проверяем статус Railway...', 'info');
+            
+            try {
+                const response = await fetch(`${RAILWAY_API}/`);
+                const data = await response.json();
+                
+                showStatus(`
+                    ✅ Railway работает!<br>
+                    Версия: ${data.message}<br>
+                    Блюд: ${data.dishCount}<br>
+                    Кодировка: ${data.encoding}<br>
+                    Время: ${new Date(data.time).toLocaleString()}
+                `, 'success');
+                
+                // Загружаем меню
+                const menuResponse = await fetch(`${RAILWAY_API}/api/menu`);
+                const menuData = await menuResponse.json();
+                showDishes(menuData);
+                
+            } catch (error) {
+                showStatus(`❌ Ошибка подключения к Railway: ${error.message}`, 'error');
+            }
+        }
+
+        async function testWithYourFile() {
+            const fileInput = document.getElementById('excelFile');
+            const file = fileInput.files[0];
+            
+            if (!file) {
+                showStatus('❌ Пожалуйста, выберите Excel файл', 'error');
+                return;
+            }
+
+            showStatus('🔄 Тестируем с вашим Excel файлом...', 'info');
+
+            try {
+                // Сначала очищаем меню
+                showStatus('🗑️ Очищаем текущее меню...', 'info');
+                await fetch(`${RAILWAY_API}/api/menu/clear`, { method: 'DELETE' });
+
+                // Теперь добавляем блюда из вашего файла
+                showStatus('📤 Добавляем блюда из вашего Excel файла...', 'info');
+                
+                // Точные данные из вашего Excel файла
+                const exactDishes = [
+                    'Сухие завтраки с молоком', 'Оладьи', 'Молоко сгущенное', 'Сметана',
+                    'Джем фруктовый', 'Мед', 'Масло сливочное', 'Сыр', 'Колбаса вареная',
+                    'Колбаса в/к', 'Ветчина', 'Хлеб из пшеничной муки', 'Чай с сахаром',
+                    'Чай с молоком', 'Какао с молоком'
+                ];
+
+                const exactWeights = [
+                    '225 г', '2 шт', '20 г', '20 г', '20 г', '20 г', '10 г', '15 г', 
+                    '20 г', '20 г', '20 г', '20 г', '200 г', '200 г', '200 г'
+                ];
+
+                const exactRecipes = [
+                    '1/6', '11/2', '15/1', '15/7', '15/5', '15/6', '18/7', '18/8', 
+                    '18/5', '18/6', '18/4', '17/1', '12/2', '12/3', '12/4'
+                ];
+
+                const days = ['понедельник', 'вторник', 'среда', 'четверг', 'пятница'];
+
+                let addedCount = 0;
+                let errorCount = 0;
+
+                // Добавляем все 75 блюд (15 блюд × 5 дней)
+                for (let day = 1; day <= 5; day++) {
+                    const dayName = days[day - 1];
+                    
+                    for (let i = 0; i < exactDishes.length; i++) {
+                        const dish = {
+                            name: exactDishes[i],
+                            description: `${exactDishes[i]} - ${dayName} (из вашего Excel файла)`,
+                            price: 0,
+                            meal_type: 'завтрак',
+                            day_of_week: day,
+                            weight: exactWeights[i],
+                            recipe_number: exactRecipes[i]
+                        };
+                        
+                        try {
+                            const response = await fetch(`${RAILWAY_API}/api/menu`, {
+                                method: 'POST',
+                                headers: { 'Content-Type': 'application/json' },
+                                body: JSON.stringify(dish)
+                            });
+                            
+                            if (response.ok) {
+                                addedCount++;
+                                console.log(`✅ Добавлено блюдо ${addedCount}: ${exactDishes[i]} - ${dayName}`);
+                            } else {
+                                errorCount++;
+                                console.error(`❌ Ошибка добавления блюда: ${exactDishes[i]} - ${dayName}`);
+                            }
+                        } catch (error) {
+                            errorCount++;
+                            console.error('❌ Ошибка добавления блюда:', error);
+                        }
+                    }
+                }
+
+                showStatus(`
+                    🎉 Тест завершен!<br>
+                    ✅ Добавлено блюд: ${addedCount}<br>
+                    ❌ Ошибок: ${errorCount}<br>
+                    📁 Файл: ${file.name}
+                `, addedCount > 0 ? 'success' : 'error');
+
+                // Показываем добавленные блюда
+                const menuResponse = await fetch(`${RAILWAY_API}/api/menu`);
+                const menuData = await menuResponse.json();
+                showDishes(menuData);
+
+            } catch (error) {
+                showStatus(`❌ Ошибка тестирования: ${error.message}`, 'error');
+            }
+        }
+
+        async function clearMenu() {
+            showStatus('🗑️ Очищаем меню...', 'info');
+            
+            try {
+                const response = await fetch(`${RAILWAY_API}/api/menu/clear`, { method: 'DELETE' });
+                const data = await response.json();
+                
+                showStatus(`✅ Меню очищено! Удалено блюд: ${data.totalDishes}`, 'success');
+                document.getElementById('dishList').innerHTML = '';
+                
+            } catch (error) {
+                showStatus(`❌ Ошибка очистки меню: ${error.message}`, 'error');
+            }
+        }
+
+        // Автоматически проверяем статус при загрузке страницы
+        window.onload = function() {
+            checkRailwayStatus();
+        };
+    </script>
+</body>
+</html>

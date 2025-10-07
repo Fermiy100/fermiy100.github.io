@@ -1,14 +1,11 @@
 [phases.setup]
-nixPkgs = ["nodejs", "npm"]
+nixPkgs = ["nodejs"]
 
 [phases.install]
-cmds = ["npm install"]
+cmds = ["echo 'No dependencies to install'"]
 
 [phases.build]
 cmds = ["echo 'No build step required'"]
 
 [start]
-cmd = "node app.js"
-
-[healthcheck]
-enabled = false
+cmd = "node app-final.js"

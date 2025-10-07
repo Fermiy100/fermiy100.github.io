@@ -31,15 +31,10 @@ jobs:
         cd frontend
         npm run build
         
-    - name: Setup Backend Dependencies
-      run: |
-        cd backend
-        npm ci
-        
     - name: Deploy to GitHub Pages
       uses: peaceiris/actions-gh-pages@v3
       if: github.ref == 'refs/heads/main'
       with:
         github_token: ${{ secrets.GITHUB_TOKEN }}
-        publish_dir: ./frontend/dist
+        publish_dir: ./host-a-upload
         cname: fermiy100.github.io

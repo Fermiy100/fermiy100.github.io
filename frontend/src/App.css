@@ -126,19 +126,35 @@ button:focus-visible {
 
 /* Основной контент на полный экран */
 .main-content {
-  width: 100%;
+  width: 100vw;
   min-height: 100vh;
-  padding: 20px;
+  padding: 0;
+  margin: 0;
   box-sizing: border-box;
+  background: #f8f9fa;
 }
 
 /* Панель директора на полный экран */
 .director-panel {
+  width: 100vw;
+  min-height: 100vh;
+  background: #f8f9fa;
+  padding: 0;
+  margin: 0;
+  box-sizing: border-box;
+  position: fixed;
+  top: 0;
+  left: 0;
+  overflow-y: auto;
+}
+
+/* Контейнер панели директора */
+.director-container {
   width: 100%;
   min-height: 100vh;
-  background: white;
   padding: 20px;
   box-sizing: border-box;
+  background: #f8f9fa;
 }
 
 /* Формы и секции */
@@ -147,6 +163,9 @@ button:focus-visible {
   padding: 20px;
   box-sizing: border-box;
   background: white;
+  border-radius: 12px;
+  margin-bottom: 20px;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
 }
 
 /* Typography */
@@ -835,20 +854,49 @@ p {
   
   /* Основной контент */
   .main-content {
-    padding: 10px;
-    width: 100%;
+    padding: 0;
+    width: 100vw;
+    min-height: 100vh;
   }
   
   /* Панель директора */
   .director-panel {
+    padding: 0;
+    width: 100vw;
+    min-height: 100vh;
+    position: fixed;
+    top: 0;
+    left: 0;
+    overflow-y: auto;
+  }
+  
+  /* Контейнер панели директора */
+  .director-container {
     padding: 10px;
     width: 100%;
+    min-height: 100vh;
   }
   
   /* Формы и секции */
   .form-section, .upload-section, .menu-section {
-    padding: 10px;
+    padding: 15px;
     width: 100%;
+    margin-bottom: 15px;
+  }
+  
+  /* Кнопки управления меню */
+  .menu-controls {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    margin-bottom: 20px;
+  }
+  
+  .menu-controls button {
+    width: 100%;
+    padding: 12px;
+    font-size: 16px;
+    min-height: 44px;
   }
   
   /* Убираем отступы у body */
@@ -908,6 +956,24 @@ p {
   .tab-buttons button {
     width: 100%;
     text-align: center;
+    min-height: 44px;
+    font-size: 16px;
+  }
+  
+  /* Навигация директора */
+  .director-navigation {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    margin-bottom: 20px;
+  }
+  
+  .director-navigation button {
+    width: 100%;
+    padding: 15px;
+    font-size: 16px;
+    min-height: 44px;
+    border-radius: 8px;
   }
   
   /* Алерты */
@@ -944,20 +1010,45 @@ p {
   
   /* Основной контент */
   .main-content {
-    padding: 5px;
-    width: 100%;
+    padding: 0;
+    width: 100vw;
+    min-height: 100vh;
   }
   
   /* Панель директора */
   .director-panel {
+    padding: 0;
+    width: 100vw;
+    min-height: 100vh;
+    position: fixed;
+    top: 0;
+    left: 0;
+    overflow-y: auto;
+  }
+  
+  /* Контейнер панели директора */
+  .director-container {
     padding: 5px;
     width: 100%;
+    min-height: 100vh;
   }
   
   /* Формы и секции */
   .form-section, .upload-section, .menu-section {
-    padding: 5px;
+    padding: 10px;
     width: 100%;
+    margin-bottom: 10px;
+  }
+  
+  /* Кнопки управления меню */
+  .menu-controls {
+    gap: 8px;
+  }
+  
+  .menu-controls button {
+    padding: 10px;
+    font-size: 14px;
+    min-height: 40px;
   }
   
   .menu-selector {
@@ -1874,7 +1965,6 @@ p {
   .summary-header h3 {
     font-size: 18px;
   }
-}
 
 @media (max-width: 480px) {
   .parent-menu-selector {
@@ -1913,8 +2003,6 @@ p {
   
   .item-weight, .item-recipe, .item-description {
     font-size: 12px;
-  }
-    text-align: center;
   }
   
   .meal-header {

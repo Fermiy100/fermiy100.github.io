@@ -210,8 +210,9 @@ export default function DirectorAdvanced({ token: _token }: any) {
   }
 
   return (
-    <div style={{ maxWidth: '1200px', margin: '0 auto', padding: '20px' }}>
-      <h1>Панель директора</h1>
+    <div className="director-panel">
+      <div className="director-container">
+        <h1>Панель директора</h1>
       
       {msg && (
         <div style={{
@@ -227,47 +228,39 @@ export default function DirectorAdvanced({ token: _token }: any) {
       )}
 
       {/* Навигация */}
-      <div style={{ marginBottom: '20px' }}>
+      <div className="director-navigation">
         <button
           onClick={() => setActiveTab('menu')}
           style={{
-            padding: '10px 20px',
-            marginRight: '10px',
             backgroundColor: activeTab === 'menu' ? '#007bff' : '#f8f9fa',
             color: activeTab === 'menu' ? 'white' : 'black',
             border: '1px solid #dee2e6',
-            borderRadius: '5px',
-            cursor: 'pointer'
+            borderRadius: '8px',
+            cursor: 'pointer',
+            fontWeight: '600'
           }}
         >
-          Меню
+          📋 Меню
         </button>
         <button
           onClick={() => setActiveTab('users')}
           style={{
-            padding: '10px 20px',
             backgroundColor: activeTab === 'users' ? '#007bff' : '#f8f9fa',
             color: activeTab === 'users' ? 'white' : 'black',
             border: '1px solid #dee2e6',
-            borderRadius: '5px',
-            cursor: 'pointer'
+            borderRadius: '8px',
+            cursor: 'pointer',
+            fontWeight: '600'
           }}
         >
-          Пользователи
+          👥 Пользователи
         </button>
       </div>
 
       {activeTab === 'menu' && (
         <div>
           {/* Загрузка файла */}
-          <div style={{
-            background: 'white',
-            border: '1px solid #e5e7eb',
-            borderRadius: '12px',
-            padding: '20px',
-            marginBottom: '20px',
-            boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)'
-          }}>
+          <div className="upload-section">
             <h3 style={{ margin: '0 0 20px 0' }}>📤 Загрузить меню из Excel</h3>
             
             <form onSubmit={handleFileUpload}>
@@ -324,17 +317,10 @@ export default function DirectorAdvanced({ token: _token }: any) {
           </div>
 
           {/* Управление меню */}
-          <div style={{
-            background: 'white',
-            border: '1px solid #e5e7eb',
-            borderRadius: '12px',
-            padding: '20px',
-            marginBottom: '20px',
-            boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)'
-          }}>
+          <div className="form-section">
             <h3 style={{ margin: '0 0 20px 0' }}>⚙️ Управление меню</h3>
             
-            <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap', marginBottom: '20px' }}>
+            <div className="menu-controls">
               <button
                 onClick={() => setShowAddForm(true)}
                 style={{
@@ -463,13 +449,7 @@ export default function DirectorAdvanced({ token: _token }: any) {
           </div>
 
           {/* Список блюд */}
-          <div style={{
-            background: 'white',
-            border: '1px solid #e5e7eb',
-            borderRadius: '12px',
-            padding: '20px',
-            boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)'
-          }}>
+          <div className="menu-section">
             <h3 style={{ margin: '0 0 20px 0' }}>
               🍽️ Блюда меню ({menuItems.length})
             </h3>
@@ -569,6 +549,7 @@ export default function DirectorAdvanced({ token: _token }: any) {
           onCancel={() => setShowAddForm(false)}
         />
       )}
+      </div>
     </div>
   );
 }

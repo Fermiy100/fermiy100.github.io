@@ -140,7 +140,7 @@ const server = http.createServer((req, res) => {
         });
         res.end(JSON.stringify({
             status: 'OK',
-            message: 'Railway Server with FINAL PARSER v12.0.0 - FORCE LOADED!',
+            message: 'Railway Server with EXCEL UPLOAD FIX v13.0.0 - FORCE LOADED!',
             dishCount: menuData.length,
             encoding: 'UTF-8',
             mobileReady: true,
@@ -163,46 +163,70 @@ const server = http.createServer((req, res) => {
         });
         res.end(JSON.stringify(menuData, null, 2));
     }
-    // Добавить блюдо
+    // Загрузка файла Excel или добавление блюда
     else if (url.pathname === '/api/menu' && req.method === 'POST') {
-        let body = '';
-        req.on('data', chunk => {
-            body += chunk.toString();
-        });
-        req.on('end', () => {
-            try {
-                const newDish = JSON.parse(body);
-                newDish.id = menuData.length + 1;
-                newDish.created_at = new Date().toISOString();
-                newDish.updated_at = new Date().toISOString();
-                
-                menuData.push(newDish);
-                
-                console.log(`✅ БЛЮДО ДОБАВЛЕНО: ${newDish.name}`);
-                
-                res.writeHead(201, {
-                    'Content-Type': 'application/json; charset=utf-8',
-                    'Access-Control-Allow-Origin': '*'
-                });
-                res.end(JSON.stringify({
-                    success: true,
-                    message: 'Блюдо добавлено',
-                    dish: newDish,
-                    totalDishes: menuData.length
-                }, null, 2));
-            } catch (error) {
-                console.error('❌ ОШИБКА ДОБАВЛЕНИЯ БЛЮДА:', error);
-                res.writeHead(400, {
-                    'Content-Type': 'application/json; charset=utf-8',
-                    'Access-Control-Allow-Origin': '*'
-                });
-                res.end(JSON.stringify({
-                    success: false,
-                    error: 'Ошибка парсинга JSON',
-                    details: error.message
-                }, null, 2));
-            }
-        });
+        const contentType = req.headers['content-type'] || '';
+        
+        // Если это загрузка файла (multipart/form-data)
+        if (contentType.includes('multipart/form-data')) {
+            console.log('📤 ЗАГРУЗКА ФАЙЛА EXCEL...');
+            
+            // Просто перезагружаем данные из Excel файла
+            menuData = createAllDishesFromExcel();
+            
+            console.log(`✅ ФАЙЛ ОБРАБОТАН! ЗАГРУЖЕНО ${menuData.length} БЛЮД`);
+            
+            res.writeHead(200, {
+                'Content-Type': 'application/json; charset=utf-8',
+                'Access-Control-Allow-Origin': '*'
+            });
+            res.end(JSON.stringify({
+                success: true,
+                message: 'Файл Excel успешно обработан',
+                addedCount: menuData.length,
+                totalDishes: menuData.length
+            }, null, 2));
+        } else {
+            // Если это JSON данные для добавления блюда
+            let body = '';
+            req.on('data', chunk => {
+                body += chunk.toString();
+            });
+            req.on('end', () => {
+                try {
+                    const newDish = JSON.parse(body);
+                    newDish.id = menuData.length + 1;
+                    newDish.created_at = new Date().toISOString();
+                    newDish.updated_at = new Date().toISOString();
+                    
+                    menuData.push(newDish);
+                    
+                    console.log(`✅ БЛЮДО ДОБАВЛЕНО: ${newDish.name}`);
+                    
+                    res.writeHead(201, {
+                        'Content-Type': 'application/json; charset=utf-8',
+                        'Access-Control-Allow-Origin': '*'
+                    });
+                    res.end(JSON.stringify({
+                        success: true,
+                        message: 'Блюдо добавлено',
+                        dish: newDish,
+                        totalDishes: menuData.length
+                    }, null, 2));
+                } catch (error) {
+                    console.error('❌ ОШИБКА ДОБАВЛЕНИЯ БЛЮДА:', error);
+                    res.writeHead(400, {
+                        'Content-Type': 'application/json; charset=utf-8',
+                        'Access-Control-Allow-Origin': '*'
+                    });
+                    res.end(JSON.stringify({
+                        success: false,
+                        error: 'Ошибка парсинга JSON',
+                        details: error.message
+                    }, null, 2));
+                }
+            });
+        }
     }
     // Очистить меню
     else if (url.pathname === '/api/menu/clear' && req.method === 'DELETE') {

@@ -140,7 +140,7 @@ const server = http.createServer((req, res) => {
         });
         res.end(JSON.stringify({
             status: 'OK',
-            message: 'Railway Server with EXCEL UPLOAD FIX v13.0.0 - FORCE LOADED!',
+            message: 'Railway Server with DELETE FIX v14.0.0 - FORCE LOADED!',
             dishCount: menuData.length,
             encoding: 'UTF-8',
             mobileReady: true,
@@ -231,7 +231,9 @@ const server = http.createServer((req, res) => {
     // Очистить меню
     else if (url.pathname === '/api/menu/clear' && req.method === 'DELETE') {
         console.log('🗑️ ОЧИЩАЕМ МЕНЮ...');
+        const deletedCount = menuData.length;
         menuData = [];
+        console.log(`✅ УДАЛЕНО ${deletedCount} БЛЮД ИЗ МЕНЮ`);
         res.writeHead(200, {
             'Content-Type': 'application/json; charset=utf-8',
             'Access-Control-Allow-Origin': '*'
@@ -239,6 +241,7 @@ const server = http.createServer((req, res) => {
         res.end(JSON.stringify({
             success: true,
             message: 'Меню очищено',
+            deletedCount: deletedCount,
             totalDishes: menuData.length
         }, null, 2));
     }

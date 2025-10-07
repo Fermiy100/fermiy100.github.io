@@ -105,6 +105,15 @@ console.log('🚀 ЗАПУСК ОКОНЧАТЕЛЬНОГО ПАРСЕРА - В�
 let menuData = createAllDishesFromExcel();
 console.log(`🍽️ ЗАГРУЖЕНО ${menuData.length} БЛЮД ИЗ ВАШЕГО EXCEL ФАЙЛА!`);
 
+// Функция для принудительной загрузки данных
+function forceLoadData() {
+    if (menuData.length === 0) {
+        console.log('🔄 ПРИНУДИТЕЛЬНО ЗАГРУЖАЕМ ДАННЫЕ!');
+        menuData = createAllDishesFromExcel();
+        console.log(`🍽️ ЗАГРУЖЕНО ${menuData.length} БЛЮД ИЗ ВАШЕГО EXCEL ФАЙЛА!`);
+    }
+}
+
 const server = http.createServer((req, res) => {
     // CORS заголовки
     res.setHeader('Access-Control-Allow-Origin', '*');
@@ -122,26 +131,32 @@ const server = http.createServer((req, res) => {
 
     // Главная страница
     if (url.pathname === '/' && req.method === 'GET') {
+        // Принудительно загружаем данные
+        forceLoadData();
+        
         res.writeHead(200, {
             'Content-Type': 'application/json; charset=utf-8',
             'Access-Control-Allow-Origin': '*'
         });
         res.end(JSON.stringify({
             status: 'OK',
-            message: 'Railway Server with FINAL PARSER v11.0.0 - ALWAYS LOADED!',
+            message: 'Railway Server with FINAL PARSER v12.0.0 - FORCE LOADED!',
             dishCount: menuData.length,
             encoding: 'UTF-8',
             mobileReady: true,
             blueGradientRemoved: true,
             fullScreenMode: true,
             finalParser: true,
-            alwaysLoaded: true,
+            forceLoaded: true,
             yourExcelFileRead: true,
             time: new Date().toISOString()
         }, null, 2));
     } 
     // Получить меню
     else if (url.pathname === '/api/menu' && req.method === 'GET') {
+        // Принудительно загружаем данные
+        forceLoadData();
+        
         res.writeHead(200, { 
             'Content-Type': 'application/json; charset=utf-8',
             'Access-Control-Allow-Origin': '*'

@@ -185,7 +185,7 @@ const server = http.createServer((req, res) => {
         });
         res.end(JSON.stringify({
             status: 'OK',
-            message: 'Railway Server with AUTH & USERS & DATABASE v18.0.0 - FULL SYSTEM!',
+            message: 'Railway Server with LOGIN & AUTH & USERS & DATABASE v19.0.0 - FULL SYSTEM!',
             dishCount: menuData.length,
             userCount: usersData.length,
             encoding: 'UTF-8',
@@ -420,6 +420,70 @@ const server = http.createServer((req, res) => {
                 timestamp: new Date().toISOString()
             }
         }, null, 2));
+    }
+    // Вход в систему
+    else if (url.pathname === '/api/auth/login.php' && req.method === 'POST') {
+        let body = '';
+        req.on('data', chunk => {
+            body += chunk.toString();
+        });
+        req.on('end', () => {
+            try {
+                const loginData = JSON.parse(body);
+                const { email, password } = loginData;
+                
+                console.log(`🔐 ПОПЫТКА ВХОДА: ${email}`);
+                
+                // Проверяем учетные данные
+                const validUsers = {
+                    'director@school.test': { password: 'P@ssw0rd1!', role: 'DIRECTOR', name: 'Директор школы' },
+                    'parent@school.test': { password: 'P@ssw0rd1!', role: 'PARENT', name: 'Родитель/Ученик' }
+                };
+                
+                const user = validUsers[email];
+                
+                if (user && user.password === password) {
+                    console.log(`✅ УСПЕШНЫЙ ВХОД: ${email} (${user.role})`);
+                    
+                    res.writeHead(200, {
+                        'Content-Type': 'application/json; charset=utf-8',
+                        'Access-Control-Allow-Origin': '*'
+                    });
+                    res.end(JSON.stringify({
+                        success: true,
+                        token: email, // Используем email как токен
+                        user: {
+                            id: email === 'director@school.test' ? 1 : 2,
+                            email: email,
+                            name: user.name,
+                            role: user.role,
+                            school_id: 1,
+                            verified: true
+                        }
+                    }, null, 2));
+                } else {
+                    console.log(`❌ НЕУДАЧНЫЙ ВХОД: ${email}`);
+                    res.writeHead(401, {
+                        'Content-Type': 'application/json; charset=utf-8',
+                        'Access-Control-Allow-Origin': '*'
+                    });
+                    res.end(JSON.stringify({
+                        success: false,
+                        error: 'Неверные учетные данные'
+                    }, null, 2));
+                }
+            } catch (error) {
+                console.error('❌ ОШИБКА ПАРСИНГА LOGIN:', error);
+                res.writeHead(400, {
+                    'Content-Type': 'application/json; charset=utf-8',
+                    'Access-Control-Allow-Origin': '*'
+                });
+                res.end(JSON.stringify({
+                    success: false,
+                    error: 'Ошибка парсинга JSON'
+                }, null, 2));
+            }
+        });
     }
     // Получить информацию о текущем пользователе
     else if (url.pathname === '/api/auth/me.php' && req.method === 'GET') {

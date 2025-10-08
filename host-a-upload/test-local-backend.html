@@ -1,0 +1,237 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test Local Backend</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 1000px;
+            margin: 0 auto;
+            padding: 20px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+        .container {
+            background: rgba(255, 255, 255, 0.1);
+            padding: 30px;
+            border-radius: 15px;
+            backdrop-filter: blur(10px);
+        }
+        button {
+            background: linear-gradient(45deg, #FF6B6B, #4ECDC4);
+            color: white;
+            border: none;
+            padding: 15px 30px;
+            border-radius: 25px;
+            cursor: pointer;
+            font-size: 16px;
+            margin: 10px;
+        }
+        .status {
+            margin: 20px 0;
+            padding: 15px;
+            border-radius: 8px;
+            font-weight: bold;
+        }
+        .success { background: rgba(76, 175, 80, 0.3); }
+        .error { background: rgba(244, 67, 54, 0.3); }
+        .info { background: rgba(33, 150, 243, 0.3); }
+        .results {
+            background: rgba(255, 255, 255, 0.1);
+            padding: 20px;
+            border-radius: 10px;
+            margin: 20px 0;
+            max-height: 400px;
+            overflow-y: auto;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🔧 Test Local PHP Backend</h1>
+        <p>Тестируем локальный PHP backend на fermiy.ru</p>
+        
+        <div style="text-align: center;">
+            <button onclick="testAuth()">👤 Test Auth</button>
+            <button onclick="testMenu()">🍽️ Test Menu</button>
+            <button onclick="testUsers()">👥 Test Users</button>
+            <button onclick="testAll()">🔄 Test All</button>
+        </div>
+        
+        <div id="status"></div>
+        <div id="results"></div>
+    </div>
+
+    <script>
+        const API_BASE_URL = 'https://fermiy.ru/api';
+        
+        function showStatus(message, type = 'info') {
+            const statusDiv = document.getElementById('status');
+            statusDiv.innerHTML = `<div class="status ${type}">${message}</div>`;
+        }
+        
+        function showResults(content) {
+            document.getElementById('results').innerHTML = content;
+        }
+        
+        async function testAuth() {
+            showStatus('👤 Тестируем Auth endpoint...', 'info');
+            
+            try {
+                const response = await fetch(`${API_BASE_URL}/auth/me.php`, {
+                    method: 'GET',
+                    headers: {
+                        'Accept': 'application/json',
+                        'Content-Type': 'application/json'
+                    }
+                });
+                
+                if (response.ok) {
+                    const data = await response.json();
+                    showStatus(`✅ Auth OK! Пользователь: ${data.user.name}`, 'success');
+                    showResults(`
+                        <h3>👤 Auth Response:</h3>
+                        <div class="results">
+                            <p><strong>Успех:</strong> ${data.success}</p>
+                            <p><strong>ID:</strong> ${data.user.id}</p>
+                            <p><strong>Email:</strong> ${data.user.email}</p>
+                            <p><strong>Имя:</strong> ${data.user.name}</p>
+                            <p><strong>Роль:</strong> ${data.user.role}</p>
+                            <p><strong>Школа ID:</strong> ${data.user.school_id}</p>
+                            <p><strong>Верифицирован:</strong> ${data.user.verified ? '✅ Да' : '❌ Нет'}</p>
+                        </div>
+                    `);
+                } else {
+                    showStatus(`❌ Auth Error: ${response.status} ${response.statusText}`, 'error');
+                }
+            } catch (error) {
+                showStatus(`❌ Auth Error: ${error.message}`, 'error');
+            }
+        }
+        
+        async function testMenu() {
+            showStatus('🍽️ Тестируем Menu endpoint...', 'info');
+            
+            try {
+                const response = await fetch(`${API_BASE_URL}/menu.php`, {
+                    method: 'GET',
+                    headers: {
+                        'Accept': 'application/json',
+                        'Content-Type': 'application/json'
+                    }
+                });
+                
+                if (response.ok) {
+                    const data = await response.json();
+                    showStatus(`✅ Menu OK! Загружено ${data.items.length} блюд`, 'success');
+                    showResults(`
+                        <h3>🍽️ Menu Response:</h3>
+                        <div class="results">
+                            <p><strong>Всего блюд:</strong> ${data.items.length}</p>
+                            <p><strong>Неделя:</strong> ${data.weekStart}</p>
+                            <p><strong>Заголовок:</strong> ${data.title}</p>
+                            <p><strong>Первое блюдо:</strong> ${data.items[0]?.name || 'Нет данных'}</p>
+                        </div>
+                    `);
+                } else {
+                    showStatus(`❌ Menu Error: ${response.status} ${response.statusText}`, 'error');
+                }
+            } catch (error) {
+                showStatus(`❌ Menu Error: ${error.message}`, 'error');
+            }
+        }
+        
+        async function testUsers() {
+            showStatus('👥 Тестируем Users endpoint...', 'info');
+            
+            try {
+                const response = await fetch(`${API_BASE_URL}/users.php`, {
+                    method: 'GET',
+                    headers: {
+                        'Accept': 'application/json',
+                        'Content-Type': 'application/json'
+                    }
+                });
+                
+                if (response.ok) {
+                    const data = await response.json();
+                    showStatus(`✅ Users OK! Загружено ${data.length} пользователей`, 'success');
+                    showResults(`
+                        <h3>👥 Users Response:</h3>
+                        <div class="results">
+                            <p><strong>Всего пользователей:</strong> ${data.length}</p>
+                            <p><strong>Первый пользователь:</strong> ${data[0]?.name || 'Нет данных'}</p>
+                            <p><strong>Email:</strong> ${data[0]?.email || 'Нет данных'}</p>
+                            <p><strong>Роль:</strong> ${data[0]?.role || 'Нет данных'}</p>
+                        </div>
+                    `);
+                } else {
+                    showStatus(`❌ Users Error: ${response.status} ${response.statusText}`, 'error');
+                }
+            } catch (error) {
+                showStatus(`❌ Users Error: ${error.message}`, 'error');
+            }
+        }
+        
+        async function testAll() {
+            showStatus('🔄 Тестируем все endpoints...', 'info');
+            
+            const results = [];
+            
+            // Тест Auth
+            try {
+                const authResponse = await fetch(`${API_BASE_URL}/auth/me.php`);
+                if (authResponse.ok) {
+                    const data = await authResponse.json();
+                    results.push(`✅ Auth: ${data.user.name}`);
+                } else {
+                    results.push(`❌ Auth: ${authResponse.status}`);
+                }
+            } catch (error) {
+                results.push(`❌ Auth: ${error.message}`);
+            }
+            
+            // Тест Menu
+            try {
+                const menuResponse = await fetch(`${API_BASE_URL}/menu.php`);
+                if (menuResponse.ok) {
+                    const data = await menuResponse.json();
+                    results.push(`✅ Menu: ${data.items.length} блюд`);
+                } else {
+                    results.push(`❌ Menu: ${menuResponse.status}`);
+                }
+            } catch (error) {
+                results.push(`❌ Menu: ${error.message}`);
+            }
+            
+            // Тест Users
+            try {
+                const usersResponse = await fetch(`${API_BASE_URL}/users.php`);
+                if (usersResponse.ok) {
+                    const data = await usersResponse.json();
+                    results.push(`✅ Users: ${data.length} пользователей`);
+                } else {
+                    results.push(`❌ Users: ${usersResponse.status}`);
+                }
+            } catch (error) {
+                results.push(`❌ Users: ${error.message}`);
+            }
+            
+            showStatus('🔄 Тест завершен!', 'info');
+            showResults(`
+                <h3>🔄 Результаты всех тестов:</h3>
+                <div class="results">
+                    ${results.map(result => `<p>${result}</p>`).join('')}
+                </div>
+            `);
+        }
+        
+        // Автоматически тестируем при загрузке
+        window.onload = function() {
+            testAll();
+        };
+    </script>
+</body>
+</html>

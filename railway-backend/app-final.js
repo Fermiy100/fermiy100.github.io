@@ -113,6 +113,46 @@ console.log('🚀 ЗАПУСК ПАРСЕРА - ПУСТОЕ МЕНЮ, ЗАГР�
 let menuData = [];
 console.log(`🍽️ МЕНЮ ПУСТОЕ - ${menuData.length} БЛЮД!`);
 
+// Данные пользователей
+let usersData = [
+    {
+        id: 1,
+        email: 'director@school.test',
+        name: 'Директор школы',
+        role: 'director',
+        school_id: 1,
+        verified: true,
+        created_at: '2025-10-07T10:00:00Z'
+    },
+    {
+        id: 2,
+        email: 'parent@school.test',
+        name: 'Родитель',
+        role: 'parent',
+        school_id: 1,
+        verified: true,
+        created_at: '2025-10-07T10:00:00Z'
+    },
+    {
+        id: 3,
+        email: 'teacher@school.test',
+        name: 'Учитель',
+        role: 'teacher',
+        school_id: 1,
+        verified: false,
+        created_at: '2025-10-07T10:00:00Z'
+    },
+    {
+        id: 462,
+        email: 'fermiy2013@gmail.com',
+        name: 'Клетка Конфетка',
+        role: 'parent',
+        school_id: 1,
+        verified: false,
+        created_at: '2025-10-07T10:00:00Z'
+    }
+];
+
 // Функция для загрузки данных только при необходимости
 function loadDataIfNeeded() {
     // Не загружаем автоматически - только по запросу пользователя
@@ -145,14 +185,16 @@ const server = http.createServer((req, res) => {
         });
         res.end(JSON.stringify({
             status: 'OK',
-            message: 'Railway Server with EMPTY MENU v16.1.0 - FORCE EMPTY!',
+            message: 'Railway Server with USERS & DATABASE v17.0.0 - FULL SYSTEM!',
             dishCount: menuData.length,
+            userCount: usersData.length,
             encoding: 'UTF-8',
             mobileReady: true,
             blueGradientRemoved: true,
             fullScreenMode: true,
             finalParser: true,
-            forceLoaded: true,
+            userManagement: true,
+            databaseEndpoint: true,
             yourExcelFileRead: true,
             time: new Date().toISOString()
         }, null, 2));
@@ -267,6 +309,116 @@ const server = http.createServer((req, res) => {
             message: `Блюдо ${dishId} удалено`,
             removed: initialLength - menuData.length,
             totalDishes: menuData.length
+        }, null, 2));
+    }
+    // Получить всех пользователей
+    else if (url.pathname === '/api/users' && req.method === 'GET') {
+        console.log('👥 ПОЛУЧАЕМ СПИСОК ПОЛЬЗОВАТЕЛЕЙ...');
+        res.writeHead(200, {
+            'Content-Type': 'application/json; charset=utf-8',
+            'Access-Control-Allow-Origin': '*'
+        });
+        res.end(JSON.stringify(usersData, null, 2));
+    }
+    // Создать пользователя
+    else if (url.pathname === '/api/users' && req.method === 'POST') {
+        let body = '';
+        req.on('data', chunk => {
+            body += chunk.toString();
+        });
+        req.on('end', () => {
+            try {
+                const newUser = JSON.parse(body);
+                newUser.id = Math.max(...usersData.map(u => u.id)) + 1;
+                newUser.verified = false;
+                newUser.created_at = new Date().toISOString();
+                
+                usersData.push(newUser);
+                
+                console.log(`✅ ПОЛЬЗОВАТЕЛЬ СОЗДАН: ${newUser.name} (${newUser.email})`);
+                
+                res.writeHead(201, {
+                    'Content-Type': 'application/json; charset=utf-8',
+                    'Access-Control-Allow-Origin': '*'
+                });
+                res.end(JSON.stringify({
+                    success: true,
+                    message: 'Пользователь создан',
+                    user: newUser
+                }, null, 2));
+            } catch (error) {
+                console.error('❌ ОШИБКА СОЗДАНИЯ ПОЛЬЗОВАТЕЛЯ:', error);
+                res.writeHead(400, {
+                    'Content-Type': 'application/json; charset=utf-8',
+                    'Access-Control-Allow-Origin': '*'
+                });
+                res.end(JSON.stringify({
+                    success: false,
+                    error: 'Ошибка парсинга JSON',
+                    details: error.message
+                }, null, 2));
+            }
+        });
+    }
+    // Верифицировать пользователя
+    else if (url.pathname.startsWith('/api/users/') && url.pathname.endsWith('/verify') && req.method === 'POST') {
+        const userId = parseInt(url.pathname.split('/')[3]);
+        const user = usersData.find(u => u.id === userId);
+        
+        if (user) {
+            user.verified = true;
+            console.log(`✅ ПОЛЬЗОВАТЕЛЬ ВЕРИФИЦИРОВАН: ${user.name} (ID: ${userId})`);
+            
+            res.writeHead(200, {
+                'Content-Type': 'application/json; charset=utf-8',
+                'Access-Control-Allow-Origin': '*'
+            });
+            res.end(JSON.stringify({
+                success: true,
+                message: 'Пользователь верифицирован',
+                user: user
+            }, null, 2));
+        } else {
+            console.log(`❌ ПОЛЬЗОВАТЕЛЬ НЕ НАЙДЕН: ID ${userId}`);
+            res.writeHead(404, {
+                'Content-Type': 'application/json; charset=utf-8',
+                'Access-Control-Allow-Origin': '*'
+            });
+            res.end(JSON.stringify({
+                success: false,
+                error: 'Пользователь не найден'
+            }, null, 2));
+        }
+    }
+    // Получить информацию о базе данных
+    else if (url.pathname === '/api/database' && req.method === 'GET') {
+        console.log('📊 ПОЛУЧАЕМ ИНФОРМАЦИЮ О БАЗЕ ДАННЫХ...');
+        res.writeHead(200, {
+            'Content-Type': 'application/json; charset=utf-8',
+            'Access-Control-Allow-Origin': '*'
+        });
+        res.end(JSON.stringify({
+            menu: {
+                totalDishes: menuData.length,
+                dishes: menuData.slice(0, 5), // Показываем первые 5 блюд
+                mealTypes: {
+                    breakfast: menuData.filter(d => d.meal_type === 'завтрак').length,
+                    lunch: menuData.filter(d => d.meal_type === 'обед').length,
+                    snack: menuData.filter(d => d.meal_type === 'полдник').length
+                }
+            },
+            users: {
+                totalUsers: usersData.length,
+                users: usersData,
+                verified: usersData.filter(u => u.verified).length,
+                pending: usersData.filter(u => !u.verified).length
+            },
+            server: {
+                version: 'v17.0.0 - WITH USERS & DATABASE',
+                uptime: process.uptime(),
+                memory: process.memoryUsage(),
+                timestamp: new Date().toISOString()
+            }
         }, null, 2));
     }
     // 404

@@ -32,6 +32,8 @@ const ParentMenuSelector: React.FC<ParentMenuSelectorProps> = ({ schoolId, weekS
   const [loading, setLoading] = useState(true);
   const [selectedItems, setSelectedItems] = useState<Set<number>>(new Set());
   const [selectedDay, setSelectedDay] = useState<number>(1);
+  const [sortBy, setSortBy] = useState<'name' | 'weight' | 'recipe'>('name');
+  const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('asc');
 
   const daysOfWeek = [
     '', 'Понедельник', 'Вторник', 'Среда', 'Четверг', 'Пятница'
@@ -75,14 +77,48 @@ const ParentMenuSelector: React.FC<ParentMenuSelectorProps> = ({ schoolId, weekS
     setSelectedItems(newSelected);
   };
 
+  // Функция сортировки блюд
+  const sortItems = (items: MenuItem[]) => {
+    return [...items].sort((a, b) => {
+      let aValue: string | number;
+      let bValue: string | number;
+      
+      switch (sortBy) {
+        case 'name':
+          aValue = a.name.toLowerCase();
+          bValue = b.name.toLowerCase();
+          break;
+        case 'weight':
+          // Извлекаем числовое значение из веса (например, "225 г" -> 225)
+          aValue = parseFloat(a.weight?.replace(/[^\d.]/g, '') || '0');
+          bValue = parseFloat(b.weight?.replace(/[^\d.]/g, '') || '0');
+          break;
+        case 'recipe':
+          // Извлекаем числовое значение из рецепта (например, "1/6" -> 1)
+          aValue = parseFloat(a.recipe_number?.split('/')[0] || '0');
+          bValue = parseFloat(b.recipe_number?.split('/')[0] || '0');
+          break;
+        default:
+          aValue = a.name.toLowerCase();
+          bValue = b.name.toLowerCase();
+      }
+      
+      if (aValue < bValue) return sortOrder === 'asc' ? -1 : 1;
+      if (aValue > bValue) return sortOrder === 'asc' ? 1 : -1;
+      return 0;
+    });
+  };
+
   const getItemsForDayAndMeal = (day: number, mealType: string) => {
-    return menuItems.filter(item => {
+    const filteredItems = menuItems.filter(item => {
       // Приводим day_of_week к числу для сравнения
       const itemDay = typeof item.day_of_week === 'string' ? 
         parseInt(item.day_of_week) : item.day_of_week;
       
       return itemDay === day && item.meal_type === mealType;
     });
+    
+    return sortItems(filteredItems);
   };
 
   const getSelectedItemsForDayAndMeal = (day: number, mealType: string) => {
@@ -103,6 +139,18 @@ const ParentMenuSelector: React.FC<ParentMenuSelectorProps> = ({ schoolId, weekS
 
   const getTotalSelected = () => {
     return selectedItems.size;
+  };
+
+  // Функции для управления сортировкой
+  const handleSortChange = (newSortBy: 'name' | 'weight' | 'recipe') => {
+    if (sortBy === newSortBy) {
+      // Если тот же критерий, меняем порядок
+      setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc');
+    } else {
+      // Если новый критерий, устанавливаем по возрастанию
+      setSortBy(newSortBy);
+      setSortOrder('asc');
+    }
   };
 
   if (loading) {
@@ -132,6 +180,31 @@ const ParentMenuSelector: React.FC<ParentMenuSelectorProps> = ({ schoolId, weekS
               {day}
             </button>
           ))}
+        </div>
+      </div>
+
+      {/* Панель сортировки */}
+      <div className="sort-panel">
+        <h3>Сортировка блюд</h3>
+        <div className="sort-controls">
+          <button
+            onClick={() => handleSortChange('name')}
+            className={`sort-button ${sortBy === 'name' ? 'active' : ''}`}
+          >
+            По названию {sortBy === 'name' && (sortOrder === 'asc' ? '↑' : '↓')}
+          </button>
+          <button
+            onClick={() => handleSortChange('weight')}
+            className={`sort-button ${sortBy === 'weight' ? 'active' : ''}`}
+          >
+            По весу {sortBy === 'weight' && (sortOrder === 'asc' ? '↑' : '↓')}
+          </button>
+          <button
+            onClick={() => handleSortChange('recipe')}
+            className={`sort-button ${sortBy === 'recipe' ? 'active' : ''}`}
+          >
+            По рецепту {sortBy === 'recipe' && (sortOrder === 'asc' ? '↑' : '↓')}
+          </button>
         </div>
       </div>
 

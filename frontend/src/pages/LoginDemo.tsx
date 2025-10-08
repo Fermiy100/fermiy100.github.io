@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { apiClient, tokenUtils } from '../utils/api';
 
 interface LoginDemoProps {
-  onLogin: (token: string, role: string) => void;
+  onLogin: (token: string, role: string, name: string) => void;
 }
 
 export default function LoginDemo({ onLogin }: LoginDemoProps) {
@@ -25,7 +25,7 @@ export default function LoginDemo({ onLogin }: LoginDemoProps) {
     try {
       const { user, token } = await apiClient.login(email, password);
       tokenUtils.setToken(token);
-      onLogin(token, user.role);
+      onLogin(token, user.role, user.name);
     } catch (error: any) {
       setError(error.message);
     } finally {
@@ -38,6 +38,8 @@ export default function LoginDemo({ onLogin }: LoginDemoProps) {
     if (account) {
       setEmail(email);
       setPassword(account.password);
+      // Автоматически входим
+      onLogin(email, account.role, account.name);
     }
   };
 

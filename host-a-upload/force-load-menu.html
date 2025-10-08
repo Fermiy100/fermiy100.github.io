@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Принудительная загрузка меню</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 600px;
+            margin: 0 auto;
+            padding: 20px;
+            background: #f5f5f5;
+        }
+        .container {
+            background: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        h1 {
+            color: #2c3e50;
+            text-align: center;
+        }
+        .button {
+            background: #3498db;
+            color: white;
+            border: none;
+            padding: 15px 30px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+            margin: 10px 0;
+            display: block;
+            width: 100%;
+        }
+        .button:hover {
+            background: #2980b9;
+        }
+        .success {
+            background: #27ae60;
+        }
+        .error {
+            background: #e74c3c;
+        }
+        .log {
+            background: #ecf0f1;
+            padding: 15px;
+            border-radius: 5px;
+            margin: 10px 0;
+            font-family: monospace;
+            white-space: pre-wrap;
+            max-height: 200px;
+            overflow-y: auto;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🍽️ Принудительная загрузка меню</h1>
+        
+        <button class="button" onclick="forceLoadMenu()">
+            🚀 Загрузить 225 блюд в Railway
+        </button>
+        
+        <button class="button" onclick="checkMenu()">
+            📊 Проверить меню
+        </button>
+        
+        <div id="log" class="log"></div>
+    </div>
+
+    <script>
+        const RAILWAY_URL = 'https://fermiy100githubio-production.up.railway.app';
+        
+        function log(message) {
+            const logDiv = document.getElementById('log');
+            const timestamp = new Date().toLocaleTimeString();
+            logDiv.textContent += `[${timestamp}] ${message}\n`;
+            logDiv.scrollTop = logDiv.scrollHeight;
+        }
+        
+        async function forceLoadMenu() {
+            try {
+                log('🚀 Начинаем принудительную загрузку меню...');
+                
+                // Создаем FormData для имитации загрузки файла
+                const formData = new FormData();
+                formData.append('file', new Blob(['test'], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' }), 'menu.xlsx');
+                
+                const response = await fetch(`${RAILWAY_URL}/api/menu`, {
+                    method: 'POST',
+                    body: formData
+                });
+                
+                if (!response.ok) {
+                    throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+                }
+                
+                const result = await response.json();
+                log(`✅ Загружено: ${result.addedCount} блюд`);
+                log(`📊 Всего: ${result.totalDishes} блюд`);
+                
+                // Проверяем результат
+                setTimeout(checkMenu, 1000);
+                
+            } catch (error) {
+                log(`❌ Ошибка: ${error.message}`);
+            }
+        }
+        
+        async function checkMenu() {
+            try {
+                log('📊 Проверяем меню...');
+                
+                const response = await fetch(`${RAILWAY_URL}/api/menu`);
+                
+                if (!response.ok) {
+                    throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+                }
+                
+                const data = await response.json();
+                const count = Array.isArray(data) ? data.length : 0;
+                
+                log(`📊 Найдено блюд: ${count}`);
+                
+                if (count > 0) {
+                    log('✅ Меню загружено успешно!');
+                } else {
+                    log('⚠️ Меню пустое');
+                }
+                
+            } catch (error) {
+                log(`❌ Ошибка проверки: ${error.message}`);
+            }
+        }
+        
+        // Автоматически проверяем при загрузке
+        window.onload = function() {
+            log('🌐 Страница загружена');
+            checkMenu();
+        };
+    </script>
+</body>
+</html>

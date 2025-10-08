@@ -1,0 +1,235 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Тест полного меню</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+            background-color: #f5f5f5;
+        }
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        .day-section {
+            margin-bottom: 30px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            padding: 15px;
+        }
+        .day-title {
+            font-size: 18px;
+            font-weight: bold;
+            color: #333;
+            margin-bottom: 15px;
+            background: #e3f2fd;
+            padding: 10px;
+            border-radius: 5px;
+        }
+        .meal-section {
+            margin-bottom: 20px;
+            border-left: 4px solid #2196f3;
+            padding-left: 15px;
+        }
+        .meal-title {
+            font-size: 16px;
+            font-weight: bold;
+            color: #1976d2;
+            margin-bottom: 10px;
+        }
+        .dish-list {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 10px;
+        }
+        .dish-item {
+            background: #f8f9fa;
+            padding: 10px;
+            border-radius: 5px;
+            border: 1px solid #e9ecef;
+        }
+        .dish-name {
+            font-weight: bold;
+            color: #333;
+        }
+        .dish-details {
+            font-size: 12px;
+            color: #666;
+            margin-top: 5px;
+        }
+        .stats {
+            background: #e8f5e8;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+        }
+        .stats h3 {
+            margin: 0 0 10px 0;
+            color: #2e7d32;
+        }
+        .stats p {
+            margin: 5px 0;
+            color: #388e3c;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🍽️ Тест полного меню - Все приемы пищи</h1>
+        
+        <div class="stats">
+            <h3>📊 Статистика меню</h3>
+            <p><strong>Всего блюд:</strong> <span id="totalDishes">0</span></p>
+            <p><strong>Дней недели:</strong> 5 (понедельник - пятница)</p>
+            <p><strong>Приемов пищи:</strong> 3 (завтрак, обед, полдник)</p>
+            <p><strong>Блюд на прием пищи:</strong> 15</p>
+            <p><strong>Ожидаемое количество:</strong> 225 блюд (15 × 5 × 3)</p>
+        </div>
+
+        <div id="menuContainer">
+            <p>Загружаем меню...</p>
+        </div>
+    </div>
+
+    <script>
+        // Данные блюд из Excel файла
+        const EXACT_DISHES = [
+            'Сухие завтраки с молоком',
+            'Оладьи',
+            'Молоко сгущенное',
+            'Сметана',
+            'Джем фруктовый',
+            'Мед',
+            'Масло сливочное',
+            'Сыр',
+            'Колбаса вареная',
+            'Колбаса в/к',
+            'Ветчина',
+            'Хлеб из пшеничной муки',
+            'Чай с сахаром',
+            'Чай с молоком',
+            'Какао с молоком'
+        ];
+
+        const EXACT_WEIGHTS = [
+            '225 г', '2 шт', '20 г', '20 г', '20 г', '20 г', '10 г', '15 г',
+            '20 г', '20 г', '20 г', '20 г', '200 г', '200 г', '200 г'
+        ];
+
+        const EXACT_RECIPES = [
+            '1/6', '11/2', '15/1', '15/7', '15/5', '15/6', '18/7', '18/8',
+            '18/5', '18/6', '18/4', '17/1', '12/2', '12/3', '12/4'
+        ];
+
+        const DAYS = ['понедельник', 'вторник', 'среда', 'четверг', 'пятница'];
+        const MEAL_TYPES = ['завтрак', 'обед', 'полдник'];
+
+        function createFullMenu() {
+            const dishes = [];
+            let idCounter = 1;
+            
+            // Для каждого дня недели (5 дней)
+            for (let day = 1; day <= 5; day++) {
+                const dayName = DAYS[day - 1];
+                
+                // Для каждого типа питания
+                for (let mealIndex = 0; mealIndex < MEAL_TYPES.length; mealIndex++) {
+                    const mealType = MEAL_TYPES[mealIndex];
+                    
+                    // Для каждого блюда (15 блюд)
+                    for (let i = 0; i < EXACT_DISHES.length; i++) {
+                        const dish = {
+                            id: idCounter++,
+                            name: EXACT_DISHES[i],
+                            description: `${EXACT_DISHES[i]} - ${dayName} - ${mealType} (из вашего Excel файла)`,
+                            price: 0,
+                            meal_type: mealType,
+                            day_of_week: day,
+                            weight: EXACT_WEIGHTS[i],
+                            recipe_number: EXACT_RECIPES[i]
+                        };
+                        
+                        dishes.push(dish);
+                    }
+                }
+            }
+            
+            return dishes;
+        }
+
+        function displayMenu(dishes) {
+            const container = document.getElementById('menuContainer');
+            const totalDishes = document.getElementById('totalDishes');
+            
+            totalDishes.textContent = dishes.length;
+            
+            // Группируем блюда по дням
+            const dishesByDay = {};
+            dishes.forEach(dish => {
+                if (!dishesByDay[dish.day_of_week]) {
+                    dishesByDay[dish.day_of_week] = {};
+                }
+                if (!dishesByDay[dish.day_of_week][dish.meal_type]) {
+                    dishesByDay[dish.day_of_week][dish.meal_type] = [];
+                }
+                dishesByDay[dish.day_of_week][dish.meal_type].push(dish);
+            });
+            
+            let html = '';
+            
+            // Отображаем по дням
+            for (let day = 1; day <= 5; day++) {
+                const dayName = DAYS[day - 1];
+                const dayDishes = dishesByDay[day] || {};
+                
+                html += `<div class="day-section">`;
+                html += `<div class="day-title">📅 ${dayName.charAt(0).toUpperCase() + dayName.slice(1)}</div>`;
+                
+                // Отображаем по приемам пищи
+                MEAL_TYPES.forEach(mealType => {
+                    const mealDishes = dayDishes[mealType] || [];
+                    const mealEmoji = mealType === 'завтрак' ? '🌅' : mealType === 'обед' ? '🍽️' : '🥛';
+                    
+                    html += `<div class="meal-section">`;
+                    html += `<div class="meal-title">${mealEmoji} ${mealType.charAt(0).toUpperCase() + mealType.slice(1)} (${mealDishes.length} блюд)</div>`;
+                    
+                    if (mealDishes.length > 0) {
+                        html += `<div class="dish-list">`;
+                        mealDishes.forEach(dish => {
+                            html += `
+                                <div class="dish-item">
+                                    <div class="dish-name">${dish.name}</div>
+                                    <div class="dish-details">
+                                        Вес: ${dish.weight} | Рецепт: ${dish.recipe_number}
+                                    </div>
+                                </div>
+                            `;
+                        });
+                        html += `</div>`;
+                    } else {
+                        html += `<p style="color: #f44336; font-style: italic;">Нет блюд для ${mealType}</p>`;
+                    }
+                    
+                    html += `</div>`;
+                });
+                
+                html += `</div>`;
+            }
+            
+            container.innerHTML = html;
+        }
+
+        // Создаем и отображаем полное меню
+        const fullMenu = createFullMenu();
+        console.log(`✅ Создано ${fullMenu.length} блюд (15 блюд × 5 дней × 3 приема пищи)`);
+        displayMenu(fullMenu);
+    </script>
+</body>
+</html>

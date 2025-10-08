@@ -1,0 +1,197 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Загрузка данных меню в Railway</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background: #f5f5f5;
+        }
+        .container {
+            background: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        h1 {
+            color: #2c3e50;
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        .button {
+            background: #3498db;
+            color: white;
+            border: none;
+            padding: 15px 30px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+            margin: 10px;
+            display: block;
+            width: 100%;
+        }
+        .button:hover {
+            background: #2980b9;
+        }
+        .success {
+            background: #27ae60;
+        }
+        .error {
+            background: #e74c3c;
+        }
+        .info {
+            background: #f39c12;
+        }
+        .status {
+            margin: 20px 0;
+            padding: 15px;
+            border-radius: 5px;
+            font-weight: bold;
+        }
+        .log {
+            background: #ecf0f1;
+            padding: 15px;
+            border-radius: 5px;
+            margin: 10px 0;
+            font-family: monospace;
+            white-space: pre-wrap;
+            max-height: 300px;
+            overflow-y: auto;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🍽️ Загрузка данных меню в Railway</h1>
+        
+        <div id="status" class="status info">
+            Готов к загрузке данных
+        </div>
+        
+        <button class="button" onclick="loadMenuData()">
+            📤 Загрузить данные меню (225 блюд)
+        </button>
+        
+        <button class="button" onclick="checkMenuData()">
+            📊 Проверить количество блюд
+        </button>
+        
+        <button class="button" onclick="clearMenuData()">
+            🗑️ Очистить меню
+        </button>
+        
+        <div id="log" class="log"></div>
+    </div>
+
+    <script>
+        const RAILWAY_URL = 'https://fermiy100githubio-production.up.railway.app';
+        
+        function log(message) {
+            const logDiv = document.getElementById('log');
+            const timestamp = new Date().toLocaleTimeString();
+            logDiv.textContent += `[${timestamp}] ${message}\n`;
+            logDiv.scrollTop = logDiv.scrollHeight;
+        }
+        
+        function updateStatus(message, type = 'info') {
+            const statusDiv = document.getElementById('status');
+            statusDiv.textContent = message;
+            statusDiv.className = `status ${type}`;
+        }
+        
+        async function loadMenuData() {
+            try {
+                updateStatus('Загружаем данные меню...', 'info');
+                log('🚀 Начинаем загрузку данных меню...');
+                
+                // Создаем FormData для имитации загрузки файла
+                const formData = new FormData();
+                formData.append('file', new Blob(['test'], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' }), 'menu.xlsx');
+                
+                const response = await fetch(`${RAILWAY_URL}/api/menu`, {
+                    method: 'POST',
+                    body: formData
+                });
+                
+                if (!response.ok) {
+                    throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+                }
+                
+                const result = await response.json();
+                log(`✅ Данные загружены: ${result.addedCount} блюд`);
+                log(`📊 Всего блюд: ${result.totalDishes}`);
+                
+                updateStatus(`✅ Загружено ${result.addedCount} блюд`, 'success');
+                
+            } catch (error) {
+                log(`❌ Ошибка загрузки: ${error.message}`);
+                updateStatus(`❌ Ошибка: ${error.message}`, 'error');
+            }
+        }
+        
+        async function checkMenuData() {
+            try {
+                updateStatus('Проверяем данные меню...', 'info');
+                log('📊 Проверяем количество блюд...');
+                
+                const response = await fetch(`${RAILWAY_URL}/api/menu`);
+                
+                if (!response.ok) {
+                    throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+                }
+                
+                const data = await response.json();
+                const count = Array.isArray(data) ? data.length : 0;
+                
+                log(`📊 Найдено блюд: ${count}`);
+                
+                if (count > 0) {
+                    updateStatus(`✅ Найдено ${count} блюд`, 'success');
+                } else {
+                    updateStatus('⚠️ Меню пустое', 'error');
+                }
+                
+            } catch (error) {
+                log(`❌ Ошибка проверки: ${error.message}`);
+                updateStatus(`❌ Ошибка: ${error.message}`, 'error');
+            }
+        }
+        
+        async function clearMenuData() {
+            try {
+                updateStatus('Очищаем меню...', 'info');
+                log('🗑️ Очищаем меню...');
+                
+                const response = await fetch(`${RAILWAY_URL}/api/menu/clear`, {
+                    method: 'DELETE'
+                });
+                
+                if (!response.ok) {
+                    throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+                }
+                
+                const result = await response.json();
+                log(`✅ Удалено ${result.deletedCount} блюд`);
+                log(`📊 Осталось блюд: ${result.totalDishes}`);
+                
+                updateStatus(`✅ Удалено ${result.deletedCount} блюд`, 'success');
+                
+            } catch (error) {
+                log(`❌ Ошибка очистки: ${error.message}`);
+                updateStatus(`❌ Ошибка: ${error.message}`, 'error');
+            }
+        }
+        
+        // Автоматически проверяем данные при загрузке страницы
+        window.onload = function() {
+            log('🌐 Страница загружена');
+            checkMenuData();
+        };
+    </script>
+</body>
+</html>

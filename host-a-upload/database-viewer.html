@@ -1,0 +1,351 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Просмотр базы данных - Railway</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            background: #f5f5f5;
+        }
+        .container {
+            background: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        h1 {
+            color: #2c3e50;
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        .section {
+            margin-bottom: 30px;
+            padding: 20px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            background: #fafafa;
+        }
+        .section h2 {
+            color: #34495e;
+            margin-top: 0;
+            border-bottom: 2px solid #3498db;
+            padding-bottom: 10px;
+        }
+        .stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+        .stat-card {
+            background: white;
+            padding: 15px;
+            border-radius: 8px;
+            text-align: center;
+            border: 2px solid #3498db;
+        }
+        .stat-number {
+            font-size: 24px;
+            font-weight: bold;
+            color: #2c3e50;
+        }
+        .stat-label {
+            color: #7f8c8d;
+            font-size: 14px;
+        }
+        .data-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 15px;
+        }
+        .data-table th,
+        .data-table td {
+            border: 1px solid #ddd;
+            padding: 8px;
+            text-align: left;
+        }
+        .data-table th {
+            background: #3498db;
+            color: white;
+        }
+        .data-table tr:nth-child(even) {
+            background: #f2f2f2;
+        }
+        .button {
+            background: #3498db;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            margin: 5px;
+        }
+        .button:hover {
+            background: #2980b9;
+        }
+        .success {
+            background: #27ae60;
+        }
+        .error {
+            background: #e74c3c;
+        }
+        .loading {
+            text-align: center;
+            color: #7f8c8d;
+            font-style: italic;
+        }
+        .json-viewer {
+            background: #2c3e50;
+            color: #ecf0f1;
+            padding: 15px;
+            border-radius: 5px;
+            font-family: monospace;
+            white-space: pre-wrap;
+            max-height: 400px;
+            overflow-y: auto;
+            margin-top: 10px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🗄️ Просмотр базы данных Railway</h1>
+        
+        <div class="section">
+            <h2>📊 Статистика системы</h2>
+            <div class="stats" id="stats">
+                <div class="loading">Загрузка статистики...</div>
+            </div>
+        </div>
+        
+        <div class="section">
+            <h2>👥 Пользователи</h2>
+            <button class="button" onclick="loadUsers()">🔄 Обновить список пользователей</button>
+            <div id="users-content">
+                <div class="loading">Нажмите кнопку для загрузки пользователей</div>
+            </div>
+        </div>
+        
+        <div class="section">
+            <h2>🍽️ Меню</h2>
+            <button class="button" onclick="loadMenu()">🔄 Обновить меню</button>
+            <div id="menu-content">
+                <div class="loading">Нажмите кнопку для загрузки меню</div>
+            </div>
+        </div>
+        
+        <div class="section">
+            <h2>🔧 Тестирование API</h2>
+            <button class="button" onclick="testUserVerification()">✅ Тест верификации пользователя</button>
+            <button class="button success" onclick="loadFullDatabase()">📊 Полная информация о БД</button>
+            <div id="test-content">
+                <div class="loading">Выберите действие для тестирования</div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const RAILWAY_URL = 'https://fermiy100githubio-production.up.railway.app';
+        
+        function log(message, elementId = 'test-content') {
+            const element = document.getElementById(elementId);
+            const timestamp = new Date().toLocaleTimeString();
+            element.innerHTML += `<div>[${timestamp}] ${message}</div>`;
+        }
+        
+        function clearLog(elementId = 'test-content') {
+            document.getElementById(elementId).innerHTML = '';
+        }
+        
+        async function loadFullDatabase() {
+            try {
+                clearLog();
+                log('📊 Загружаем полную информацию о базе данных...');
+                
+                const response = await fetch(`${RAILWAY_URL}/api/database`);
+                
+                if (!response.ok) {
+                    throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+                }
+                
+                const data = await response.json();
+                
+                log('✅ Данные загружены успешно!');
+                log(`📊 Версия сервера: ${data.server.version}`);
+                log(`⏱️ Время работы: ${Math.round(data.server.uptime)} секунд`);
+                log(`🍽️ Блюд в меню: ${data.menu.totalDishes}`);
+                log(`👥 Пользователей: ${data.users.totalUsers}`);
+                log(`✅ Верифицированных: ${data.users.verified}`);
+                log(`⏳ Ожидают верификации: ${data.users.pending}`);
+                
+                // Показываем JSON
+                const jsonViewer = document.createElement('div');
+                jsonViewer.className = 'json-viewer';
+                jsonViewer.textContent = JSON.stringify(data, null, 2);
+                document.getElementById('test-content').appendChild(jsonViewer);
+                
+            } catch (error) {
+                log(`❌ Ошибка: ${error.message}`, 'test-content');
+            }
+        }
+        
+        async function loadUsers() {
+            try {
+                clearLog('users-content');
+                log('👥 Загружаем пользователей...', 'users-content');
+                
+                const response = await fetch(`${RAILWAY_URL}/api/users`);
+                
+                if (!response.ok) {
+                    throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+                }
+                
+                const users = await response.json();
+                
+                log(`✅ Загружено ${users.length} пользователей`, 'users-content');
+                
+                // Создаем таблицу
+                let table = `
+                    <table class="data-table">
+                        <thead>
+                            <tr>
+                                <th>ID</th>
+                                <th>Имя</th>
+                                <th>Email</th>
+                                <th>Роль</th>
+                                <th>Статус</th>
+                                <th>Дата создания</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                `;
+                
+                users.forEach(user => {
+                    const status = user.verified ? 
+                        '<span style="color: green;">✓ Верифицирован</span>' : 
+                        '<span style="color: orange;">⏳ Ожидает</span>';
+                    
+                    table += `
+                        <tr>
+                            <td>${user.id}</td>
+                            <td>${user.name}</td>
+                            <td>${user.email}</td>
+                            <td>${user.role}</td>
+                            <td>${status}</td>
+                            <td>${new Date(user.created_at).toLocaleDateString()}</td>
+                        </tr>
+                    `;
+                });
+                
+                table += '</tbody></table>';
+                
+                document.getElementById('users-content').innerHTML = table;
+                
+            } catch (error) {
+                log(`❌ Ошибка: ${error.message}`, 'users-content');
+            }
+        }
+        
+        async function loadMenu() {
+            try {
+                clearLog('menu-content');
+                log('🍽️ Загружаем меню...', 'menu-content');
+                
+                const response = await fetch(`${RAILWAY_URL}/api/menu`);
+                
+                if (!response.ok) {
+                    throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+                }
+                
+                const menu = await response.json();
+                
+                log(`✅ Загружено ${menu.length} блюд`, 'menu-content');
+                
+                // Статистика по типам питания
+                const breakfast = menu.filter(d => d.meal_type === 'завтрак').length;
+                const lunch = menu.filter(d => d.meal_type === 'обед').length;
+                const snack = menu.filter(d => d.meal_type === 'полдник').length;
+                
+                log(`🍳 Завтрак: ${breakfast} блюд`, 'menu-content');
+                log(`🍽️ Обед: ${lunch} блюд`, 'menu-content');
+                log(`🍪 Полдник: ${snack} блюд`, 'menu-content');
+                
+                // Показываем первые 10 блюд
+                if (menu.length > 0) {
+                    let table = `
+                        <h3>Первые 10 блюд:</h3>
+                        <table class="data-table">
+                            <thead>
+                                <tr>
+                                    <th>ID</th>
+                                    <th>Название</th>
+                                    <th>Тип питания</th>
+                                    <th>День недели</th>
+                                    <th>Вес</th>
+                                    <th>Рецепт</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                    `;
+                    
+                    menu.slice(0, 10).forEach(dish => {
+                        table += `
+                            <tr>
+                                <td>${dish.id}</td>
+                                <td>${dish.name}</td>
+                                <td>${dish.meal_type}</td>
+                                <td>${dish.day_of_week}</td>
+                                <td>${dish.weight || 'N/A'}</td>
+                                <td>${dish.recipe_number || 'N/A'}</td>
+                            </tr>
+                        `;
+                    });
+                    
+                    table += '</tbody></table>';
+                    
+                    document.getElementById('menu-content').innerHTML += table;
+                }
+                
+            } catch (error) {
+                log(`❌ Ошибка: ${error.message}`, 'menu-content');
+            }
+        }
+        
+        async function testUserVerification() {
+            try {
+                clearLog();
+                log('✅ Тестируем верификацию пользователя...');
+                
+                // Верифицируем пользователя с ID 462
+                const response = await fetch(`${RAILWAY_URL}/api/users/462/verify`, {
+                    method: 'POST'
+                });
+                
+                if (!response.ok) {
+                    throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+                }
+                
+                const result = await response.json();
+                
+                log('✅ Верификация прошла успешно!');
+                log(`👤 Пользователь: ${result.user.name}`);
+                log(`📧 Email: ${result.user.email}`);
+                log(`✅ Статус: ${result.user.verified ? 'Верифицирован' : 'Не верифицирован'}`);
+                
+            } catch (error) {
+                log(`❌ Ошибка верификации: ${error.message}`);
+            }
+        }
+        
+        // Автоматически загружаем статистику при загрузке страницы
+        window.onload = function() {
+            loadFullDatabase();
+        };
+    </script>
+</body>
+</html>

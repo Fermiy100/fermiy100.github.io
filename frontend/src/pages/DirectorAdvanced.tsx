@@ -42,6 +42,19 @@ export default function DirectorAdvanced({ token: _token }: any) {
     return () => clearTimeout(timer);
   }, []);
 
+  // Обработка изменения размера экрана для мобильных устройств
+  useEffect(() => {
+    const handleResize = () => {
+      if (window.innerWidth <= 768) {
+        setMenuView('list'); // На мобильных показываем список
+      }
+    };
+
+    handleResize(); // Вызываем сразу
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
+
   async function loadData() {
     try {
       setLoading(true);
@@ -273,7 +286,10 @@ export default function DirectorAdvanced({ token: _token }: any) {
             border: '1px solid #dee2e6',
             borderRadius: '8px',
             cursor: 'pointer',
-            fontWeight: '600'
+            fontWeight: '600',
+            minHeight: '44px',
+            fontSize: '16px',
+            padding: '12px 20px'
           }}
         >
           📋 Меню
@@ -286,7 +302,10 @@ export default function DirectorAdvanced({ token: _token }: any) {
             border: '1px solid #dee2e6',
             borderRadius: '8px',
             cursor: 'pointer',
-            fontWeight: '600'
+            fontWeight: '600',
+            minHeight: '44px',
+            fontSize: '16px',
+            padding: '12px 20px'
           }}
         >
           👥 Пользователи
@@ -360,13 +379,15 @@ export default function DirectorAdvanced({ token: _token }: any) {
               <button
                 onClick={() => setShowAddForm(true)}
                 style={{
-                  padding: '10px 15px',
+                  padding: '12px 20px',
                   backgroundColor: '#10b981',
                   color: 'white',
                   border: 'none',
-                  borderRadius: '6px',
+                  borderRadius: '8px',
                   cursor: 'pointer',
-                  fontSize: '14px'
+                  fontSize: '16px',
+                  minHeight: '44px',
+                  fontWeight: '600'
                 }}
               >
                 Добавить блюдо
@@ -375,13 +396,15 @@ export default function DirectorAdvanced({ token: _token }: any) {
               <button
                 onClick={clearAllMenu}
                 style={{
-                  padding: '10px 15px',
+                  padding: '12px 20px',
                   backgroundColor: '#ef4444',
                   color: 'white',
                   border: 'none',
-                  borderRadius: '6px',
+                  borderRadius: '8px',
                   cursor: 'pointer',
-                  fontSize: '14px'
+                  fontSize: '16px',
+                  minHeight: '44px',
+                  fontWeight: '600'
                 }}
               >
                 Удалить все
@@ -393,13 +416,15 @@ export default function DirectorAdvanced({ token: _token }: any) {
                   loadMenuData(); // Принудительно загружаем меню
                 }}
                 style={{
-                  padding: '10px 15px',
+                  padding: '12px 20px',
                   backgroundColor: '#6b7280',
                   color: 'white',
                   border: 'none',
-                  borderRadius: '6px',
+                  borderRadius: '8px',
                   cursor: 'pointer',
-                  fontSize: '14px'
+                  fontSize: '16px',
+                  minHeight: '44px',
+                  fontWeight: '600'
                 }}
                     >
                       {menuView === 'grid' ? '📋 Список' : '🔲 Сетка'}

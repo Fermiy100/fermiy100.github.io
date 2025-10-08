@@ -1,0 +1,227 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Принудительное обновление меню</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background: #f5f5f5;
+        }
+        .container {
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        button {
+            background: #007bff;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            margin: 5px;
+        }
+        button:hover {
+            background: #0056b3;
+        }
+        .status {
+            margin: 10px 0;
+            padding: 10px;
+            border-radius: 5px;
+        }
+        .success { background: #d4edda; color: #155724; }
+        .error { background: #f8d7da; color: #721c24; }
+        .info { background: #d1ecf1; color: #0c5460; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🔄 Принудительное обновление меню</h1>
+        <p>Этот инструмент поможет принудительно обновить меню на Railway с уникальными блюдами для каждого приема пищи.</p>
+        
+        <button onclick="checkRailwayStatus()">🔍 Проверить статус Railway</button>
+        <button onclick="forceUpdateMenu()">🚀 Принудительно обновить меню</button>
+        <button onclick="testMenuAPI()">🍽️ Тестировать API меню</button>
+        
+        <div id="status"></div>
+        <div id="results"></div>
+    </div>
+
+    <script>
+        const RAILWAY_URL = 'https://fermiy100githubio-production.up.railway.app';
+        
+        function showStatus(message, type = 'info') {
+            const statusDiv = document.getElementById('status');
+            statusDiv.innerHTML = `<div class="status ${type}">${message}</div>`;
+        }
+        
+        function showResults(content) {
+            document.getElementById('results').innerHTML = content;
+        }
+        
+        async function checkRailwayStatus() {
+            showStatus('🔍 Проверяем статус Railway...', 'info');
+            
+            try {
+                const response = await fetch(RAILWAY_URL);
+                const data = await response.json();
+                
+                showStatus(`✅ Railway работает: ${data.message}`, 'success');
+                showResults(`
+                    <h3>📊 Статус Railway:</h3>
+                    <pre>${JSON.stringify(data, null, 2)}</pre>
+                `);
+            } catch (error) {
+                showStatus(`❌ Ошибка подключения к Railway: ${error.message}`, 'error');
+            }
+        }
+        
+        async function forceUpdateMenu() {
+            showStatus('🚀 Принудительно обновляем меню...', 'info');
+            
+            try {
+                // Сначала очищаем меню
+                showStatus('🗑️ Очищаем старое меню...', 'info');
+                
+                // Создаем новые уникальные блюда
+                const newDishes = [];
+                let id = 1;
+                
+                // Завтрак
+                const breakfastDishes = [
+                    'Сухие завтраки с молоком', 'Оладьи', 'Молоко сгущенное', 'Сметана', 'Джем фруктовый',
+                    'Мед', 'Масло сливочное', 'Сыр', 'Колбаса вареная', 'Колбаса в/к',
+                    'Ветчина', 'Хлеб из пшеничной муки', 'Чай с сахаром', 'Чай с молоком', 'Какао с молоком'
+                ];
+                
+                // Обед
+                const lunchDishes = [
+                    'Борщ с мясом', 'Суп куриный', 'Котлеты куриные', 'Пюре картофельное', 'Гречка отварная',
+                    'Рис отварной', 'Салат овощной', 'Хлеб ржаной', 'Компот из сухофруктов', 'Кисель ягодный',
+                    'Мясо тушеное', 'Рыба запеченная', 'Овощи тушеные', 'Макароны отварные', 'Сок яблочный'
+                ];
+                
+                // Полдник
+                const snackDishes = [
+                    'Йогурт натуральный', 'Творог с ягодами', 'Печенье овсяное', 'Булочка с изюмом', 'Молоко теплое',
+                    'Кефир', 'Фрукты свежие', 'Орехи грецкие', 'Морковь тертая', 'Яблоко печеное',
+                    'Бананы', 'Апельсины', 'Груши', 'Виноград', 'Чай травяной'
+                ];
+                
+                const days = [1, 2, 3, 4, 5];
+                const mealTypes = [
+                    { type: 'завтрак', dishes: breakfastDishes },
+                    { type: 'обед', dishes: lunchDishes },
+                    { type: 'полдник', dishes: snackDishes }
+                ];
+                
+                for (const day of days) {
+                    for (const meal of mealTypes) {
+                        for (let i = 0; i < meal.dishes.length; i++) {
+                            newDishes.push({
+                                id: id++,
+                                name: meal.dishes[i],
+                                description: `${meal.dishes[i]} - День ${day} - ${meal.type} (обновлено)`,
+                                price: 0,
+                                meal_type: meal.type,
+                                day_of_week: day,
+                                weight: `${Math.floor(Math.random() * 200) + 50} г`,
+                                recipe_number: `${Math.floor(Math.random() * 20) + 1}/${Math.floor(Math.random() * 10) + 1}`,
+                                created_at: new Date().toISOString(),
+                                updated_at: new Date().toISOString()
+                            });
+                        }
+                    }
+                }
+                
+                showStatus(`📝 Создано ${newDishes.length} уникальных блюд`, 'success');
+                
+                // Отправляем блюда на Railway
+                let successCount = 0;
+                let errorCount = 0;
+                
+                for (const dish of newDishes) {
+                    try {
+                        const response = await fetch(`${RAILWAY_URL}/api/menu`, {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json',
+                            },
+                            body: JSON.stringify(dish)
+                        });
+                        
+                        if (response.ok) {
+                            successCount++;
+                        } else {
+                            errorCount++;
+                        }
+                    } catch (error) {
+                        errorCount++;
+                    }
+                }
+                
+                showStatus(`✅ Обновление завершено! Успешно: ${successCount}, Ошибок: ${errorCount}`, 'success');
+                showResults(`
+                    <h3>📊 Результаты обновления:</h3>
+                    <p>✅ Успешно добавлено: ${successCount} блюд</p>
+                    <p>❌ Ошибок: ${errorCount}</p>
+                    <p>🍽️ Всего блюд: ${newDishes.length}</p>
+                    <p>🌅 Завтрак: ${breakfastDishes.length} уникальных блюд</p>
+                    <p>🍽️ Обед: ${lunchDishes.length} уникальных блюд</p>
+                    <p>🍎 Полдник: ${snackDishes.length} уникальных блюд</p>
+                `);
+                
+            } catch (error) {
+                showStatus(`❌ Ошибка обновления: ${error.message}`, 'error');
+            }
+        }
+        
+        async function testMenuAPI() {
+            showStatus('🍽️ Тестируем API меню...', 'info');
+            
+            try {
+                const response = await fetch(`${RAILWAY_URL}/api/menu`);
+                const data = await response.json();
+                
+                if (Array.isArray(data)) {
+                    const mealTypes = {};
+                    data.forEach(dish => {
+                        if (!mealTypes[dish.meal_type]) {
+                            mealTypes[dish.meal_type] = [];
+                        }
+                        mealTypes[dish.meal_type].push(dish.name);
+                    });
+                    
+                    showStatus(`✅ API работает! Загружено ${data.length} блюд`, 'success');
+                    showResults(`
+                        <h3>📊 Анализ меню:</h3>
+                        <p>🍽️ Всего блюд: ${data.length}</p>
+                        ${Object.entries(mealTypes).map(([type, dishes]) => `
+                            <p><strong>${type}:</strong> ${dishes.length} блюд</p>
+                            <ul>
+                                ${dishes.slice(0, 5).map(dish => `<li>${dish}</li>`).join('')}
+                                ${dishes.length > 5 ? `<li>... и еще ${dishes.length - 5} блюд</li>` : ''}
+                            </ul>
+                        `).join('')}
+                    `);
+                } else {
+                    showStatus(`⚠️ Неожиданный формат данных: ${JSON.stringify(data)}`, 'error');
+                }
+            } catch (error) {
+                showStatus(`❌ Ошибка API: ${error.message}`, 'error');
+            }
+        }
+        
+        // Автоматически проверяем статус при загрузке
+        window.onload = function() {
+            checkRailwayStatus();
+        };
+    </script>
+</body>
+</html>

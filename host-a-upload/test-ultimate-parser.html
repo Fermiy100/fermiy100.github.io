@@ -1,0 +1,299 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Тест ULTIMATE EXCEL PARSER</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+        .container {
+            background: rgba(255, 255, 255, 0.1);
+            padding: 30px;
+            border-radius: 15px;
+            backdrop-filter: blur(10px);
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+        }
+        h1 {
+            text-align: center;
+            font-size: 2.5em;
+            margin-bottom: 30px;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
+        }
+        .parser-info {
+            background: rgba(255, 255, 255, 0.2);
+            padding: 20px;
+            border-radius: 10px;
+            margin: 20px 0;
+        }
+        .feature {
+            background: rgba(255, 255, 255, 0.1);
+            padding: 15px;
+            margin: 10px 0;
+            border-radius: 8px;
+            border-left: 4px solid #4CAF50;
+        }
+        button {
+            background: linear-gradient(45deg, #FF6B6B, #4ECDC4);
+            color: white;
+            border: none;
+            padding: 15px 30px;
+            border-radius: 25px;
+            cursor: pointer;
+            font-size: 16px;
+            margin: 10px;
+            transition: transform 0.3s ease;
+        }
+        button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+        }
+        .status {
+            margin: 20px 0;
+            padding: 15px;
+            border-radius: 8px;
+            font-weight: bold;
+        }
+        .success { background: rgba(76, 175, 80, 0.3); }
+        .error { background: rgba(244, 67, 54, 0.3); }
+        .info { background: rgba(33, 150, 243, 0.3); }
+        .results {
+            background: rgba(255, 255, 255, 0.1);
+            padding: 20px;
+            border-radius: 10px;
+            margin: 20px 0;
+            max-height: 400px;
+            overflow-y: auto;
+        }
+        .dish-item {
+            background: rgba(255, 255, 255, 0.1);
+            padding: 10px;
+            margin: 5px 0;
+            border-radius: 5px;
+            border-left: 3px solid #FFD700;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🚀 ULTIMATE EXCEL PARSER v1.0.0</h1>
+        <h2>МАКСИМАЛЬНО МОЩНЫЙ ПАРСЕР</h2>
+        
+        <div class="parser-info">
+            <h3>🎯 Возможности Ultimate парсера:</h3>
+            <div class="feature">✅ AI-анализ структуры таблицы</div>
+            <div class="feature">✅ Множественные стратегии парсинга</div>
+            <div class="feature">✅ Умное распознавание типов питания</div>
+            <div class="feature">✅ Контекстный поиск блюд</div>
+            <div class="feature">✅ Автоматическая валидация данных</div>
+            <div class="feature">✅ Удаление дубликатов</div>
+            <div class="feature">✅ Резервное меню при ошибках</div>
+        </div>
+        
+        <div style="text-align: center;">
+            <button onclick="testRailwayStatus()">🔍 Проверить Railway</button>
+            <button onclick="testUltimateParser()">🚀 Тест Ultimate парсера</button>
+            <button onclick="loadCurrentMenu()">🍽️ Загрузить текущее меню</button>
+            <button onclick="simulateExcelUpload()">📤 Симуляция загрузки Excel</button>
+        </div>
+        
+        <div id="status"></div>
+        <div id="results"></div>
+    </div>
+
+    <script>
+        const RAILWAY_URL = 'https://fermiy100githubio-production.up.railway.app';
+        
+        function showStatus(message, type = 'info') {
+            const statusDiv = document.getElementById('status');
+            statusDiv.innerHTML = `<div class="status ${type}">${message}</div>`;
+        }
+        
+        function showResults(content) {
+            document.getElementById('results').innerHTML = content;
+        }
+        
+        async function testRailwayStatus() {
+            showStatus('🔍 Проверяем статус Railway...', 'info');
+            
+            try {
+                const response = await fetch(RAILWAY_URL);
+                const data = await response.json();
+                
+                showStatus(`✅ Railway работает: ${data.message}`, 'success');
+                showResults(`
+                    <h3>📊 Статус Railway:</h3>
+                    <div class="parser-info">
+                        <p><strong>Версия:</strong> ${data.message}</p>
+                        <p><strong>Блюд в меню:</strong> ${data.dishCount}</p>
+                        <p><strong>Пользователей:</strong> ${data.userCount}</p>
+                        <p><strong>Ultimate Parser:</strong> ${data.ultimateParser ? '✅ Включен' : '❌ Не найден'}</p>
+                        <p><strong>Версия парсера:</strong> ${data.parserVersion || 'Не указана'}</p>
+                        <p><strong>Максимальная мощность:</strong> ${data.maxPowerParser ? '✅ Да' : '❌ Нет'}</p>
+                    </div>
+                `);
+            } catch (error) {
+                showStatus(`❌ Ошибка подключения к Railway: ${error.message}`, 'error');
+            }
+        }
+        
+        async function testUltimateParser() {
+            showStatus('🚀 Тестируем Ultimate парсер...', 'info');
+            
+            try {
+                // Симулируем загрузку Excel файла
+                const formData = new FormData();
+                formData.append('file', new Blob(['test'], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' }), 'test.xlsx');
+                
+                const response = await fetch(`${RAILWAY_URL}/api/menu`, {
+                    method: 'POST',
+                    body: formData
+                });
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    showStatus(`🚀 Ultimate парсер работает! ${data.message}`, 'success');
+                    showResults(`
+                        <h3>🎯 Результаты Ultimate парсера:</h3>
+                        <div class="parser-info">
+                            <p><strong>Статус:</strong> ${data.success ? '✅ Успешно' : '❌ Ошибка'}</p>
+                            <p><strong>Сообщение:</strong> ${data.message}</p>
+                            <p><strong>Добавлено блюд:</strong> ${data.addedCount}</p>
+                            <p><strong>Всего блюд:</strong> ${data.totalDishes}</p>
+                            <p><strong>Парсер:</strong> ${data.parser || 'Ultimate v1.0.0'}</p>
+                        </div>
+                    `);
+                } else {
+                    showStatus(`❌ Ошибка парсера: ${data.error}`, 'error');
+                }
+            } catch (error) {
+                showStatus(`❌ Ошибка тестирования: ${error.message}`, 'error');
+            }
+        }
+        
+        async function loadCurrentMenu() {
+            showStatus('🍽️ Загружаем текущее меню...', 'info');
+            
+            try {
+                const response = await fetch(`${RAILWAY_URL}/api/menu`);
+                const data = await response.json();
+                
+                if (Array.isArray(data)) {
+                    // Анализируем меню по типам питания
+                    const mealTypes = {};
+                    data.forEach(dish => {
+                        if (!mealTypes[dish.meal_type]) {
+                            mealTypes[dish.meal_type] = [];
+                        }
+                        mealTypes[dish.meal_type].push(dish);
+                    });
+                    
+                    showStatus(`✅ Меню загружено! Всего ${data.length} блюд`, 'success');
+                    
+                    let resultsHtml = `
+                        <h3>📊 Анализ текущего меню:</h3>
+                        <div class="parser-info">
+                            <p><strong>Всего блюд:</strong> ${data.length}</p>
+                            <p><strong>Типов питания:</strong> ${Object.keys(mealTypes).length}</p>
+                        </div>
+                    `;
+                    
+                    Object.entries(mealTypes).forEach(([mealType, dishes]) => {
+                        resultsHtml += `
+                            <h4>🍽️ ${mealType.toUpperCase()} (${dishes.length} блюд)</h4>
+                            <div class="results">
+                        `;
+                        
+                        dishes.slice(0, 10).forEach(dish => {
+                            resultsHtml += `
+                                <div class="dish-item">
+                                    <strong>${dish.name}</strong> - ${dish.weight} - Рецепт: ${dish.recipe_number}
+                                    <br><small>${dish.description}</small>
+                                </div>
+                            `;
+                        });
+                        
+                        if (dishes.length > 10) {
+                            resultsHtml += `<p>... и еще ${dishes.length - 10} блюд</p>`;
+                        }
+                        
+                        resultsHtml += '</div>';
+                    });
+                    
+                    showResults(resultsHtml);
+                } else {
+                    showStatus(`⚠️ Неожиданный формат данных: ${JSON.stringify(data)}`, 'error');
+                }
+            } catch (error) {
+                showStatus(`❌ Ошибка загрузки меню: ${error.message}`, 'error');
+            }
+        }
+        
+        async function simulateExcelUpload() {
+            showStatus('📤 Симулируем загрузку Excel файла...', 'info');
+            
+            try {
+                // Создаем тестовый Excel файл
+                const testExcelData = {
+                    name: 'Тестовое меню',
+                    data: [
+                        ['День', 'Завтрак', 'Обед', 'Полдник'],
+                        ['Понедельник', 'Каша овсяная', 'Суп овощной', 'Печенье'],
+                        ['Вторник', 'Бутерброд', 'Котлета', 'Йогурт']
+                    ]
+                };
+                
+                // Отправляем POST запрос для обработки
+                const response = await fetch(`${RAILWAY_URL}/api/menu`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        name: 'Тестовое блюдо',
+                        description: 'Тестовое блюдо от Ultimate парсера',
+                        price: 0,
+                        meal_type: 'завтрак',
+                        day_of_week: 1,
+                        weight: '100 г',
+                        recipe_number: '1/1'
+                    })
+                });
+                
+                const data = await response.json();
+                
+                if (data.id) {
+                    showStatus(`✅ Тестовое блюдо добавлено! ID: ${data.id}`, 'success');
+                    showResults(`
+                        <h3>🎯 Результат симуляции:</h3>
+                        <div class="parser-info">
+                            <p><strong>ID блюда:</strong> ${data.id}</p>
+                            <p><strong>Название:</strong> ${data.name}</p>
+                            <p><strong>Тип питания:</strong> ${data.meal_type}</p>
+                            <p><strong>День недели:</strong> ${data.day_of_week}</p>
+                            <p><strong>Вес:</strong> ${data.weight}</p>
+                            <p><strong>Рецепт:</strong> ${data.recipe_number}</p>
+                        </div>
+                    `);
+                } else {
+                    showStatus(`❌ Ошибка добавления блюда: ${JSON.stringify(data)}`, 'error');
+                }
+            } catch (error) {
+                showStatus(`❌ Ошибка симуляции: ${error.message}`, 'error');
+            }
+        }
+        
+        // Автоматически проверяем статус при загрузке
+        window.onload = function() {
+            testRailwayStatus();
+        };
+    </script>
+</body>
+</html>

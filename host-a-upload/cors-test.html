@@ -1,0 +1,229 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CORS Test - Railway Backend</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 1000px;
+            margin: 0 auto;
+            padding: 20px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+        .container {
+            background: rgba(255, 255, 255, 0.1);
+            padding: 30px;
+            border-radius: 15px;
+            backdrop-filter: blur(10px);
+        }
+        button {
+            background: linear-gradient(45deg, #FF6B6B, #4ECDC4);
+            color: white;
+            border: none;
+            padding: 15px 30px;
+            border-radius: 25px;
+            cursor: pointer;
+            font-size: 16px;
+            margin: 10px;
+        }
+        .status {
+            margin: 20px 0;
+            padding: 15px;
+            border-radius: 8px;
+            font-weight: bold;
+        }
+        .success { background: rgba(76, 175, 80, 0.3); }
+        .error { background: rgba(244, 67, 54, 0.3); }
+        .info { background: rgba(33, 150, 243, 0.3); }
+        .results {
+            background: rgba(255, 255, 255, 0.1);
+            padding: 20px;
+            border-radius: 10px;
+            margin: 20px 0;
+            max-height: 400px;
+            overflow-y: auto;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🔧 CORS Test - Railway Backend</h1>
+        <p>Тестируем исправления CORS для связи между fermiy.ru и Railway backend</p>
+        
+        <div style="text-align: center;">
+            <button onclick="testRailwayStatus()">🔍 Тест Railway Status</button>
+            <button onclick="testAuthEndpoint()">👤 Тест /api/auth/me.php</button>
+            <button onclick="testMenuEndpoint()">🍽️ Тест /api/menu</button>
+            <button onclick="testOptionsRequest()">🔄 Тест OPTIONS (Preflight)</button>
+        </div>
+        
+        <div id="status"></div>
+        <div id="results"></div>
+    </div>
+
+    <script>
+        const RAILWAY_URL = 'https://fermiy100githubio-production.up.railway.app';
+        
+        function showStatus(message, type = 'info') {
+            const statusDiv = document.getElementById('status');
+            statusDiv.innerHTML = `<div class="status ${type}">${message}</div>`;
+        }
+        
+        function showResults(content) {
+            document.getElementById('results').innerHTML = content;
+        }
+        
+        async function testRailwayStatus() {
+            showStatus('🔍 Тестируем Railway Status...', 'info');
+            
+            try {
+                const response = await fetch(RAILWAY_URL, {
+                    method: 'GET',
+                    headers: {
+                        'Accept': 'application/json',
+                        'Content-Type': 'application/json'
+                    }
+                });
+                
+                if (response.ok) {
+                    const data = await response.json();
+                    showStatus(`✅ Railway Status OK! Версия: ${data.message}`, 'success');
+                    showResults(`
+                        <h3>📊 Railway Status:</h3>
+                        <div class="results">
+                            <p><strong>Статус:</strong> ${data.status}</p>
+                            <p><strong>Сообщение:</strong> ${data.message}</p>
+                            <p><strong>Блюд в меню:</strong> ${data.dishCount}</p>
+                            <p><strong>Пользователей:</strong> ${data.userCount}</p>
+                            <p><strong>CORS исправлен:</strong> ${data.corsFixed ? '✅ Да' : '❌ Нет'}</p>
+                            <p><strong>Preflight обработка:</strong> ${data.preflightHandling ? '✅ Да' : '❌ Нет'}</p>
+                        </div>
+                    `);
+                } else {
+                    showStatus(`❌ Railway Status Error: ${response.status} ${response.statusText}`, 'error');
+                }
+            } catch (error) {
+                showStatus(`❌ CORS Error: ${error.message}`, 'error');
+                showResults(`
+                    <h3>❌ CORS Error Details:</h3>
+                    <div class="results">
+                        <p><strong>Ошибка:</strong> ${error.message}</p>
+                        <p><strong>Тип:</strong> ${error.name}</p>
+                        <p><strong>Стек:</strong> ${error.stack}</p>
+                    </div>
+                `);
+            }
+        }
+        
+        async function testAuthEndpoint() {
+            showStatus('👤 Тестируем /api/auth/me.php...', 'info');
+            
+            try {
+                const response = await fetch(`${RAILWAY_URL}/api/auth/me.php`, {
+                    method: 'GET',
+                    headers: {
+                        'Accept': 'application/json',
+                        'Content-Type': 'application/json'
+                    }
+                });
+                
+                if (response.ok) {
+                    const data = await response.json();
+                    showStatus(`✅ Auth Endpoint OK! Пользователь: ${data.user.name}`, 'success');
+                    showResults(`
+                        <h3>👤 Auth Response:</h3>
+                        <div class="results">
+                            <p><strong>Успех:</strong> ${data.success}</p>
+                            <p><strong>ID:</strong> ${data.user.id}</p>
+                            <p><strong>Email:</strong> ${data.user.email}</p>
+                            <p><strong>Имя:</strong> ${data.user.name}</p>
+                            <p><strong>Роль:</strong> ${data.user.role}</p>
+                            <p><strong>Школа ID:</strong> ${data.user.school_id}</p>
+                            <p><strong>Верифицирован:</strong> ${data.user.verified ? '✅ Да' : '❌ Нет'}</p>
+                        </div>
+                    `);
+                } else {
+                    showStatus(`❌ Auth Endpoint Error: ${response.status} ${response.statusText}`, 'error');
+                }
+            } catch (error) {
+                showStatus(`❌ Auth CORS Error: ${error.message}`, 'error');
+            }
+        }
+        
+        async function testMenuEndpoint() {
+            showStatus('🍽️ Тестируем /api/menu...', 'info');
+            
+            try {
+                const response = await fetch(`${RAILWAY_URL}/api/menu`, {
+                    method: 'GET',
+                    headers: {
+                        'Accept': 'application/json',
+                        'Content-Type': 'application/json'
+                    }
+                });
+                
+                if (response.ok) {
+                    const data = await response.json();
+                    showStatus(`✅ Menu Endpoint OK! Загружено ${data.length} блюд`, 'success');
+                    showResults(`
+                        <h3>🍽️ Menu Response:</h3>
+                        <div class="results">
+                            <p><strong>Всего блюд:</strong> ${data.length}</p>
+                            <p><strong>Первое блюдо:</strong> ${data[0]?.name || 'Нет данных'}</p>
+                            <p><strong>Тип питания:</strong> ${data[0]?.meal_type || 'Нет данных'}</p>
+                        </div>
+                    `);
+                } else {
+                    showStatus(`❌ Menu Endpoint Error: ${response.status} ${response.statusText}`, 'error');
+                }
+            } catch (error) {
+                showStatus(`❌ Menu CORS Error: ${error.message}`, 'error');
+            }
+        }
+        
+        async function testOptionsRequest() {
+            showStatus('🔄 Тестируем OPTIONS preflight запрос...', 'info');
+            
+            try {
+                const response = await fetch(`${RAILWAY_URL}/api/auth/me.php`, {
+                    method: 'OPTIONS',
+                    headers: {
+                        'Accept': 'application/json',
+                        'Content-Type': 'application/json',
+                        'Access-Control-Request-Method': 'GET',
+                        'Access-Control-Request-Headers': 'Content-Type'
+                    }
+                });
+                
+                if (response.ok) {
+                    const data = await response.json();
+                    showStatus(`✅ OPTIONS Request OK! ${data.message}`, 'success');
+                    showResults(`
+                        <h3>🔄 OPTIONS Response:</h3>
+                        <div class="results">
+                            <p><strong>Статус:</strong> ${data.status}</p>
+                            <p><strong>Сообщение:</strong> ${data.message}</p>
+                            <p><strong>Статус код:</strong> ${response.status}</p>
+                            <p><strong>Access-Control-Allow-Origin:</strong> ${response.headers.get('Access-Control-Allow-Origin')}</p>
+                            <p><strong>Access-Control-Allow-Methods:</strong> ${response.headers.get('Access-Control-Allow-Methods')}</p>
+                            <p><strong>Access-Control-Allow-Headers:</strong> ${response.headers.get('Access-Control-Allow-Headers')}</p>
+                        </div>
+                    `);
+                } else {
+                    showStatus(`❌ OPTIONS Request Error: ${response.status} ${response.statusText}`, 'error');
+                }
+            } catch (error) {
+                showStatus(`❌ OPTIONS CORS Error: ${error.message}`, 'error');
+            }
+        }
+        
+        // Автоматически тестируем при загрузке
+        window.onload = function() {
+            testRailwayStatus();
+        };
+    </script>
+</body>
+</html>

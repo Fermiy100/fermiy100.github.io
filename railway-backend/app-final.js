@@ -108,18 +108,15 @@ function createAllDishesFromExcel() {
     return dishes;
 }
 
-// Инициализируем меню при запуске - ОКОНЧАТЕЛЬНАЯ ВЕРСИЯ
-console.log('🚀 ЗАПУСК ОКОНЧАТЕЛЬНОГО ПАРСЕРА - ВСЕГДА ЗАГРУЖАЕМ ВСЕ БЛЮДА!');
-let menuData = createAllDishesFromExcel();
-console.log(`🍽️ ЗАГРУЖЕНО ${menuData.length} БЛЮД ИЗ ВАШЕГО EXCEL ФАЙЛА!`);
+// Инициализируем пустое меню при запуске - НЕ ЗАГРУЖАЕМ АВТОМАТИЧЕСКИ
+console.log('🚀 ЗАПУСК ПАРСЕРА - ПУСТОЕ МЕНЮ, ЗАГРУЖАЕМ ТОЛЬКО ПО ЗАПРОСУ!');
+let menuData = [];
+console.log(`🍽️ МЕНЮ ПУСТОЕ - ${menuData.length} БЛЮД!`);
 
-// Функция для принудительной загрузки данных
-function forceLoadData() {
-    if (menuData.length === 0) {
-        console.log('🔄 ПРИНУДИТЕЛЬНО ЗАГРУЖАЕМ ДАННЫЕ!');
-        menuData = createAllDishesFromExcel();
-        console.log(`🍽️ ЗАГРУЖЕНО ${menuData.length} БЛЮД ИЗ ВАШЕГО EXCEL ФАЙЛА!`);
-    }
+// Функция для загрузки данных только при необходимости
+function loadDataIfNeeded() {
+    // Не загружаем автоматически - только по запросу пользователя
+    console.log('📋 МЕНЮ ОСТАЕТСЯ ПУСТЫМ ДО ЗАГРУЗКИ ФАЙЛА!');
 }
 
 const server = http.createServer((req, res) => {
@@ -139,8 +136,8 @@ const server = http.createServer((req, res) => {
 
     // Главная страница
     if (url.pathname === '/' && req.method === 'GET') {
-        // Принудительно загружаем данные
-        forceLoadData();
+        // Не загружаем данные автоматически
+        loadDataIfNeeded();
         
         res.writeHead(200, {
             'Content-Type': 'application/json; charset=utf-8',
@@ -148,7 +145,7 @@ const server = http.createServer((req, res) => {
         });
         res.end(JSON.stringify({
             status: 'OK',
-            message: 'Railway Server with FULL MENU v15.1.0 - FORCE UPDATE!',
+            message: 'Railway Server with EMPTY MENU v16.0.0 - NO AUTO LOAD!',
             dishCount: menuData.length,
             encoding: 'UTF-8',
             mobileReady: true,
@@ -162,8 +159,8 @@ const server = http.createServer((req, res) => {
     } 
     // Получить меню
     else if (url.pathname === '/api/menu' && req.method === 'GET') {
-        // Принудительно загружаем данные
-        forceLoadData();
+        // Не загружаем данные автоматически
+        loadDataIfNeeded();
         
         res.writeHead(200, { 
             'Content-Type': 'application/json; charset=utf-8',

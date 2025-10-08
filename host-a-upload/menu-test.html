@@ -1,0 +1,304 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Тест загрузки меню</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            background: #f5f5f5;
+        }
+        .container {
+            background: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        h1 {
+            color: #2c3e50;
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        .controls {
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            display: flex;
+            gap: 15px;
+            flex-wrap: wrap;
+            align-items: center;
+        }
+        button {
+            background: #3498db;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 14px;
+        }
+        button:hover {
+            background: #2980b9;
+        }
+        .success {
+            background: #27ae60;
+        }
+        .error {
+            background: #e74c3c;
+        }
+        .log {
+            background: #ecf0f1;
+            padding: 15px;
+            border-radius: 5px;
+            margin: 10px 0;
+            font-family: monospace;
+            white-space: pre-wrap;
+            max-height: 200px;
+            overflow-y: auto;
+        }
+        .menu-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 15px;
+            margin-top: 20px;
+        }
+        .dish-card {
+            background: white;
+            border: 1px solid #e9ecef;
+            border-radius: 8px;
+            padding: 15px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .dish-name {
+            font-weight: bold;
+            color: #2c3e50;
+            margin-bottom: 8px;
+        }
+        .dish-details {
+            color: #6c757d;
+            font-size: 14px;
+            margin-bottom: 5px;
+        }
+        .meal-type {
+            display: inline-block;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 12px;
+            font-weight: bold;
+            margin-top: 8px;
+        }
+        .breakfast { background: #fff3cd; color: #856404; }
+        .lunch { background: #d1ecf1; color: #0c5460; }
+        .snack { background: #d4edda; color: #155724; }
+        .stats {
+            background: #e3f2fd;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            text-align: center;
+        }
+        .stats h3 {
+            margin: 0 0 10px 0;
+            color: #1976d2;
+        }
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 15px;
+        }
+        .stat-item {
+            background: white;
+            padding: 10px;
+            border-radius: 5px;
+            text-align: center;
+        }
+        .stat-number {
+            font-size: 24px;
+            font-weight: bold;
+            color: #1976d2;
+        }
+        .stat-label {
+            font-size: 12px;
+            color: #666;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🍽️ Тест загрузки меню</h1>
+        
+        <div class="controls">
+            <button onclick="loadMenu()" class="success">
+                📋 Загрузить меню
+            </button>
+            
+            <button onclick="testSorting()" class="success">
+                🔄 Тест сортировки
+            </button>
+            
+            <button onclick="clearLog()">
+                🗑️ Очистить лог
+            </button>
+        </div>
+        
+        <div id="stats" class="stats" style="display: none;">
+            <h3>📊 Статистика меню</h3>
+            <div class="stats-grid" id="statsGrid"></div>
+        </div>
+        
+        <div id="log" class="log"></div>
+        
+        <div id="menuContainer" class="menu-grid"></div>
+    </div>
+
+    <script>
+        let menuData = [];
+        
+        function log(message) {
+            const logDiv = document.getElementById('log');
+            const timestamp = new Date().toLocaleTimeString();
+            logDiv.textContent += `[${timestamp}] ${message}\n`;
+            logDiv.scrollTop = logDiv.scrollHeight;
+        }
+        
+        function clearLog() {
+            document.getElementById('log').textContent = '';
+        }
+        
+        async function loadMenu() {
+            try {
+                log('📋 Загружаем меню...');
+                
+                const response = await fetch('https://fermiy.ru/api/menu.php');
+                
+                if (!response.ok) {
+                    throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+                }
+                
+                menuData = await response.json();
+                
+                log(`✅ Загружено ${menuData.length} блюд`);
+                
+                // Показываем статистику
+                showStats();
+                
+                // Отображаем меню
+                displayMenu(menuData);
+                
+            } catch (error) {
+                log(`❌ Ошибка загрузки: ${error.message}`);
+            }
+        }
+        
+        function showStats() {
+            const stats = {
+                total: menuData.length,
+                breakfast: menuData.filter(d => d.meal_type === 'завтрак').length,
+                lunch: menuData.filter(d => d.meal_type === 'обед').length,
+                snack: menuData.filter(d => d.meal_type === 'полдник').length,
+                days: new Set(menuData.map(d => d.day_of_week)).size
+            };
+            
+            const statsDiv = document.getElementById('stats');
+            const statsGrid = document.getElementById('statsGrid');
+            
+            statsGrid.innerHTML = `
+                <div class="stat-item">
+                    <div class="stat-number">${stats.total}</div>
+                    <div class="stat-label">Всего блюд</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-number">${stats.breakfast}</div>
+                    <div class="stat-label">Завтрак</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-number">${stats.lunch}</div>
+                    <div class="stat-label">Обед</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-number">${stats.snack}</div>
+                    <div class="stat-label">Полдник</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-number">${stats.days}</div>
+                    <div class="stat-label">Дней недели</div>
+                </div>
+            `;
+            
+            statsDiv.style.display = 'block';
+        }
+        
+        function testSorting() {
+            if (menuData.length === 0) {
+                log('⚠️ Меню не загружено');
+                return;
+            }
+            
+            log('🔄 Тестируем сортировку...');
+            
+            // Тестируем сортировку по названию
+            const sortedByName = [...menuData].sort((a, b) => a.name.localeCompare(b.name));
+            log(`🔤 Сортировка по названию: ${sortedByName.slice(0, 3).map(d => d.name).join(', ')}...`);
+            
+            // Тестируем сортировку по весу
+            const sortedByWeight = [...menuData].sort((a, b) => {
+                const aWeight = parseFloat(a.weight?.replace(/[^\d.]/g, '') || '0');
+                const bWeight = parseFloat(b.weight?.replace(/[^\d.]/g, '') || '0');
+                return aWeight - bWeight;
+            });
+            log(`⚖️ Сортировка по весу: ${sortedByWeight.slice(0, 3).map(d => `${d.name} (${d.weight})`).join(', ')}...`);
+            
+            // Тестируем сортировку по рецепту
+            const sortedByRecipe = [...menuData].sort((a, b) => {
+                const aRecipe = parseFloat(a.recipe_number?.split('/')[0] || '0');
+                const bRecipe = parseFloat(b.recipe_number?.split('/')[0] || '0');
+                return aRecipe - bRecipe;
+            });
+            log(`📝 Сортировка по рецепту: ${sortedByRecipe.slice(0, 3).map(d => `${d.name} (${d.recipe_number})`).join(', ')}...`);
+            
+            log('✅ Все тесты сортировки пройдены успешно!');
+        }
+        
+        function displayMenu(dishes) {
+            const container = document.getElementById('menuContainer');
+            
+            if (!dishes || dishes.length === 0) {
+                container.innerHTML = '<p>Меню пусто</p>';
+                return;
+            }
+            
+            container.innerHTML = dishes.slice(0, 20).map(dish => `
+                <div class="dish-card">
+                    <div class="dish-name">${dish.name}</div>
+                    <div class="dish-details">Вес: ${dish.weight || 'Не указан'}</div>
+                    <div class="dish-details">Рецепт: ${dish.recipe_number || 'Не указан'}</div>
+                    <div class="dish-details">День: ${getDayName(dish.day_of_week)}</div>
+                    <div class="meal-type ${dish.meal_type}">${dish.meal_type}</div>
+                </div>
+            `).join('');
+            
+            if (dishes.length > 20) {
+                container.innerHTML += `<div style="grid-column: 1 / -1; text-align: center; padding: 20px; color: #666;">
+                    ... и еще ${dishes.length - 20} блюд
+                </div>`;
+            }
+        }
+        
+        function getDayName(dayNumber) {
+            const days = ['', 'Понедельник', 'Вторник', 'Среда', 'Четверг', 'Пятница'];
+            return days[parseInt(dayNumber)] || `День ${dayNumber}`;
+        }
+        
+        // Автоматически загружаем меню при загрузке страницы
+        window.onload = function() {
+            log('🌐 Страница загружена');
+            loadMenu();
+        };
+    </script>
+</body>
+</html>

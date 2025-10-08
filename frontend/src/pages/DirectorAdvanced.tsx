@@ -31,6 +31,17 @@ export default function DirectorAdvanced({ token: _token }: any) {
     }
   }, [menuItems.length]);
 
+  // Принудительно загружаем меню при загрузке компонента
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      if (menuItems.length === 0) {
+        loadMenuData();
+      }
+    }, 1000);
+    
+    return () => clearTimeout(timer);
+  }, []);
+
   async function loadData() {
     try {
       setLoading(true);
@@ -186,7 +197,7 @@ export default function DirectorAdvanced({ token: _token }: any) {
     const newSelected = new Set(bulkSelected);
     if (newSelected.has(itemId)) {
       newSelected.delete(itemId);
-    } else {
+      } else {
       newSelected.add(itemId);
     }
     setBulkSelected(newSelected);
@@ -290,9 +301,9 @@ export default function DirectorAdvanced({ token: _token }: any) {
             
             <form onSubmit={handleFileUpload}>
               <div style={{ display: 'flex', gap: '10px', alignItems: 'center', marginBottom: '15px' }}>
-                <input
-                  type="file"
-                  accept=".xlsx,.xls"
+                  <input 
+                    type="file" 
+                    accept=".xlsx,.xls"
                   onChange={(e) => setFile(e.target.files?.[0] || null)}
                   style={{
                     flex: 1,
@@ -301,8 +312,8 @@ export default function DirectorAdvanced({ token: _token }: any) {
                     borderRadius: '6px'
                   }}
                 />
-                <button
-                  type="submit"
+                <button 
+                  type="submit" 
                   disabled={loading || !file}
                   style={{
                     padding: '8px 16px',
@@ -316,7 +327,7 @@ export default function DirectorAdvanced({ token: _token }: any) {
                   {loading ? 'Загружаем...' : 'Загрузить'}
                 </button>
               </div>
-              
+
               {uploadProgress > 0 && (
                 <div style={{ marginBottom: '10px' }}>
                   <div style={{
@@ -376,7 +387,7 @@ export default function DirectorAdvanced({ token: _token }: any) {
                 Удалить все
               </button>
               
-              <button
+                    <button
                 onClick={() => {
                   setMenuView(menuView === 'grid' ? 'list' : 'grid');
                   loadMenuData(); // Принудительно загружаем меню
@@ -390,9 +401,9 @@ export default function DirectorAdvanced({ token: _token }: any) {
                   cursor: 'pointer',
                   fontSize: '14px'
                 }}
-              >
-                {menuView === 'grid' ? '📋 Список' : '🔲 Сетка'}
-              </button>
+                    >
+                      {menuView === 'grid' ? '📋 Список' : '🔲 Сетка'}
+                    </button>
             </div>
 
             {/* Массовые операции */}
@@ -424,7 +435,7 @@ export default function DirectorAdvanced({ token: _token }: any) {
                     🗑️ Удалить выбранные
                   </button>
                   
-                  <button
+                    <button
                     onClick={clearSelection}
                     style={{
                       padding: '8px 12px',
@@ -437,8 +448,8 @@ export default function DirectorAdvanced({ token: _token }: any) {
                     }}
                   >
                     ❌ Отменить выбор
-                  </button>
-                </div>
+                    </button>
+                  </div>
               </div>
             )}
 
@@ -473,8 +484,8 @@ export default function DirectorAdvanced({ token: _token }: any) {
               >
                 ❌ Снять выбор
               </button>
-            </div>
-          </div>
+                </div>
+              </div>
 
           {/* Список блюд */}
           <div className="menu-section">
@@ -492,22 +503,22 @@ export default function DirectorAdvanced({ token: _token }: any) {
                 gridTemplateColumns: menuView === 'grid' ? 'repeat(auto-fill, minmax(300px, 1fr))' : 'none',
                 gap: '15px'
               }}>
-                {menuItems.map((item) => (
-                  <MenuItemCard
-                    key={item.id}
-                    item={item}
+                    {menuItems.map((item) => (
+                      <MenuItemCard
+                        key={item.id}
+                        item={item}
                     onEdit={setEditingItem}
                     onDelete={() => handleDeleteItem(item.id)}
                     showBulkSelection={true}
                     isBulkSelected={bulkSelected.has(item.id)}
                     onBulkSelect={() => toggleBulkSelection(item.id)}
                   />
-                ))}
+                    ))}
+                  </div>
+                )}
               </div>
-            )}
-          </div>
-        </div>
-      )}
+            </div>
+          )}
 
       {activeTab === 'users' && currentUser && (
         <UserManagement 

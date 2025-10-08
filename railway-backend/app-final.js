@@ -148,7 +148,7 @@ const server = http.createServer((req, res) => {
         });
         res.end(JSON.stringify({
             status: 'OK',
-            message: 'Railway Server with FULL MENU v15.0.0 - ALL MEAL TYPES!',
+            message: 'Railway Server with FULL MENU v15.1.0 - FORCE UPDATE!',
             dishCount: menuData.length,
             encoding: 'UTF-8',
             mobileReady: true,

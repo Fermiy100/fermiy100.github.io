@@ -185,7 +185,7 @@ const server = http.createServer((req, res) => {
         });
         res.end(JSON.stringify({
             status: 'OK',
-            message: 'Railway Server with USERS & DATABASE v17.0.0 - FULL SYSTEM!',
+            message: 'Railway Server with AUTH & USERS & DATABASE v18.0.0 - FULL SYSTEM!',
             dishCount: menuData.length,
             userCount: usersData.length,
             encoding: 'UTF-8',
@@ -418,6 +418,25 @@ const server = http.createServer((req, res) => {
                 uptime: process.uptime(),
                 memory: process.memoryUsage(),
                 timestamp: new Date().toISOString()
+            }
+        }, null, 2));
+    }
+    // Получить информацию о текущем пользователе
+    else if (url.pathname === '/api/auth/me.php' && req.method === 'GET') {
+        console.log('👤 ПОЛУЧАЕМ ИНФОРМАЦИЮ О ТЕКУЩЕМ ПОЛЬЗОВАТЕЛЕ...');
+        res.writeHead(200, {
+            'Content-Type': 'application/json; charset=utf-8',
+            'Access-Control-Allow-Origin': '*'
+        });
+        res.end(JSON.stringify({
+            success: true,
+            user: {
+                id: 1,
+                email: 'director@school.test',
+                name: 'Директор школы',
+                role: 'DIRECTOR',
+                school_id: 1,
+                verified: true
             }
         }, null, 2));
     }

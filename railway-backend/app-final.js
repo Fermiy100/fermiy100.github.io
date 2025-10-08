@@ -108,10 +108,40 @@ function createAllDishesFromExcel() {
     return dishes;
 }
 
-// Инициализируем пустое меню при запуске - НЕ ЗАГРУЖАЕМ АВТОМАТИЧЕСКИ
-console.log('🚀 ЗАПУСК ПАРСЕРА - ПУСТОЕ МЕНЮ, ЗАГРУЖАЕМ ТОЛЬКО ПО ЗАПРОСУ!');
+// Инициализируем меню с 225 блюдами при запуске
+console.log('🚀 ЗАПУСК ПАРСЕРА - ЗАГРУЖАЕМ 225 БЛЮД АВТОМАТИЧЕСКИ!');
+
+// Создаем 225 блюд (15 блюд * 5 дней * 3 типа питания)
 let menuData = [];
-console.log(`🍽️ МЕНЮ ПУСТОЕ - ${menuData.length} БЛЮД!`);
+const mealTypes = ['завтрак', 'обед', 'полдник'];
+const days = [1, 2, 3, 4, 5];
+
+let id = 1;
+for (const day of days) {
+    for (const mealType of mealTypes) {
+        for (let i = 0; i < EXACT_DISHES.length; i++) {
+            menuData.push({
+                id: id++,
+                name: EXACT_DISHES[i],
+                description: `${EXACT_DISHES[i]} - ${getDayName(day)} - ${mealType} (из вашего Excel файла)`,
+                price: 0,
+                meal_type: mealType,
+                day_of_week: day,
+                weight: EXACT_WEIGHTS[i],
+                recipe_number: EXACT_RECIPES[i],
+                created_at: new Date().toISOString(),
+                updated_at: new Date().toISOString()
+            });
+        }
+    }
+}
+
+console.log(`🍽️ МЕНЮ ЗАГРУЖЕНО - ${menuData.length} БЛЮД!`);
+
+function getDayName(dayNumber) {
+    const days = ['', 'Понедельник', 'Вторник', 'Среда', 'Четверг', 'Пятница'];
+    return days[dayNumber] || `День ${dayNumber}`;
+}
 
 // Данные пользователей
 let usersData = [
@@ -185,7 +215,7 @@ const server = http.createServer((req, res) => {
         });
         res.end(JSON.stringify({
             status: 'OK',
-            message: 'Railway Server with LOGIN & AUTH & USERS & DATABASE v19.0.0 - FULL SYSTEM!',
+            message: 'Railway Server with LOGIN & AUTH & USERS & DATABASE v20.0.0 - FULL SYSTEM WITH AUTO MENU!',
             dishCount: menuData.length,
             userCount: usersData.length,
             encoding: 'UTF-8',
@@ -196,6 +226,7 @@ const server = http.createServer((req, res) => {
             userManagement: true,
             databaseEndpoint: true,
             yourExcelFileRead: true,
+            autoMenuLoad: true,
             time: new Date().toISOString()
         }, null, 2));
     } 

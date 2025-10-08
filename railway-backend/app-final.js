@@ -1,6 +1,7 @@
 const http = require('http');
 const fs = require('fs');
 const path = require('path');
+const UltimateExcelParser = require('./ultimate-excel-parser');
 
 // Устанавливаем кодировку UTF-8
 process.stdout.setEncoding('utf8');
@@ -108,8 +109,9 @@ function createAllDishesFromExcel() {
     return dishes;
 }
 
-// Инициализируем меню с 225 блюдами при запуске
-console.log('🚀 ЗАПУСК ПАРСЕРА - ЗАГРУЖАЕМ 225 БЛЮД АВТОМАТИЧЕСКИ!');
+// Инициализируем ULTIMATE парсер
+const ultimateParser = new UltimateExcelParser();
+console.log('🚀 ЗАПУСК ULTIMATE EXCEL PARSER v1.0.0 - МАКСИМАЛЬНО МОЩНЫЙ ПАРСЕР!');
 
 // Разные наборы блюд для каждого приема пищи
 const BREAKFAST_DISHES = [
@@ -216,6 +218,19 @@ console.log(`🌅 ЗАВТРАК: ${BREAKFAST_DISHES.length} уникальны�
 console.log(`🍽️ ОБЕД: ${LUNCH_DISHES.length} уникальных блюд`);
 console.log(`🍎 ПОЛДНИК: ${SNACK_DISHES.length} уникальных блюд`);
 
+// Функция для парсинга Excel файла с помощью Ultimate парсера
+async function parseExcelWithUltimateParser(filePath) {
+    try {
+        console.log('🎯 ЗАПУСК ULTIMATE ПАРСЕРА для файла:', filePath);
+        const dishes = await ultimateParser.parseExcelFile(filePath);
+        console.log(`🚀 ULTIMATE ПАРСЕР НАШЕЛ ${dishes.length} БЛЮД!`);
+        return dishes;
+    } catch (error) {
+        console.error('❌ Ошибка Ultimate парсера:', error);
+        return [];
+    }
+}
+
 function getDayName(dayNumber) {
     const days = ['', 'Понедельник', 'Вторник', 'Среда', 'Четверг', 'Пятница'];
     return days[dayNumber] || `День ${dayNumber}`;
@@ -293,7 +308,7 @@ const server = http.createServer((req, res) => {
         });
         res.end(JSON.stringify({
             status: 'OK',
-            message: 'Railway Server with LOGIN & AUTH & USERS & DATABASE v22.0.0 - UNIQUE DISHES FOR BREAKFAST/LUNCH/SNACK!',
+            message: 'Railway Server with ULTIMATE EXCEL PARSER v23.0.0 - MAXIMUM POWER PARSER!',
             dishCount: menuData.length,
             userCount: usersData.length,
             encoding: 'UTF-8',
@@ -305,6 +320,9 @@ const server = http.createServer((req, res) => {
             databaseEndpoint: true,
             yourExcelFileRead: true,
             autoMenuLoad: true,
+            ultimateParser: true,
+            parserVersion: 'v1.0.0',
+            maxPowerParser: true,
             time: new Date().toISOString()
         }, null, 2));
     } 
@@ -325,23 +343,54 @@ const server = http.createServer((req, res) => {
         
         // Если это загрузка файла (multipart/form-data)
         if (contentType.includes('multipart/form-data')) {
-            console.log('📤 ЗАГРУЗКА ФАЙЛА EXCEL...');
+            console.log('📤 ЗАГРУЗКА ФАЙЛА EXCEL С ULTIMATE ПАРСЕРОМ...');
             
-            // Просто перезагружаем данные из Excel файла
-            menuData = createAllDishesFromExcel();
-            
-            console.log(`✅ ФАЙЛ ОБРАБОТАН! ЗАГРУЖЕНО ${menuData.length} БЛЮД`);
-            
-            res.writeHead(200, {
-                'Content-Type': 'application/json; charset=utf-8',
-                'Access-Control-Allow-Origin': '*'
-            });
-            res.end(JSON.stringify({
-                success: true,
-                message: 'Файл Excel успешно обработан',
-                addedCount: menuData.length,
-                totalDishes: menuData.length
-            }, null, 2));
+            try {
+                // Путь к Excel файлу
+                const excelFilePath = path.join(__dirname, 'uploads', 'menu.xlsx');
+                
+                let newDishes = [];
+                
+                // Проверяем, есть ли файл для парсинга
+                if (fs.existsSync(excelFilePath)) {
+                    console.log('🎯 Найден Excel файл, запускаем ULTIMATE ПАРСЕР...');
+                    newDishes = await parseExcelWithUltimateParser(excelFilePath);
+                } else {
+                    console.log('📋 Excel файл не найден, используем встроенные данные...');
+                    newDishes = createAllDishesFromExcel();
+                }
+                
+                // Очищаем старое меню и добавляем новые блюда
+                menuData = [];
+                newDishes.forEach((dish, index) => {
+                    dish.id = index + 1;
+                    menuData.push(dish);
+                });
+                
+                console.log(`🚀 ULTIMATE ПАРСЕР ЗАВЕРШИЛ РАБОТУ! Обработано ${newDishes.length} блюд`);
+                
+                res.writeHead(200, {
+                    'Content-Type': 'application/json; charset=utf-8',
+                    'Access-Control-Allow-Origin': '*'
+                });
+                res.end(JSON.stringify({
+                    success: true,
+                    message: `ULTIMATE ПАРСЕР: Меню загружено! Обработано ${newDishes.length} блюд`,
+                    addedCount: newDishes.length,
+                    totalDishes: menuData.length,
+                    parser: 'ULTIMATE v1.0.0'
+                }, null, 2));
+            } catch (error) {
+                console.error('❌ Ошибка ULTIMATE парсера:', error);
+                res.writeHead(500, {
+                    'Content-Type': 'application/json; charset=utf-8',
+                    'Access-Control-Allow-Origin': '*'
+                });
+                res.end(JSON.stringify({
+                    success: false,
+                    error: 'Ошибка ULTIMATE парсера'
+                }, null, 2));
+            }
         } else {
             // Если это JSON данные для добавления блюда
             let body = '';

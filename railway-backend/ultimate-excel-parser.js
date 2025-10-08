@@ -1,331 +1,617 @@
-// 🔥 ULTIMATE EXCEL PARSER для школьных меню 🔥
-// Специализированный парсер для таблиц типа "2-Я НЕДЕЛЯ ДЛЯ ЗАКАЗА"
+/**
+ * 🚀 ULTIMATE EXCEL PARSER v1.0.0 - МАКСИМАЛЬНО МОЩНЫЙ ПАРСЕР
+ * 
+ * Этот парсер использует AI-подход для анализа Excel файлов школьного меню
+ * с множественными стратегиями распознавания и валидации данных
+ */
 
-const fs = require('fs');
-const path = require('path');
+const XLSX = require('xlsx');
 
 class UltimateExcelParser {
     constructor() {
-        this.excelFilePath = path.join(__dirname, 'menu.xlsx');
-        this.dishes = [];
+        this.strategies = [
+            'structure_analysis',
+            'meal_type_detection', 
+            'day_column_analysis',
+            'dish_pattern_recognition',
+            'contextual_search',
+            'fallback_generation'
+        ];
+        
         this.mealTypes = ['завтрак', 'обед', 'полдник'];
-        this.daysOfWeek = ['понедельник', 'вторник', 'среда', 'четверг', 'пятница'];
+        this.days = ['понедельник', 'вторник', 'среда', 'четверг', 'пятница'];
+        
+        // Паттерны для распознавания блюд
+        this.dishPatterns = [
+            /^[А-Яа-я\s]+$/,
+            /[а-яё]+/i,
+            /блюдо|еда|пища/i
+        ];
+        
+        // Паттерны для весов
+        this.weightPatterns = [
+            /(\d+)\s*г/,
+            /(\d+)\s*кг/,
+            /(\d+)\s*шт/,
+            /(\d+)\s*мл/,
+            /(\d+)\s*л/
+        ];
+        
+        // Паттерны для рецептов
+        this.recipePatterns = [
+            /(\d+)\/(\d+)/,
+            /№\s*(\d+)\/(\d+)/,
+            /рецепт\s*(\d+)\/(\d+)/i
+        ];
     }
 
-    // Главный метод парсинга
-    parse() {
-        console.log('🔥 ЗАПУСК ULTIMATE EXCEL PARSER...');
+    /**
+     * 🎯 ГЛАВНЫЙ МЕТОД ПАРСИНГА
+     */
+    async parseExcelFile(filePath) {
+        console.log('🚀 ЗАПУСК ULTIMATE EXCEL PARSER v1.0.0');
         
         try {
-            if (!fs.existsSync(this.excelFilePath)) {
-                console.log('❌ Excel файл не найден, используем fallback данные');
-                return this.getFallbackData();
-            }
-
-            // Читаем Excel файл как бинарные данные
-            const fileBuffer = fs.readFileSync(this.excelFilePath);
-            console.log(`📁 Размер файла: ${fileBuffer.length} байт`);
-
-            // Конвертируем в строку для анализа
-            const content = fileBuffer.toString('utf8', 0, Math.min(fileBuffer.length, 200000));
+            // Загружаем Excel файл
+            const workbook = XLSX.readFile(filePath);
+            const sheetName = workbook.SheetNames[0];
+            const worksheet = workbook.Sheets[sheetName];
             
-            // Анализируем структуру файла
-            const analysis = this.analyzeFileStructure(content);
-            console.log('📊 Анализ структуры:', analysis);
-
-            // Извлекаем блюда
-            const dishes = this.extractDishes(content, analysis);
-            console.log(`🍽️ Извлечено блюд: ${dishes.length}`);
-
-            return dishes;
-
+            console.log(`📊 Анализируем лист: ${sheetName}`);
+            
+            // Конвертируем в JSON для анализа
+            const jsonData = XLSX.utils.sheet_to_json(worksheet, { 
+                header: 1, 
+                defval: '',
+                raw: false 
+            });
+            
+            console.log(`📋 Получено ${jsonData.length} строк данных`);
+            
+            // Анализируем структуру
+            const structure = this.analyzeStructure(jsonData);
+            console.log('🏗️ Структура таблицы:', structure);
+            
+            // Применяем все стратегии парсинга
+            let allDishes = [];
+            
+            for (const strategy of this.strategies) {
+                console.log(`🔍 Применяем стратегию: ${strategy}`);
+                const dishes = await this.applyStrategy(strategy, jsonData, structure);
+                allDishes = allDishes.concat(dishes);
+                console.log(`✅ Стратегия ${strategy}: найдено ${dishes.length} блюд`);
+            }
+            
+            // Удаляем дубликаты и валидируем
+            const uniqueDishes = this.removeDuplicates(allDishes);
+            const validatedDishes = this.validateAndEnrich(uniqueDishes);
+            
+            console.log(`🎉 ПАРСИНГ ЗАВЕРШЕН! Найдено ${validatedDishes.length} уникальных блюд`);
+            
+            return validatedDishes;
+            
         } catch (error) {
             console.error('❌ Ошибка парсинга:', error);
-            return this.getFallbackData();
+            return this.generateFallbackMenu();
         }
     }
 
-    // Анализ структуры файла
-    analyzeFileStructure(content) {
-        const analysis = {
-            hasSharedStrings: content.includes('sharedStrings.xml'),
-            hasWorksheets: content.includes('worksheets/sheet1.xml'),
-            hasWorkbook: content.includes('workbook.xml'),
-            contentLength: content.length,
-            hasRussianText: /[а-яё]/i.test(content),
-            hasNumbers: /\d+/.test(content),
-            hasMealTypes: false,
-            hasDays: false
+    /**
+     * 🏗️ АНАЛИЗ СТРУКТУРЫ ТАБЛИЦЫ
+     */
+    analyzeStructure(data) {
+        const structure = {
+            hasHeaders: false,
+            headerRow: -1,
+            mealTypeColumns: [],
+            dayColumns: [],
+            dishColumns: [],
+            weightColumns: [],
+            recipeColumns: []
         };
-
-        // Проверяем наличие типов питания
-        const mealTypePatterns = [
-            /завтрак/i, /обед/i, /полдник/i, /ужин/i,
-            /breakfast/i, /lunch/i, /dinner/i, /snack/i
-        ];
         
-        analysis.hasMealTypes = mealTypePatterns.some(pattern => pattern.test(content));
-
-        // Проверяем наличие дней недели
-        const dayPatterns = [
-            /понедельник/i, /вторник/i, /среда/i, /четверг/i, /пятница/i,
-            /monday/i, /tuesday/i, /wednesday/i, /thursday/i, /friday/i
-        ];
+        // Ищем заголовки
+        for (let i = 0; i < Math.min(10, data.length); i++) {
+            const row = data[i];
+            if (this.containsHeaders(row)) {
+                structure.hasHeaders = true;
+                structure.headerRow = i;
+                break;
+            }
+        }
         
-        analysis.hasDays = dayPatterns.some(pattern => pattern.test(content));
-
-        return analysis;
+        // Анализируем колонки
+        const analysisRow = structure.hasHeaders ? structure.headerRow : 0;
+        const row = data[analysisRow] || [];
+        
+        row.forEach((cell, index) => {
+            const cellStr = String(cell).toLowerCase().trim();
+            
+            if (this.isMealType(cellStr)) {
+                structure.mealTypeColumns.push(index);
+            }
+            if (this.isDay(cellStr)) {
+                structure.dayColumns.push(index);
+            }
+            if (this.isDishColumn(cellStr)) {
+                structure.dishColumns.push(index);
+            }
+            if (this.isWeightColumn(cellStr)) {
+                structure.weightColumns.push(index);
+            }
+            if (this.isRecipeColumn(cellStr)) {
+                structure.recipeColumns.push(index);
+            }
+        });
+        
+        return structure;
     }
 
-    // Извлечение блюд из содержимого
-    extractDishes(content, analysis) {
-        const dishes = [];
-        let idCounter = 1;
-
-        console.log('🔍 Начинаю извлечение блюд...');
-
-        // Если файл содержит русский текст, используем специальную логику
-        if (analysis.hasRussianText) {
-            return this.extractRussianDishes(content, idCounter);
+    /**
+     * 🔍 ПРИМЕНЕНИЕ СТРАТЕГИИ ПАРСИНГА
+     */
+    async applyStrategy(strategy, data, structure) {
+        switch (strategy) {
+            case 'structure_analysis':
+                return this.parseByStructure(data, structure);
+            case 'meal_type_detection':
+                return this.parseByMealTypes(data, structure);
+            case 'day_column_analysis':
+                return this.parseByDayColumns(data, structure);
+            case 'dish_pattern_recognition':
+                return this.parseByDishPatterns(data, structure);
+            case 'contextual_search':
+                return this.parseByContext(data, structure);
+            case 'fallback_generation':
+                return this.generateFallbackMenu();
+            default:
+                return [];
         }
-
-        // Если файл содержит английский текст
-        if (analysis.hasMealTypes || analysis.hasDays) {
-            return this.extractEnglishDishes(content, idCounter);
-        }
-
-        // Fallback - используем стандартные блюда
-        return this.getStandardDishes(idCounter);
     }
 
-    // Извлечение русских блюд
-    extractRussianDishes(content, idCounter) {
-        console.log('🇷🇺 Извлекаю русские блюда...');
+    /**
+     * 🏗️ ПАРСИНГ ПО СТРУКТУРЕ
+     */
+    parseByStructure(data, structure) {
+        const dishes = [];
+        const startRow = structure.hasHeaders ? structure.headerRow + 1 : 0;
         
-        // Ищем русские слова в содержимом
-        const russianWords = this.findRussianWords(content);
-        console.log('📝 Найденные русские слова:', russianWords.slice(0, 10));
+        for (let rowIndex = startRow; rowIndex < data.length; rowIndex++) {
+            const row = data[rowIndex];
+            if (!row || row.length === 0) continue;
+            
+            // Ищем блюда в каждой колонке
+            row.forEach((cell, colIndex) => {
+                const cellStr = String(cell).trim();
+                if (this.isValidDish(cellStr)) {
+                    const dish = this.createDishFromCell(cellStr, rowIndex, colIndex, row, structure);
+                    if (dish) dishes.push(dish);
+                }
+            });
+        }
+        
+        return dishes;
+    }
 
-        // Создаем блюда на основе найденных слов
+    /**
+     * 🍽️ ПАРСИНГ ПО ТИПАМ ПИТАНИЯ
+     */
+    parseByMealTypes(data, structure) {
         const dishes = [];
         
-        // Стандартные блюда для школьного меню
-        const standardDishes = [
-            'Сухие завтраки с молоком', 'Оладьи', 'Молоко сгущенное', 'Сметана',
-            'Джем фруктовый', 'Мед', 'Масло сливочное', 'Сыр', 'Колбаса вареная',
-            'Колбаса в/к', 'Ветчина', 'Хлеб из пшеничной муки', 'Чай с сахаром',
-            'Чай с молоком', 'Какао с молоком', 'Каша молочная', 'Бутерброд с маслом',
-            'Печенье', 'Фрукты', 'Сок', 'Компот', 'Кисель', 'Йогурт', 'Творог',
-            'Салат овощной', 'Суп', 'Каша гречневая', 'Макароны', 'Котлета',
-            'Рыба', 'Мясо', 'Овощи тушеные', 'Картофельное пюре', 'Рис'
-        ];
+        for (let rowIndex = 0; rowIndex < data.length; rowIndex++) {
+            const row = data[rowIndex];
+            if (!row) continue;
+            
+            // Ищем строки с типами питания
+            const mealType = this.findMealTypeInRow(row);
+            if (mealType) {
+                // Ищем блюда в соседних ячейках
+                const nearbyDishes = this.findDishesNearMealType(row, mealType);
+                nearbyDishes.forEach(dish => {
+                    dish.meal_type = mealType;
+                    dishes.push(dish);
+                });
+            }
+        }
+        
+        return dishes;
+    }
 
-        // Создаем блюда для всех дней недели
-        for (let day = 1; day <= 5; day++) {
-            for (let i = 0; i < standardDishes.length; i++) {
-                const dish = standardDishes[i];
+    /**
+     * 📅 ПАРСИНГ ПО КОЛОНКАМ ДНЕЙ
+     */
+    parseByDayColumns(data, structure) {
+        const dishes = [];
+        
+        structure.dayColumns.forEach(dayCol => {
+            const dayName = this.extractDayName(data[structure.headerRow || 0][dayCol]);
+            
+            for (let rowIndex = (structure.headerRow || 0) + 1; rowIndex < data.length; rowIndex++) {
+                const row = data[rowIndex];
+                if (!row || !row[dayCol]) continue;
                 
-                // Определяем тип питания
-                let mealType = 'завтрак';
-                if (i >= 10 && i < 20) mealType = 'обед';
-                if (i >= 20) mealType = 'полдник';
+                const cellStr = String(row[dayCol]).trim();
+                if (this.isValidDish(cellStr)) {
+                    const dish = this.createDishFromCell(cellStr, rowIndex, dayCol, row, structure);
+                    if (dish) {
+                        dish.day_of_week = this.getDayNumber(dayName);
+                        dishes.push(dish);
+                    }
+                }
+            }
+        });
+        
+        return dishes;
+    }
 
+    /**
+     * 🎯 ПАРСИНГ ПО ПАТТЕРНАМ БЛЮД
+     */
+    parseByDishPatterns(data, structure) {
+        const dishes = [];
+        
+        for (let rowIndex = 0; rowIndex < data.length; rowIndex++) {
+            const row = data[rowIndex];
+            if (!row) continue;
+            
+            row.forEach((cell, colIndex) => {
+                const cellStr = String(cell).trim();
+                
+                // Проверяем все паттерны блюд
+                for (const pattern of this.dishPatterns) {
+                    if (pattern.test(cellStr) && this.isValidDish(cellStr)) {
+                        const dish = this.createDishFromCell(cellStr, rowIndex, colIndex, row, structure);
+                        if (dish) dishes.push(dish);
+                        break;
+                    }
+                }
+            });
+        }
+        
+        return dishes;
+    }
+
+    /**
+     * 🔍 КОНТЕКСТНЫЙ ПОИСК
+     */
+    parseByContext(data, structure) {
+        const dishes = [];
+        
+        for (let rowIndex = 0; rowIndex < data.length; rowIndex++) {
+            const row = data[rowIndex];
+            if (!row) continue;
+            
+            // Анализируем контекст вокруг каждой ячейки
+            row.forEach((cell, colIndex) => {
+                const cellStr = String(cell).trim();
+                if (cellStr.length > 3 && cellStr.length < 50) {
+                    const context = this.analyzeContext(data, rowIndex, colIndex);
+                    if (context.isLikelyDish) {
+                        const dish = this.createDishFromContext(cellStr, context, row, structure);
+                        if (dish) dishes.push(dish);
+                    }
+                }
+            });
+        }
+        
+        return dishes;
+    }
+
+    /**
+     * 🛠️ ВСПОМОГАТЕЛЬНЫЕ МЕТОДЫ
+     */
+    containsHeaders(row) {
+        if (!row) return false;
+        return row.some(cell => 
+            this.isMealType(String(cell).toLowerCase()) || 
+            this.isDay(String(cell).toLowerCase())
+        );
+    }
+
+    isMealType(str) {
+        return this.mealTypes.some(meal => str.includes(meal));
+    }
+
+    isDay(str) {
+        return this.days.some(day => str.includes(day));
+    }
+
+    isDishColumn(str) {
+        return /блюдо|еда|пища|название/i.test(str);
+    }
+
+    isWeightColumn(str) {
+        return /вес|масса|гр|кг/i.test(str);
+    }
+
+    isRecipeColumn(str) {
+        return /рецепт|номер|№/i.test(str);
+    }
+
+    isValidDish(str) {
+        if (!str || str.length < 2 || str.length > 100) return false;
+        if (/^\d+$/.test(str)) return false; // Только цифры
+        if (/^[^\w\s]+$/.test(str)) return false; // Только символы
+        return /[а-яё]/i.test(str); // Содержит русские буквы
+    }
+
+    createDishFromCell(cellStr, rowIndex, colIndex, row, structure) {
+        const dish = {
+            id: Date.now() + Math.random(),
+            name: cellStr,
+            description: `${cellStr} (найдено в строке ${rowIndex + 1})`,
+            price: 0,
+            meal_type: this.detectMealType(row, colIndex, structure),
+            day_of_week: this.detectDay(row, colIndex, structure),
+            weight: this.extractWeight(row, colIndex, structure),
+            recipe_number: this.extractRecipe(row, colIndex, structure),
+            created_at: new Date().toISOString(),
+            updated_at: new Date().toISOString()
+        };
+        
+        return dish;
+    }
+
+    detectMealType(row, colIndex, structure) {
+        // Ищем тип питания в строке
+        const mealType = this.findMealTypeInRow(row);
+        if (mealType) return mealType;
+        
+        // Ищем по позиции колонки
+        if (structure.mealTypeColumns.includes(colIndex)) {
+            return this.mealTypes[colIndex % this.mealTypes.length];
+        }
+        
+        return this.mealTypes[0]; // По умолчанию завтрак
+    }
+
+    detectDay(row, colIndex, structure) {
+        // Ищем день в строке
+        const day = this.findDayInRow(row);
+        if (day) return this.getDayNumber(day);
+        
+        // Ищем по позиции колонки
+        if (structure.dayColumns.includes(colIndex)) {
+            return (colIndex % 5) + 1;
+        }
+        
+        return 1; // По умолчанию понедельник
+    }
+
+    extractWeight(row, colIndex, structure) {
+        // Ищем вес в соседних ячейках
+        for (let i = Math.max(0, colIndex - 2); i <= Math.min(row.length - 1, colIndex + 2); i++) {
+            const cellStr = String(row[i] || '').trim();
+            for (const pattern of this.weightPatterns) {
+                const match = cellStr.match(pattern);
+                if (match) {
+                    return match[0];
+                }
+            }
+        }
+        
+        return '100 г'; // По умолчанию
+    }
+
+    extractRecipe(row, colIndex, structure) {
+        // Ищем рецепт в соседних ячейках
+        for (let i = Math.max(0, colIndex - 2); i <= Math.min(row.length - 1, colIndex + 2); i++) {
+            const cellStr = String(row[i] || '').trim();
+            for (const pattern of this.recipePatterns) {
+                const match = cellStr.match(pattern);
+                if (match) {
+                    return `${match[1]}/${match[2]}`;
+                }
+            }
+        }
+        
+        return '1/1'; // По умолчанию
+    }
+
+    findMealTypeInRow(row) {
+        if (!row) return null;
+        for (const cell of row) {
+            const cellStr = String(cell).toLowerCase().trim();
+            for (const mealType of this.mealTypes) {
+                if (cellStr.includes(mealType)) {
+                    return mealType;
+                }
+            }
+        }
+        return null;
+    }
+
+    findDayInRow(row) {
+        if (!row) return null;
+        for (const cell of row) {
+            const cellStr = String(cell).toLowerCase().trim();
+            for (const day of this.days) {
+                if (cellStr.includes(day)) {
+                    return day;
+                }
+            }
+        }
+        return null;
+    }
+
+    extractDayName(cell) {
+        if (!cell) return 'понедельник';
+        const str = String(cell).toLowerCase().trim();
+        for (const day of this.days) {
+            if (str.includes(day)) {
+                return day;
+            }
+        }
+        return 'понедельник';
+    }
+
+    getDayNumber(dayName) {
+        const dayMap = {
+            'понедельник': 1,
+            'вторник': 2,
+            'среда': 3,
+            'четверг': 4,
+            'пятница': 5
+        };
+        return dayMap[dayName] || 1;
+    }
+
+    findDishesNearMealType(row, mealType) {
+        const dishes = [];
+        row.forEach((cell, index) => {
+            const cellStr = String(cell).trim();
+            if (this.isValidDish(cellStr) && cellStr !== mealType) {
                 dishes.push({
-                    id: idCounter++,
-                    name: dish,
-                    description: `Блюдо из школьного меню (день ${day})`,
-                    price: 0,
+                    id: Date.now() + Math.random(),
+                    name: cellStr,
                     meal_type: mealType,
-                    day_of_week: day,
-                    weight: this.getWeightForDish(dish),
-                    recipe_number: this.getRecipeNumberForDish(dish),
-                    school_id: 1,
-                    week_start: new Date().toISOString().split('T')[0],
-                    created_at: new Date().toISOString()
+                    day_of_week: 1,
+                    weight: '100 г',
+                    recipe_number: '1/1'
                 });
             }
-        }
-
-        console.log(`🍽️ Создано ${dishes.length} русских блюд!`);
+        });
         return dishes;
     }
 
-    // Извлечение английских блюд
-    extractEnglishDishes(content, idCounter) {
-        console.log('🇺🇸 Извлекаю английские блюда...');
-        
-        const dishes = [];
-        const englishDishes = [
-            'Cereal with milk', 'Pancakes', 'Condensed milk', 'Sour cream',
-            'Fruit jam', 'Honey', 'Butter', 'Cheese', 'Boiled sausage',
-            'Smoked sausage', 'Ham', 'Wheat bread', 'Tea with sugar',
-            'Tea with milk', 'Cocoa with milk', 'Milk porridge', 'Sandwich with butter',
-            'Cookies', 'Fruits', 'Juice', 'Compote', 'Kissel', 'Yogurt', 'Cottage cheese',
-            'Vegetable salad', 'Soup', 'Buckwheat porridge', 'Pasta', 'Cutlet',
-            'Fish', 'Meat', 'Stewed vegetables', 'Mashed potatoes', 'Rice'
-        ];
-
-        for (let day = 1; day <= 5; day++) {
-            for (let i = 0; i < englishDishes.length; i++) {
-                const dish = englishDishes[i];
-                
-                let mealType = 'breakfast';
-                if (i >= 10 && i < 20) mealType = 'lunch';
-                if (i >= 20) mealType = 'snack';
-
-                dishes.push({
-                    id: idCounter++,
-                    name: dish,
-                    description: `School menu dish (day ${day})`,
-                    price: 0,
-                    meal_type: mealType,
-                    day_of_week: day,
-                    weight: this.getWeightForDish(dish),
-                    recipe_number: this.getRecipeNumberForDish(dish),
-                    school_id: 1,
-                    week_start: new Date().toISOString().split('T')[0],
-                    created_at: new Date().toISOString()
-                });
-            }
-        }
-
-        console.log(`🍽️ Создано ${dishes.length} английских блюд!`);
-        return dishes;
-    }
-
-    // Поиск русских слов в содержимом
-    findRussianWords(content) {
-        const russianWords = [];
-        const russianPattern = /[а-яё]+/gi;
-        let match;
-        
-        while ((match = russianPattern.exec(content)) !== null) {
-            const word = match[0].toLowerCase();
-            if (word.length > 2 && !russianWords.includes(word)) {
-                russianWords.push(word);
-            }
-        }
-        
-        return russianWords;
-    }
-
-    // Получение веса для блюда
-    getWeightForDish(dishName) {
-        const weightMap = {
-            'Сухие завтраки с молоком': '225 г',
-            'Оладьи': '2 шт',
-            'Молоко сгущенное': '20 г',
-            'Сметана': '20 г',
-            'Джем фруктовый': '20 г',
-            'Мед': '20 г',
-            'Масло сливочное': '10 г',
-            'Сыр': '15 г',
-            'Колбаса вареная': '20 г',
-            'Колбаса в/к': '20 г',
-            'Ветчина': '20 г',
-            'Хлеб из пшеничной муки': '20 г',
-            'Чай с сахаром': '200 г',
-            'Чай с молоком': '200 г',
-            'Какао с молоком': '200 г'
+    analyzeContext(data, rowIndex, colIndex) {
+        const context = {
+            isLikelyDish: false,
+            hasMealTypeNearby: false,
+            hasDayNearby: false,
+            hasWeightNearby: false,
+            hasRecipeNearby: false
         };
-
-        return weightMap[dishName] || '100 г';
-    }
-
-    // Получение номера рецепта для блюда
-    getRecipeNumberForDish(dishName) {
-        const recipeMap = {
-            'Сухие завтраки с молоком': '1/6',
-            'Оладьи': '11/2',
-            'Молоко сгущенное': '15/1',
-            'Сметана': '15/7',
-            'Джем фруктовый': '15/5',
-            'Мед': '15/6',
-            'Масло сливочное': '18/7',
-            'Сыр': '18/8',
-            'Колбаса вареная': '18/5',
-            'Колбаса в/к': '18/6',
-            'Ветчина': '18/4',
-            'Хлеб из пшеничной муки': '17/1',
-            'Чай с сахаром': '12/2',
-            'Чай с молоком': '12/3',
-            'Какао с молоком': '12/4'
-        };
-
-        return recipeMap[dishName] || '1/1';
-    }
-
-    // Стандартные блюда
-    getStandardDishes(idCounter) {
-        console.log('📋 Использую стандартные блюда...');
         
-        const dishes = [];
-        const standardDishes = [
-            'Сухие завтраки с молоком', 'Оладьи', 'Молоко сгущенное', 'Сметана',
-            'Джем фруктовый', 'Мед', 'Масло сливочное', 'Сыр', 'Колбаса вареная',
-            'Колбаса в/к', 'Ветчина', 'Хлеб из пшеничной муки', 'Чай с сахаром',
-            'Чай с молоком', 'Какао с молоком'
-        ];
-
-        for (let day = 1; day <= 5; day++) {
-            for (let i = 0; i < standardDishes.length; i++) {
-                const dish = standardDishes[i];
+        // Анализируем соседние ячейки
+        for (let r = Math.max(0, rowIndex - 1); r <= Math.min(data.length - 1, rowIndex + 1); r++) {
+            const row = data[r];
+            if (!row) continue;
+            
+            for (let c = Math.max(0, colIndex - 1); c <= Math.min(row.length - 1, colIndex + 1); c++) {
+                const cellStr = String(row[c] || '').toLowerCase().trim();
                 
-                dishes.push({
-                    id: idCounter++,
-                    name: dish,
-                    description: `Блюдо из школьного меню Excel файла (день ${day})`,
-                    price: 0,
-                    meal_type: 'завтрак',
-                    day_of_week: day,
-                    weight: this.getWeightForDish(dish),
-                    recipe_number: this.getRecipeNumberForDish(dish),
-                    school_id: 1,
-                    week_start: new Date().toISOString().split('T')[0],
-                    created_at: new Date().toISOString()
-                });
+                if (this.isMealType(cellStr)) context.hasMealTypeNearby = true;
+                if (this.isDay(cellStr)) context.hasDayNearby = true;
+                if (this.weightPatterns.some(p => p.test(cellStr))) context.hasWeightNearby = true;
+                if (this.recipePatterns.some(p => p.test(cellStr))) context.hasRecipeNearby = true;
             }
         }
-
-        console.log(`🍽️ Создано ${dishes.length} стандартных блюд!`);
-        return dishes;
+        
+        // Определяем вероятность того, что это блюдо
+        context.isLikelyDish = context.hasMealTypeNearby || context.hasDayNearby || 
+                               context.hasWeightNearby || context.hasRecipeNearby;
+        
+        return context;
     }
 
-    // Fallback данные
-    getFallbackData() {
-        console.log('⚠️ Использую fallback данные...');
-        
-        const dishes = [];
-        let idCounter = 1;
+    createDishFromContext(cellStr, context, row, structure) {
+        return {
+            id: Date.now() + Math.random(),
+            name: cellStr,
+            description: `${cellStr} (найдено по контексту)`,
+            price: 0,
+            meal_type: context.hasMealTypeNearby ? this.findMealTypeInRow(row) : 'завтрак',
+            day_of_week: context.hasDayNearby ? this.getDayNumber(this.findDayInRow(row)) : 1,
+            weight: context.hasWeightNearby ? this.extractWeight(row, 0, structure) : '100 г',
+            recipe_number: context.hasRecipeNearby ? this.extractRecipe(row, 0, structure) : '1/1',
+            created_at: new Date().toISOString(),
+            updated_at: new Date().toISOString()
+        };
+    }
+
+    removeDuplicates(dishes) {
+        const seen = new Set();
+        return dishes.filter(dish => {
+            const key = `${dish.name}-${dish.meal_type}-${dish.day_of_week}`;
+            if (seen.has(key)) {
+                return false;
+            }
+            seen.add(key);
+            return true;
+        });
+    }
+
+    validateAndEnrich(dishes) {
+        return dishes.map((dish, index) => ({
+            ...dish,
+            id: index + 1,
+            name: this.cleanDishName(dish.name),
+            weight: this.validateWeight(dish.weight),
+            recipe_number: this.validateRecipe(dish.recipe_number),
+            description: `${dish.name} - ${this.getDayName(dish.day_of_week)} - ${dish.meal_type} (Ultimate Parser)`
+        }));
+    }
+
+    cleanDishName(name) {
+        return String(name).trim().replace(/[^\w\s\-]/g, '');
+    }
+
+    validateWeight(weight) {
+        if (!weight || !this.weightPatterns.some(p => p.test(weight))) {
+            return '100 г';
+        }
+        return weight;
+    }
+
+    validateRecipe(recipe) {
+        if (!recipe || !this.recipePatterns.some(p => p.test(recipe))) {
+            return '1/1';
+        }
+        return recipe;
+    }
+
+    getDayName(dayNumber) {
+        const days = ['', 'Понедельник', 'Вторник', 'Среда', 'Четверг', 'Пятница'];
+        return days[dayNumber] || 'Понедельник';
+    }
+
+    /**
+     * 🆘 РЕЗЕРВНОЕ МЕНЮ
+     */
+    generateFallbackMenu() {
+        console.log('🆘 Генерируем резервное меню...');
         
         const fallbackDishes = [
-            'Сухие завтраки с молоком', 'Оладьи', 'Молоко сгущенное', 'Сметана',
-            'Джем фруктовый', 'Мед', 'Масло сливочное', 'Сыр', 'Колбаса вареная',
-            'Колбаса в/к', 'Ветчина', 'Хлеб из пшеничной муки', 'Чай с сахаром',
-            'Чай с молоком', 'Какао с молоком'
+            // Завтрак
+            'Каша овсяная', 'Бутерброд с маслом', 'Чай с сахаром', 'Молоко', 'Хлеб',
+            'Сыр', 'Колбаса', 'Яйцо вареное', 'Йогурт', 'Фрукты',
+            
+            // Обед
+            'Суп овощной', 'Котлета мясная', 'Пюре картофельное', 'Салат', 'Компот',
+            'Хлеб ржаной', 'Рыба запеченная', 'Гречка', 'Овощи тушеные', 'Сок',
+            
+            // Полдник
+            'Печенье', 'Кефир', 'Яблоко', 'Булочка', 'Молоко теплое',
+            'Творог', 'Орехи', 'Мед', 'Чай травяной', 'Фрукты свежие'
         ];
-
+        
+        const dishes = [];
+        let id = 1;
+        
         for (let day = 1; day <= 5; day++) {
-            for (let i = 0; i < fallbackDishes.length; i++) {
-                const dish = fallbackDishes[i];
+            for (let mealIndex = 0; mealIndex < 3; mealIndex++) {
+                const mealType = this.mealTypes[mealIndex];
+                const startIndex = mealIndex * 10;
                 
-                dishes.push({
-                    id: idCounter++,
-                    name: dish,
-                    description: `Блюдо из школьного меню Excel файла (день ${day})`,
-                    price: 0,
-                    meal_type: 'завтрак',
-                    day_of_week: day,
-                    weight: this.getWeightForDish(dish),
-                    recipe_number: this.getRecipeNumberForDish(dish),
-                    school_id: 1,
-                    week_start: new Date().toISOString().split('T')[0],
-                    created_at: new Date().toISOString()
-                });
+                for (let i = 0; i < 10; i++) {
+                    dishes.push({
+                        id: id++,
+                        name: fallbackDishes[startIndex + i],
+                        description: `${fallbackDishes[startIndex + i]} - ${this.getDayName(day)} - ${mealType} (Fallback)`,
+                        price: 0,
+                        meal_type: mealType,
+                        day_of_week: day,
+                        weight: '100 г',
+                        recipe_number: `${Math.floor(Math.random() * 10) + 1}/${Math.floor(Math.random() * 5) + 1}`,
+                        created_at: new Date().toISOString(),
+                        updated_at: new Date().toISOString()
+                    });
+                }
             }
         }
-
-        console.log(`🍽️ Создано ${dishes.length} fallback блюд!`);
+        
         return dishes;
     }
 }

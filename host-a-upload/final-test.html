@@ -1,91 +1,551 @@
 <!DOCTYPE html>
-<html>
+<html lang="ru">
 <head>
-    <title>Финальный тест API</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Final Test - School Meals System</title>
     <style>
-        body { font-family: Arial; padding: 20px; }
-        .success { color: green; }
-        .error { color: red; }
-        .dish { margin: 10px 0; padding: 10px; border: 1px solid #ddd; }
-        button { padding: 10px; margin: 5px; font-size: 16px; }
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 1000px;
+            margin: 0 auto;
+            padding: 20px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            min-height: 100vh;
+        }
+        .container {
+            background: rgba(255, 255, 255, 0.1);
+            padding: 30px;
+            border-radius: 15px;
+            backdrop-filter: blur(10px);
+        }
+        button {
+            background: linear-gradient(45deg, #FF6B6B, #4ECDC4);
+            color: white;
+            border: none;
+            padding: 15px 30px;
+            border-radius: 25px;
+            cursor: pointer;
+            font-size: 16px;
+            margin: 10px;
+            min-height: 44px;
+        }
+        .status {
+            margin: 20px 0;
+            padding: 15px;
+            border-radius: 8px;
+            font-weight: bold;
+        }
+        .success { background: rgba(76, 175, 80, 0.3); }
+        .error { background: rgba(244, 67, 54, 0.3); }
+        .info { background: rgba(33, 150, 243, 0.3); }
+        .results {
+            background: rgba(255, 255, 255, 0.1);
+            padding: 20px;
+            border-radius: 10px;
+            margin: 20px 0;
+            max-height: 400px;
+            overflow-y: auto;
+        }
+        .test-section {
+            margin: 20px 0;
+            padding: 20px;
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 10px;
+        }
+        .mobile-test {
+            display: none;
+        }
+        @media (max-width: 768px) {
+            .mobile-test {
+                display: block;
+            }
+            .desktop-test {
+                display: none;
+            }
+            body {
+                padding: 10px;
+            }
+            .container {
+                padding: 15px;
+            }
+            button {
+                width: 100%;
+                margin: 5px 0;
+            }
+        }
     </style>
 </head>
 <body>
-    <h1>🎯 Финальный тест системы</h1>
-    
-    <button onclick="testAPI()">Тест API /api/menu.php</button>
-    <button onclick="testDirect()">Тест файла напрямую</button>
-    <button onclick="clearCache()">Очистить кэш</button>
-    
-    <div id="results"></div>
+    <div class="container">
+        <h1>🧪 Final Test - School Meals System</h1>
+        <p>Комплексное тестирование всех компонентов системы</p>
+        
+        <div class="test-section">
+            <h2>🔧 Backend Tests</h2>
+            <div style="text-align: center;">
+                <button onclick="testRailway()">🚂 Railway Backend</button>
+                <button onclick="testFermiy()">🏠 Fermiy.ru PHP</button>
+                <button onclick="testAllBackends()">🔄 Test All Backends</button>
+            </div>
+        </div>
+        
+        <div class="test-section">
+            <h2>📱 Mobile Tests</h2>
+            <div class="desktop-test">
+                <p>🖥️ Desktop View - Switch to mobile to test mobile features</p>
+            </div>
+            <div class="mobile-test">
+                <p>📱 Mobile View Detected!</p>
+                <button onclick="testMobileFeatures()">Test Mobile Features</button>
+            </div>
+        </div>
+        
+        <div class="test-section">
+            <h2>🍽️ Menu Tests</h2>
+            <div style="text-align: center;">
+                <button onclick="testMenuAPI()">Test Menu API</button>
+                <button onclick="testMenuDisplay()">Test Menu Display</button>
+                <button onclick="testMenuUpload()">Test Menu Upload</button>
+            </div>
+        </div>
+        
+        <div class="test-section">
+            <h2>👥 User Tests</h2>
+            <div style="text-align: center;">
+                <button onclick="testUserAPI()">Test User API</button>
+                <button onclick="testAuth()">Test Authentication</button>
+                <button onclick="testUserManagement()">Test User Management</button>
+            </div>
+        </div>
+        
+        <div class="test-section">
+            <h2>🎨 UI/UX Tests</h2>
+            <div style="text-align: center;">
+                <button onclick="testResponsiveDesign()">Test Responsive Design</button>
+                <button onclick="testButtonSizes()">Test Button Sizes</button>
+                <button onclick="testNavigation()">Test Navigation</button>
+            </div>
+        </div>
+        
+        <div id="status"></div>
+        <div id="results"></div>
+    </div>
 
     <script>
-        async function testAPI() {
-            showLoading();
+        function showStatus(message, type = 'info') {
+            const statusDiv = document.getElementById('status');
+            statusDiv.innerHTML = `<div class="status ${type}">${message}</div>`;
+        }
+        
+        function showResults(content) {
+            document.getElementById('results').innerHTML = content;
+        }
+        
+        async function testRailway() {
+            showStatus('🚂 Тестируем Railway Backend...', 'info');
+            
             try {
-                const response = await fetch('/api/menu.php?' + Date.now()); // Кэш-бастер
-                const data = await response.json();
-                
-                showResults('API Test', {
-                    status: response.status,
-                    dataType: Array.isArray(data) ? 'array' : typeof data,
-                    itemsCount: Array.isArray(data) ? data.length : 'not array',
-                    firstItem: Array.isArray(data) && data[0] ? data[0] : null,
-                    sampleData: data
+                const response = await fetch('https://fermiy100githubio-production.up.railway.app', {
+                    method: 'GET',
+                    headers: {
+                        'Accept': 'application/json',
+                        'Content-Type': 'application/json'
+                    }
                 });
+                
+                if (response.ok) {
+                    const data = await response.json();
+                    showStatus(`✅ Railway OK! ${data.message}`, 'success');
+                    showResults(`
+                        <h3>🚂 Railway Status:</h3>
+                        <div class="results">
+                            <p><strong>Статус:</strong> ${data.status}</p>
+                            <p><strong>Сообщение:</strong> ${data.message}</p>
+                            <p><strong>Блюд:</strong> ${data.dishCount}</p>
+                            <p><strong>Пользователей:</strong> ${data.userCount}</p>
+                            <p><strong>Время:</strong> ${data.time}</p>
+                        </div>
+                    `);
+                } else {
+                    showStatus(`❌ Railway Error: ${response.status}`, 'error');
+                }
             } catch (error) {
-                showError('API Test Failed: ' + error.message);
+                showStatus(`❌ Railway Error: ${error.message}`, 'error');
             }
         }
         
-        async function testDirect() {
-            showLoading();
+        async function testFermiy() {
+            showStatus('🏠 Тестируем Fermiy.ru PHP...', 'info');
+            
             try {
-                const response = await fetch('/api/menu_data.json?' + Date.now());
-                const data = await response.json();
+                const response = await fetch('https://fermiy.ru/api/auth/me.php', {
+                    method: 'GET',
+                    headers: {
+                        'Accept': 'application/json',
+                        'Content-Type': 'application/json'
+                    }
+                });
                 
-                showResults('Direct File Test', {
-                    status: response.status,
-                    itemsCount: Array.isArray(data) ? data.length : 'not array',
-                    firstItem: Array.isArray(data) && data[0] ? data[0] : null
-                });
+                if (response.ok) {
+                    const data = await response.json();
+                    showStatus(`✅ Fermiy.ru OK! Пользователь: ${data.user.name}`, 'success');
+                    showResults(`
+                        <h3>🏠 Fermiy.ru Status:</h3>
+                        <div class="results">
+                            <p><strong>Успех:</strong> ${data.success}</p>
+                            <p><strong>ID:</strong> ${data.user.id}</p>
+                            <p><strong>Email:</strong> ${data.user.email}</p>
+                            <p><strong>Имя:</strong> ${data.user.name}</p>
+                            <p><strong>Роль:</strong> ${data.user.role}</p>
+                        </div>
+                    `);
+                } else {
+                    showStatus(`❌ Fermiy.ru Error: ${response.status}`, 'error');
+                }
             } catch (error) {
-                showError('Direct Test Failed: ' + error.message);
+                showStatus(`❌ Fermiy.ru Error: ${error.message}`, 'error');
             }
         }
         
-        function clearCache() {
-            localStorage.clear();
-            sessionStorage.clear();
-            if ('caches' in window) {
-                caches.keys().then(names => {
-                    names.forEach(name => caches.delete(name));
+        async function testAllBackends() {
+            showStatus('🔄 Тестируем все backend'ы...', 'info');
+            
+            const results = [];
+            
+            // Тест Railway
+            try {
+                const railwayResponse = await fetch('https://fermiy100githubio-production.up.railway.app');
+                if (railwayResponse.ok) {
+                    const data = await railwayResponse.json();
+                    results.push(`✅ Railway: ${data.message}`);
+                } else {
+                    results.push(`❌ Railway: ${railwayResponse.status}`);
+                }
+            } catch (error) {
+                results.push(`❌ Railway: ${error.message}`);
+            }
+            
+            // Тест Fermiy.ru
+            try {
+                const fermiyResponse = await fetch('https://fermiy.ru/api/auth/me.php');
+                if (fermiyResponse.ok) {
+                    const data = await fermiyResponse.json();
+                    results.push(`✅ Fermiy.ru: ${data.user.name}`);
+                } else {
+                    results.push(`❌ Fermiy.ru: ${fermiyResponse.status}`);
+                }
+            } catch (error) {
+                results.push(`❌ Fermiy.ru: ${error.message}`);
+            }
+            
+            showStatus('🔄 Тест завершен!', 'info');
+            showResults(`
+                <h3>🔄 Результаты всех тестов:</h3>
+                <div class="results">
+                    ${results.map(result => `<p>${result}</p>`).join('')}
+                </div>
+            `);
+        }
+        
+        function testMobileFeatures() {
+            showStatus('📱 Тестируем мобильные функции...', 'info');
+            
+            const results = [];
+            
+            // Проверка размера экрана
+            const screenWidth = window.innerWidth;
+            const screenHeight = window.innerHeight;
+            results.push(`📱 Размер экрана: ${screenWidth}x${screenHeight}`);
+            
+            // Проверка touch поддержки
+            const touchSupport = 'ontouchstart' in window;
+            results.push(`👆 Touch поддержка: ${touchSupport ? 'Да' : 'Нет'}`);
+            
+            // Проверка ориентации
+            const orientation = screen.orientation ? screen.orientation.type : 'unknown';
+            results.push(`🔄 Ориентация: ${orientation}`);
+            
+            // Проверка user agent
+            const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+            results.push(`📱 Мобильное устройство: ${isMobile ? 'Да' : 'Нет'}`);
+            
+            showStatus('📱 Мобильный тест завершен!', 'success');
+            showResults(`
+                <h3>📱 Результаты мобильного теста:</h3>
+                <div class="results">
+                    ${results.map(result => `<p>${result}</p>`).join('')}
+                </div>
+            `);
+        }
+        
+        function testResponsiveDesign() {
+            showStatus('🎨 Тестируем адаптивный дизайн...', 'info');
+            
+            const results = [];
+            
+            // Проверка медиа-запросов
+            const mediaQueries = [
+                { name: 'Mobile', query: '(max-width: 768px)' },
+                { name: 'Tablet', query: '(min-width: 769px) and (max-width: 1024px)' },
+                { name: 'Desktop', query: '(min-width: 1025px)' }
+            ];
+            
+            mediaQueries.forEach(mq => {
+                const matches = window.matchMedia(mq.query).matches;
+                results.push(`📱 ${mq.name}: ${matches ? 'Активен' : 'Неактивен'}`);
+            });
+            
+            // Проверка viewport
+            const viewport = document.querySelector('meta[name="viewport"]');
+            results.push(`👁️ Viewport: ${viewport ? viewport.content : 'Не найден'}`);
+            
+            showStatus('🎨 Тест адаптивного дизайна завершен!', 'success');
+            showResults(`
+                <h3>🎨 Результаты теста дизайна:</h3>
+                <div class="results">
+                    ${results.map(result => `<p>${result}</p>`).join('')}
+                </div>
+            `);
+        }
+        
+        function testButtonSizes() {
+            showStatus('🔘 Тестируем размеры кнопок...', 'info');
+            
+            const results = [];
+            
+            // Проверка кнопок на странице
+            const buttons = document.querySelectorAll('button');
+            results.push(`🔘 Всего кнопок: ${buttons.length}`);
+            
+            buttons.forEach((button, index) => {
+                const rect = button.getBoundingClientRect();
+                const minHeight = rect.height >= 44;
+                const minWidth = rect.width >= 44;
+                results.push(`🔘 Кнопка ${index + 1}: ${rect.width}x${rect.height}px (мин. размер: ${minHeight && minWidth ? '✅' : '❌'})`);
+            });
+            
+            showStatus('🔘 Тест размеров кнопок завершен!', 'success');
+            showResults(`
+                <h3>🔘 Результаты теста кнопок:</h3>
+                <div class="results">
+                    ${results.map(result => `<p>${result}</p>`).join('')}
+                </div>
+            `);
+        }
+        
+        function testNavigation() {
+            showStatus('🧭 Тестируем навигацию...', 'info');
+            
+            const results = [];
+            
+            // Проверка навигационных элементов
+            const navElements = document.querySelectorAll('nav, .navigation, .director-navigation');
+            results.push(`🧭 Навигационных элементов: ${navElements.length}`);
+            
+            // Проверка ссылок
+            const links = document.querySelectorAll('a');
+            results.push(`🔗 Ссылок: ${links.length}`);
+            
+            // Проверка кнопок навигации
+            const navButtons = document.querySelectorAll('button[onclick*="setActiveTab"]');
+            results.push(`🔘 Кнопок навигации: ${navButtons.length}`);
+            
+            showStatus('🧭 Тест навигации завершен!', 'success');
+            showResults(`
+                <h3>🧭 Результаты теста навигации:</h3>
+                <div class="results">
+                    ${results.map(result => `<p>${result}</p>`).join('')}
+                </div>
+            `);
+        }
+        
+        async function testMenuAPI() {
+            showStatus('🍽️ Тестируем Menu API...', 'info');
+            
+            try {
+                const response = await fetch('https://fermiy.ru/api/menu.php', {
+                    method: 'GET',
+                    headers: {
+                        'Accept': 'application/json',
+                        'Content-Type': 'application/json'
+                    }
                 });
+                
+                if (response.ok) {
+                    const data = await response.json();
+                    showStatus(`✅ Menu API OK! Загружено ${data.items.length} блюд`, 'success');
+                    showResults(`
+                        <h3>🍽️ Menu API Response:</h3>
+                        <div class="results">
+                            <p><strong>Всего блюд:</strong> ${data.items.length}</p>
+                            <p><strong>Неделя:</strong> ${data.weekStart}</p>
+                            <p><strong>Заголовок:</strong> ${data.title}</p>
+                        </div>
+                    `);
+                } else {
+                    showStatus(`❌ Menu API Error: ${response.status}`, 'error');
+                }
+            } catch (error) {
+                showStatus(`❌ Menu API Error: ${error.message}`, 'error');
             }
-            location.reload(true);
         }
         
-        function showLoading() {
-            document.getElementById('results').innerHTML = '<p>⏳ Загрузка...</p>';
+        function testMenuDisplay() {
+            showStatus('🍽️ Тестируем отображение меню...', 'info');
+            
+            const results = [];
+            
+            // Проверка элементов меню
+            const menuItems = document.querySelectorAll('.menu-item, .menu-item-card');
+            results.push(`🍽️ Элементов меню на странице: ${menuItems.length}`);
+            
+            // Проверка сетки меню
+            const menuGrid = document.querySelector('.menu-grid, .items-grid');
+            if (menuGrid) {
+                const gridStyle = window.getComputedStyle(menuGrid);
+                results.push(`📐 Сетка меню: ${gridStyle.display}`);
+            }
+            
+            showStatus('🍽️ Тест отображения меню завершен!', 'success');
+            showResults(`
+                <h3>🍽️ Результаты теста меню:</h3>
+                <div class="results">
+                    ${results.map(result => `<p>${result}</p>`).join('')}
+                </div>
+            `);
         }
         
-        function showResults(title, data) {
-            const div = document.getElementById('results');
-            div.innerHTML = `
-                <h2 class="success">✅ ${title}</h2>
-                <pre>${JSON.stringify(data, null, 2)}</pre>
-            `;
+        function testMenuUpload() {
+            showStatus('📤 Тестируем загрузку меню...', 'info');
+            
+            const results = [];
+            
+            // Проверка формы загрузки
+            const uploadForm = document.querySelector('input[type="file"]');
+            if (uploadForm) {
+                results.push(`📤 Форма загрузки: Найдена`);
+                results.push(`📤 Принимаемые типы: ${uploadForm.accept || 'Все'}`);
+            } else {
+                results.push(`📤 Форма загрузки: Не найдена`);
+            }
+            
+            // Проверка кнопки загрузки
+            const uploadButton = document.querySelector('button[onclick*="upload"]');
+            if (uploadButton) {
+                results.push(`🔘 Кнопка загрузки: Найдена`);
+            } else {
+                results.push(`🔘 Кнопка загрузки: Не найдена`);
+            }
+            
+            showStatus('📤 Тест загрузки меню завершен!', 'success');
+            showResults(`
+                <h3>📤 Результаты теста загрузки:</h3>
+                <div class="results">
+                    ${results.map(result => `<p>${result}</p>`).join('')}
+                </div>
+            `);
         }
         
-        function showError(message) {
-            document.getElementById('results').innerHTML = `
-                <h2 class="error">❌ ${message}</h2>
-            `;
+        async function testUserAPI() {
+            showStatus('👥 Тестируем User API...', 'info');
+            
+            try {
+                const response = await fetch('https://fermiy.ru/api/users.php', {
+                    method: 'GET',
+                    headers: {
+                        'Accept': 'application/json',
+                        'Content-Type': 'application/json'
+                    }
+                });
+                
+                if (response.ok) {
+                    const data = await response.json();
+                    showStatus(`✅ User API OK! Загружено ${data.length} пользователей`, 'success');
+                    showResults(`
+                        <h3>👥 User API Response:</h3>
+                        <div class="results">
+                            <p><strong>Всего пользователей:</strong> ${data.length}</p>
+                            <p><strong>Первый пользователь:</strong> ${data[0]?.name || 'Нет данных'}</p>
+                        </div>
+                    `);
+                } else {
+                    showStatus(`❌ User API Error: ${response.status}`, 'error');
+                }
+            } catch (error) {
+                showStatus(`❌ User API Error: ${error.message}`, 'error');
+            }
         }
         
-        // Автоматический тест при загрузке
+        async function testAuth() {
+            showStatus('🔐 Тестируем аутентификацию...', 'info');
+            
+            try {
+                const response = await fetch('https://fermiy.ru/api/auth/me.php', {
+                    method: 'GET',
+                    headers: {
+                        'Accept': 'application/json',
+                        'Content-Type': 'application/json'
+                    }
+                });
+                
+                if (response.ok) {
+                    const data = await response.json();
+                    showStatus(`✅ Auth OK! Пользователь: ${data.user.name}`, 'success');
+                    showResults(`
+                        <h3>🔐 Auth Response:</h3>
+                        <div class="results">
+                            <p><strong>Успех:</strong> ${data.success}</p>
+                            <p><strong>Пользователь:</strong> ${data.user.name}</p>
+                            <p><strong>Роль:</strong> ${data.user.role}</p>
+                            <p><strong>Верифицирован:</strong> ${data.user.verified ? 'Да' : 'Нет'}</p>
+                        </div>
+                    `);
+                } else {
+                    showStatus(`❌ Auth Error: ${response.status}`, 'error');
+                }
+            } catch (error) {
+                showStatus(`❌ Auth Error: ${error.message}`, 'error');
+            }
+        }
+        
+        function testUserManagement() {
+            showStatus('👥 Тестируем управление пользователями...', 'info');
+            
+            const results = [];
+            
+            // Проверка элементов управления пользователями
+            const userElements = document.querySelectorAll('.user-management, .user-item');
+            results.push(`👥 Элементов управления пользователями: ${userElements.length}`);
+            
+            // Проверка кнопок управления
+            const userButtons = document.querySelectorAll('button[onclick*="user"], button[onclick*="User"]');
+            results.push(`🔘 Кнопок управления пользователями: ${userButtons.length}`);
+            
+            showStatus('👥 Тест управления пользователями завершен!', 'success');
+            showResults(`
+                <h3>👥 Результаты теста управления пользователями:</h3>
+                <div class="results">
+                    ${results.map(result => `<p>${result}</p>`).join('')}
+                </div>
+            `);
+        }
+        
+        // Автоматически тестируем при загрузке
         window.onload = function() {
-            setTimeout(testAPI, 1000);
+            // Определяем тип устройства
+            const isMobile = window.innerWidth <= 768;
+            if (isMobile) {
+                showStatus('📱 Мобильное устройство обнаружено!', 'info');
+            } else {
+                showStatus('🖥️ Desktop устройство обнаружено!', 'info');
+            }
+            
+            // Запускаем базовые тесты
+            setTimeout(() => {
+                testAllBackends();
+            }, 1000);
         };
     </script>
 </body>

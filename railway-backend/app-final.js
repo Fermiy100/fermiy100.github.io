@@ -283,17 +283,33 @@ function loadDataIfNeeded() {
 }
 
 const server = http.createServer((req, res) => {
-    // CORS заголовки
+    // УЛУЧШЕННЫЕ CORS заголовки для всех запросов
     res.setHeader('Access-Control-Allow-Origin', '*');
-    res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS, DELETE');
-    res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
+    res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS, DELETE, PUT, PATCH, HEAD');
+    res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-Requested-With, Accept, Origin, Cache-Control, Pragma');
+    res.setHeader('Access-Control-Allow-Credentials', 'true');
+    res.setHeader('Access-Control-Max-Age', '86400');
+    res.setHeader('Access-Control-Expose-Headers', 'Content-Length, X-JSON');
+    
+    // Дополнительные заголовки для безопасности
+    res.setHeader('X-Content-Type-Options', 'nosniff');
+    res.setHeader('X-Frame-Options', 'DENY');
+    res.setHeader('X-XSS-Protection', '1; mode=block');
 
     const url = new URL(req.url, `http://${req.headers.host}`);
 
-    // Обработка OPTIONS запросов
+    // УЛУЧШЕННАЯ обработка OPTIONS запросов (preflight)
     if (req.method === 'OPTIONS') {
-        res.writeHead(200);
-        res.end();
+        console.log('🔄 Обрабатываем OPTIONS preflight запрос для:', req.url);
+        res.writeHead(200, {
+            'Content-Type': 'application/json; charset=utf-8',
+            'Access-Control-Allow-Origin': '*',
+            'Access-Control-Allow-Methods': 'GET, POST, OPTIONS, DELETE, PUT, PATCH, HEAD',
+            'Access-Control-Allow-Headers': 'Content-Type, Authorization, X-Requested-With, Accept, Origin, Cache-Control, Pragma',
+            'Access-Control-Allow-Credentials': 'true',
+            'Access-Control-Max-Age': '86400'
+        });
+        res.end(JSON.stringify({ status: 'OK', message: 'CORS preflight successful' }));
         return;
     }
 
@@ -308,7 +324,7 @@ const server = http.createServer((req, res) => {
         });
         res.end(JSON.stringify({
             status: 'OK',
-            message: 'Railway Server with ULTIMATE EXCEL PARSER v23.0.0 - MAXIMUM POWER PARSER!',
+            message: 'Railway Server with ULTIMATE EXCEL PARSER v24.0.0 - CORS FIXED!',
             dishCount: menuData.length,
             userCount: usersData.length,
             encoding: 'UTF-8',
@@ -323,6 +339,8 @@ const server = http.createServer((req, res) => {
             ultimateParser: true,
             parserVersion: 'v1.0.0',
             maxPowerParser: true,
+            corsFixed: true,
+            preflightHandling: true,
             time: new Date().toISOString()
         }, null, 2));
     } 
@@ -648,7 +666,11 @@ const server = http.createServer((req, res) => {
         console.log('👤 ПОЛУЧАЕМ ИНФОРМАЦИЮ О ТЕКУЩЕМ ПОЛЬЗОВАТЕЛЕ...');
         res.writeHead(200, {
             'Content-Type': 'application/json; charset=utf-8',
-            'Access-Control-Allow-Origin': '*'
+            'Access-Control-Allow-Origin': '*',
+            'Access-Control-Allow-Methods': 'GET, POST, OPTIONS, DELETE, PUT, PATCH, HEAD',
+            'Access-Control-Allow-Headers': 'Content-Type, Authorization, X-Requested-With, Accept, Origin, Cache-Control, Pragma',
+            'Access-Control-Allow-Credentials': 'true',
+            'Access-Control-Max-Age': '86400'
         });
         res.end(JSON.stringify({
             success: true,

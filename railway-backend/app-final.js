@@ -145,7 +145,7 @@ const server = http.createServer((req, res) => {
         });
         res.end(JSON.stringify({
             status: 'OK',
-            message: 'Railway Server with EMPTY MENU v16.0.0 - NO AUTO LOAD!',
+            message: 'Railway Server with EMPTY MENU v16.1.0 - FORCE EMPTY!',
             dishCount: menuData.length,
             encoding: 'UTF-8',
             mobileReady: true,

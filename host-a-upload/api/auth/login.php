@@ -9,60 +9,55 @@ if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
     exit();
 }
 
-if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
-    http_response_code(405);
-    echo json_encode(['error' => 'Method not allowed']);
-    exit();
-}
-
+// Получаем данные из POST запроса
 $input = json_decode(file_get_contents('php://input'), true);
 
 if (!$input || !isset($input['email']) || !isset($input['password'])) {
     http_response_code(400);
-    echo json_encode(['error' => 'Email and password required']);
+    echo json_encode([
+        'success' => false,
+        'error' => 'Неверные данные запроса'
+    ]);
     exit();
 }
-
-// Mock authentication - UPDATED CREDENTIALS
-$validUsers = [
-    'director@school.test' => [
-        'id' => 1,
-        'email' => 'director@school.test',
-        'name' => 'Директор школы',
-        'role' => 'DIRECTOR',
-        'school_id' => 1,
-        'verified' => true,
-        'password' => 'P@ssw0rd1!'
-    ],
-    'parent@school.test' => [
-        'id' => 2,
-        'email' => 'parent@school.test',
-        'name' => 'Родитель',
-        'role' => 'PARENT',
-        'school_id' => 1,
-        'verified' => true,
-        'password' => 'P@ssw0rd1!'
-    ]
-];
 
 $email = $input['email'];
 $password = $input['password'];
 
+// Проверяем учетные данные
+$validUsers = [
+    'director@school.test' => [
+        'password' => 'P@ssw0rd1!',
+        'role' => 'DIRECTOR',
+        'name' => 'Директор школы'
+    ],
+    'parent@school.test' => [
+        'password' => 'P@ssw0rd1!',
+        'role' => 'PARENT',
+        'name' => 'Родитель/Ученик'
+    ]
+];
+
 if (isset($validUsers[$email]) && $validUsers[$email]['password'] === $password) {
     $user = $validUsers[$email];
-    unset($user['password']); // Remove password from response
     
-    // Generate simple test token
-    $token = $user['role'] === 'DIRECTOR' ? 'test-director-token' : 'test-parent-token';
-    
-    $response = [
-        'token' => $token,
-        'user' => $user
-    ];
-    
-    echo json_encode($response);
+    echo json_encode([
+        'success' => true,
+        'token' => $email, // Используем email как токен
+        'user' => [
+            'id' => $email === 'director@school.test' ? 1 : 2,
+            'email' => $email,
+            'name' => $user['name'],
+            'role' => $user['role'],
+            'school_id' => 1,
+            'verified' => true
+        ]
+    ], JSON_UNESCAPED_UNICODE);
 } else {
     http_response_code(401);
-    echo json_encode(['error' => 'Invalid credentials']);
+    echo json_encode([
+        'success' => false,
+        'error' => 'Неверные учетные данные'
+    ], JSON_UNESCAPED_UNICODE);
 }
 ?>

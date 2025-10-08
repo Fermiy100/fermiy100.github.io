@@ -24,6 +24,13 @@ export default function DirectorAdvanced({ token: _token }: any) {
     loadData();
   }, []);
 
+  // Принудительно загружаем меню при каждом рендере
+  useEffect(() => {
+    if (menuItems.length === 0) {
+      loadMenuData();
+    }
+  }, [menuItems.length]);
+
   async function loadData() {
     try {
       setLoading(true);
@@ -46,6 +53,24 @@ export default function DirectorAdvanced({ token: _token }: any) {
       setMsg(`Ошибка загрузки: ${error.message}`);
     } finally {
       setLoading(false);
+    }
+  }
+
+  // Принудительная загрузка меню
+  async function loadMenuData() {
+    try {
+      console.log('🔄 Принудительно загружаем меню...');
+      const menuData = await apiClient.getMenu();
+      const items = Array.isArray(menuData) ? menuData : menuData.items || [];
+      console.log(`📊 Загружено ${items.length} блюд`);
+      setMenuItems(items);
+      
+      if (items.length > 0) {
+        setMsg(`Меню загружено! Добавлено ${items.length} блюд`);
+      }
+    } catch (error: any) {
+      console.error('❌ Ошибка загрузки меню:', error);
+      setMsg(`Ошибка загрузки меню: ${error.message}`);
     }
   }
 
@@ -352,7 +377,10 @@ export default function DirectorAdvanced({ token: _token }: any) {
               </button>
               
               <button
-                onClick={() => setMenuView(menuView === 'grid' ? 'list' : 'grid')}
+                onClick={() => {
+                  setMenuView(menuView === 'grid' ? 'list' : 'grid');
+                  loadMenuData(); // Принудительно загружаем меню
+                }}
                 style={{
                   padding: '10px 15px',
                   backgroundColor: '#6b7280',

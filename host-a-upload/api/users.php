@@ -1,7 +1,7 @@
 <?php
 header('Content-Type: application/json');
 header('Access-Control-Allow-Origin: *');
-header('Access-Control-Allow-Methods: GET, POST, PUT, DELETE, OPTIONS');
+header('Access-Control-Allow-Methods: GET, POST, PUT, DELETE, OPTIONS, PATCH');
 header('Access-Control-Allow-Headers: Content-Type, Authorization');
 
 if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
@@ -9,67 +9,73 @@ if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
     exit();
 }
 
-// Обработка GET запроса для получения списка пользователей
-if ($_SERVER['REQUEST_METHOD'] === 'GET') {
-    // Mock список пользователей
-    $users = [
-        [
-            'id' => 1,
-            'email' => 'director@school.test',
-            'name' => 'Директор школы',
-            'role' => 'director',
-            'school_id' => 1,
-            'verified' => true,
-            'created_at' => '2025-10-07T10:00:00Z'
-        ],
-        [
-            'id' => 2,
-            'email' => 'parent@school.test',
-            'name' => 'Родитель',
-            'role' => 'parent',
-            'school_id' => 1,
-            'verified' => true,
-            'created_at' => '2025-10-07T10:00:00Z'
-        ],
-        [
-            'id' => 3,
-            'email' => 'teacher@school.test',
-            'name' => 'Учитель',
-            'role' => 'teacher',
-            'school_id' => 1,
-            'verified' => false,
-            'created_at' => '2025-10-07T10:00:00Z'
-        ]
-    ];
-    
-    echo json_encode($users);
+// Railway backend URL
+$railway_url = 'https://fermiy100githubio-production.up.railway.app';
+
+// Получаем путь запроса
+$request_uri = $_SERVER['REQUEST_URI'];
+$path = str_replace('/api/users', '', $request_uri);
+
+// Определяем URL для Railway
+$railway_endpoint = $railway_url . '/api/users' . $path;
+
+// Подготавливаем данные для отправки
+$post_data = null;
+if ($_SERVER['REQUEST_METHOD'] === 'POST' || $_SERVER['REQUEST_METHOD'] === 'PATCH') {
+    $post_data = file_get_contents('php://input');
+}
+
+// Настройки cURL
+$ch = curl_init();
+curl_setopt($ch, CURLOPT_URL, $railway_endpoint);
+curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+curl_setopt($ch, CURLOPT_FOLLOWLOCATION, true);
+curl_setopt($ch, CURLOPT_TIMEOUT, 30);
+curl_setopt($ch, CURLOPT_HTTPHEADER, [
+    'Content-Type: application/json',
+    'Accept: application/json'
+]);
+
+// Устанавливаем метод запроса
+switch ($_SERVER['REQUEST_METHOD']) {
+    case 'GET':
+        curl_setopt($ch, CURLOPT_HTTPGET, true);
+        break;
+    case 'POST':
+        curl_setopt($ch, CURLOPT_POST, true);
+        if ($post_data) {
+            curl_setopt($ch, CURLOPT_POSTFIELDS, $post_data);
+        }
+        break;
+    case 'PATCH':
+        curl_setopt($ch, CURLOPT_CUSTOMREQUEST, 'POST'); // Railway использует POST для верификации
+        if ($post_data) {
+            curl_setopt($ch, CURLOPT_POSTFIELDS, $post_data);
+        }
+        break;
+    case 'DELETE':
+        curl_setopt($ch, CURLOPT_CUSTOMREQUEST, 'DELETE');
+        break;
+}
+
+// Выполняем запрос
+$response = curl_exec($ch);
+$http_code = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+$error = curl_error($ch);
+curl_close($ch);
+
+// Обрабатываем ошибки
+if ($error) {
+    http_response_code(500);
+    echo json_encode([
+        'error' => 'Curl error: ' . $error
+    ]);
     exit();
 }
 
-if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
-    http_response_code(405);
-    echo json_encode(['error' => 'Method not allowed']);
-    exit();
-}
+// Устанавливаем HTTP код ответа
+http_response_code($http_code);
 
-$input = json_decode(file_get_contents('php://input'), true);
-
-if (!$input || !isset($input['email']) || !isset($input['name']) || !isset($input['role']) || !isset($input['password'])) {
-    http_response_code(400);
-    echo json_encode(['error' => 'Все поля обязательны']);
-    exit();
-}
-
-// Mock successful user creation
-$newUser = [
-    'id' => rand(100, 999),
-    'email' => $input['email'],
-    'name' => $input['name'],
-    'role' => $input['role'],
-    'school_id' => 1,
-    'verified' => false,
-    'created_at' => date('c')
-];
-
-echo json_encode($newUser);
+// Возвращаем ответ от Railway
+echo $response;
 ?>

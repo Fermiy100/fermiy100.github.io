@@ -90,7 +90,7 @@ function App() {
             </div>
             <div className="user-info">
               <span className={`role-badge ${role === 'DIRECTOR' ? 'role-director' : 'role-parent'}`}>
-                {role === 'DIRECTOR' ? '👨‍💼 Директор' : '👨‍👩‍👧‍👦 Родитель/Ученик'}
+                {userName || (role === 'DIRECTOR' ? '👨‍💼 Директор' : '👨‍👩‍👧‍👦 Родитель/Ученик')}
               </span>
               <button onClick={handleLogout} className="btn btn-danger btn-sm">
                 Выйти

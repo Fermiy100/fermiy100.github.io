@@ -1,0 +1,308 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Тест загрузки Excel файла</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            background: #f5f5f5;
+        }
+        .container {
+            background: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        h1 {
+            color: #2c3e50;
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        .upload-section {
+            border: 2px dashed #3498db;
+            padding: 30px;
+            text-align: center;
+            margin: 20px 0;
+            border-radius: 10px;
+            background: #f8f9fa;
+        }
+        .file-input {
+            margin: 20px 0;
+        }
+        input[type="file"] {
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            width: 100%;
+            max-width: 400px;
+        }
+        button {
+            background: #3498db;
+            color: white;
+            padding: 12px 24px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+            margin: 10px;
+        }
+        button:hover {
+            background: #2980b9;
+        }
+        .success {
+            background: #27ae60;
+        }
+        .error {
+            background: #e74c3c;
+        }
+        .log {
+            background: #ecf0f1;
+            padding: 15px;
+            border-radius: 5px;
+            margin: 10px 0;
+            font-family: monospace;
+            white-space: pre-wrap;
+            max-height: 300px;
+            overflow-y: auto;
+        }
+        .menu-display {
+            background: #f8f9fa;
+            border: 1px solid #dee2e6;
+            border-radius: 8px;
+            padding: 15px;
+            margin: 10px 0;
+        }
+        .dish-item {
+            background: white;
+            border: 1px solid #e9ecef;
+            border-radius: 5px;
+            padding: 10px;
+            margin: 5px 0;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .dish-name {
+            font-weight: bold;
+            color: #2c3e50;
+        }
+        .dish-details {
+            color: #6c757d;
+            font-size: 14px;
+        }
+        .meal-type {
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 12px;
+            font-weight: bold;
+        }
+        .breakfast { background: #fff3cd; color: #856404; }
+        .lunch { background: #d1ecf1; color: #0c5460; }
+        .snack { background: #d4edda; color: #155724; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🍽️ Тест загрузки Excel файла в Railway</h1>
+        
+        <div class="upload-section">
+            <h3>📁 Загрузите ваш Excel файл</h3>
+            <p>Выберите файл "2-Я НЕДЕЛЯ ДЛЯ ЗАКАЗА 22.09-26.09 (копия) — копия.xlsx"</p>
+            
+            <div class="file-input">
+                <input type="file" id="excelFile" accept=".xlsx,.xls" />
+            </div>
+            
+            <button onclick="uploadExcelFile()">
+                📤 Загрузить в Railway
+            </button>
+            
+            <button onclick="clearMenu()" class="error">
+                🗑️ Очистить меню
+            </button>
+            
+            <button onclick="loadCurrentMenu()" class="success">
+                📋 Загрузить текущее меню
+            </button>
+        </div>
+        
+        <div id="log" class="log"></div>
+        
+        <div id="menu-display" style="margin-top: 20px;"></div>
+    </div>
+
+    <script>
+        const RAILWAY_URL = 'https://fermiy100githubio-production.up.railway.app';
+        
+        function log(message) {
+            const logDiv = document.getElementById('log');
+            const timestamp = new Date().toLocaleTimeString();
+            logDiv.textContent += `[${timestamp}] ${message}\n`;
+            logDiv.scrollTop = logDiv.scrollHeight;
+        }
+        
+        function clearLog() {
+            document.getElementById('log').textContent = '';
+        }
+        
+        async function uploadExcelFile() {
+            const fileInput = document.getElementById('excelFile');
+            const file = fileInput.files[0];
+            
+            if (!file) {
+                log('❌ Пожалуйста, выберите Excel файл');
+                return;
+            }
+            
+            try {
+                clearLog();
+                log('📤 Загружаем Excel файл в Railway...');
+                log(`📁 Файл: ${file.name} (${(file.size / 1024).toFixed(1)} KB)`);
+                
+                const formData = new FormData();
+                formData.append('file', file);
+                
+                const response = await fetch(`${RAILWAY_URL}/api/menu`, {
+                    method: 'POST',
+                    body: formData
+                });
+                
+                if (!response.ok) {
+                    throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+                }
+                
+                const result = await response.json();
+                
+                log('✅ Файл успешно загружен!');
+                log(`🍽️ Обработано блюд: ${result.itemsCount || result.length || 'Неизвестно'}`);
+                log(`📅 Неделя: ${result.weekStart || 'Не указана'}`);
+                
+                // Загружаем обновленное меню
+                setTimeout(loadCurrentMenu, 1000);
+                
+            } catch (error) {
+                log(`❌ Ошибка загрузки: ${error.message}`);
+            }
+        }
+        
+        async function clearMenu() {
+            try {
+                log('🗑️ Очищаем меню...');
+                
+                const response = await fetch(`${RAILWAY_URL}/api/menu/clear`, {
+                    method: 'DELETE'
+                });
+                
+                if (!response.ok) {
+                    throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+                }
+                
+                const result = await response.json();
+                
+                log('✅ Меню очищено!');
+                log(`🗑️ Удалено блюд: ${result.deletedCount || 'Неизвестно'}`);
+                
+                // Очищаем отображение
+                document.getElementById('menu-display').innerHTML = '';
+                
+            } catch (error) {
+                log(`❌ Ошибка очистки: ${error.message}`);
+            }
+        }
+        
+        async function loadCurrentMenu() {
+            try {
+                log('📋 Загружаем текущее меню...');
+                
+                const response = await fetch(`${RAILWAY_URL}/api/menu`);
+                
+                if (!response.ok) {
+                    throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+                }
+                
+                const menu = await response.json();
+                
+                log(`✅ Загружено ${menu.length} блюд`);
+                
+                // Отображаем меню
+                displayMenu(menu);
+                
+            } catch (error) {
+                log(`❌ Ошибка загрузки меню: ${error.message}`);
+            }
+        }
+        
+        function displayMenu(menu) {
+            const menuDiv = document.getElementById('menu-display');
+            
+            if (!menu || menu.length === 0) {
+                menuDiv.innerHTML = '<div class="menu-display"><h3>🍽️ Меню пусто</h3></div>';
+                return;
+            }
+            
+            // Группируем по дням недели и типам питания
+            const grouped = {};
+            
+            menu.forEach(dish => {
+                const day = dish.day_of_week || 'Неизвестно';
+                const mealType = dish.meal_type || 'Неизвестно';
+                
+                if (!grouped[day]) {
+                    grouped[day] = {};
+                }
+                if (!grouped[day][mealType]) {
+                    grouped[day][mealType] = [];
+                }
+                
+                grouped[day][mealType].push(dish);
+            });
+            
+            let html = '<div class="menu-display"><h3>🍽️ Текущее меню</h3>';
+            
+            const days = ['Понедельник', 'Вторник', 'Среда', 'Четверг', 'Пятница'];
+            const mealTypes = ['завтрак', 'обед', 'полдник'];
+            
+            days.forEach(day => {
+                if (grouped[day]) {
+                    html += `<h4>📅 ${day}</h4>`;
+                    
+                    mealTypes.forEach(mealType => {
+                        if (grouped[day][mealType] && grouped[day][mealType].length > 0) {
+                            html += `<h5>🍽️ ${mealType.charAt(0).toUpperCase() + mealType.slice(1)}</h5>`;
+                            
+                            grouped[day][mealType].forEach(dish => {
+                                html += `
+                                    <div class="dish-item">
+                                        <div>
+                                            <div class="dish-name">${dish.name}</div>
+                                            <div class="dish-details">
+                                                Вес: ${dish.weight || 'Не указан'} | 
+                                                Рецепт: ${dish.recipe_number || 'Не указан'}
+                                            </div>
+                                        </div>
+                                        <span class="meal-type ${mealType}">${mealType}</span>
+                                    </div>
+                                `;
+                            });
+                        }
+                    });
+                }
+            });
+            
+            html += '</div>';
+            menuDiv.innerHTML = html;
+        }
+        
+        // Автоматически загружаем текущее меню при загрузке страницы
+        window.onload = function() {
+            log('🌐 Страница загружена');
+            loadCurrentMenu();
+        };
+    </script>
+</body>
+</html>

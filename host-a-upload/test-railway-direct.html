@@ -1,0 +1,255 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Тест Railway напрямую</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background: #f5f5f5;
+        }
+        .container {
+            background: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        h1 {
+            color: #2c3e50;
+            text-align: center;
+        }
+        .button {
+            background: #3498db;
+            color: white;
+            border: none;
+            padding: 15px 30px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+            margin: 10px;
+            display: block;
+            width: 100%;
+        }
+        .button:hover {
+            background: #2980b9;
+        }
+        .success {
+            background: #27ae60;
+        }
+        .error {
+            background: #e74c3c;
+        }
+        .log {
+            background: #ecf0f1;
+            padding: 15px;
+            border-radius: 5px;
+            margin: 10px 0;
+            font-family: monospace;
+            white-space: pre-wrap;
+            max-height: 300px;
+            overflow-y: auto;
+        }
+        .user-card {
+            background: #f8f9fa;
+            border: 1px solid #dee2e6;
+            border-radius: 8px;
+            padding: 15px;
+            margin: 10px 0;
+        }
+        .verified {
+            color: #28a745;
+            font-weight: bold;
+        }
+        .unverified {
+            color: #dc3545;
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🚀 Тест Railway Backend напрямую</h1>
+        
+        <button class="button" onclick="loadUsers()">
+            👥 Загрузить пользователей
+        </button>
+        
+        <button class="button" onclick="verifyUser3()">
+            ✅ Верифицировать пользователя 3 (Учитель)
+        </button>
+        
+        <button class="button" onclick="verifyUser462()">
+            ✅ Верифицировать пользователя 462 (Клетка Конфетка)
+        </button>
+        
+        <button class="button success" onclick="testAll()">
+            🧪 Полный тест всех функций
+        </button>
+        
+        <div id="log" class="log"></div>
+        
+        <div id="users" style="margin-top: 20px;"></div>
+    </div>
+
+    <script>
+        const RAILWAY_URL = 'https://fermiy100githubio-production.up.railway.app';
+        
+        function log(message) {
+            const logDiv = document.getElementById('log');
+            const timestamp = new Date().toLocaleTimeString();
+            logDiv.textContent += `[${timestamp}] ${message}\n`;
+            logDiv.scrollTop = logDiv.scrollHeight;
+        }
+        
+        function clearLog() {
+            document.getElementById('log').textContent = '';
+        }
+        
+        async function loadUsers() {
+            try {
+                clearLog();
+                log('👥 Загружаем пользователей из Railway...');
+                
+                const response = await fetch(`${RAILWAY_URL}/api/users`);
+                
+                if (!response.ok) {
+                    throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+                }
+                
+                const users = await response.json();
+                
+                log(`✅ Загружено ${users.length} пользователей`);
+                
+                // Отображаем пользователей
+                const usersDiv = document.getElementById('users');
+                usersDiv.innerHTML = '<h2>👥 Пользователи:</h2>';
+                
+                users.forEach(user => {
+                    const userCard = document.createElement('div');
+                    userCard.className = 'user-card';
+                    userCard.innerHTML = `
+                        <h3>${user.name}</h3>
+                        <p><strong>Email:</strong> ${user.email}</p>
+                        <p><strong>Роль:</strong> ${user.role}</p>
+                        <p><strong>ID:</strong> ${user.id}</p>
+                        <p><strong>Статус:</strong> <span class="${user.verified ? 'verified' : 'unverified'}">
+                            ${user.verified ? '✅ Верифицирован' : '❌ Не верифицирован'}
+                        </span></p>
+                    `;
+                    usersDiv.appendChild(userCard);
+                });
+                
+            } catch (error) {
+                log(`❌ Ошибка: ${error.message}`);
+            }
+        }
+        
+        async function verifyUser3() {
+            try {
+                log('✅ Верифицируем пользователя 3 (Учитель)...');
+                
+                const response = await fetch(`${RAILWAY_URL}/api/users/3/verify`, {
+                    method: 'POST'
+                });
+                
+                if (!response.ok) {
+                    throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+                }
+                
+                const result = await response.json();
+                
+                log('✅ Верификация успешна!');
+                log(`👤 Пользователь: ${result.user.name}`);
+                log(`📧 Email: ${result.user.email}`);
+                log(`✅ Статус: ${result.user.verified ? 'Верифицирован' : 'Не верифицирован'}`);
+                
+                // Обновляем список пользователей
+                setTimeout(loadUsers, 1000);
+                
+            } catch (error) {
+                log(`❌ Ошибка верификации: ${error.message}`);
+            }
+        }
+        
+        async function verifyUser462() {
+            try {
+                log('✅ Верифицируем пользователя 462 (Клетка Конфетка)...');
+                
+                const response = await fetch(`${RAILWAY_URL}/api/users/462/verify`, {
+                    method: 'POST'
+                });
+                
+                if (!response.ok) {
+                    throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+                }
+                
+                const result = await response.json();
+                
+                log('✅ Верификация успешна!');
+                log(`👤 Пользователь: ${result.user.name}`);
+                log(`📧 Email: ${result.user.email}`);
+                log(`✅ Статус: ${result.user.verified ? 'Верифицирован' : 'Не верифицирован'}`);
+                
+                // Обновляем список пользователей
+                setTimeout(loadUsers, 1000);
+                
+            } catch (error) {
+                log(`❌ Ошибка верификации: ${error.message}`);
+            }
+        }
+        
+        async function testAll() {
+            try {
+                clearLog();
+                log('🧪 Запускаем полный тест всех функций...');
+                
+                // Тест 1: Загрузка пользователей
+                log('📋 Тест 1: Загрузка пользователей...');
+                const usersResponse = await fetch(`${RAILWAY_URL}/api/users`);
+                if (!usersResponse.ok) throw new Error(`Users API: ${usersResponse.status}`);
+                const users = await usersResponse.json();
+                log(`✅ Пользователи загружены: ${users.length} шт.`);
+                
+                // Тест 2: Загрузка меню
+                log('🍽️ Тест 2: Загрузка меню...');
+                const menuResponse = await fetch(`${RAILWAY_URL}/api/menu`);
+                if (!menuResponse.ok) throw new Error(`Menu API: ${menuResponse.status}`);
+                const menu = await menuResponse.json();
+                log(`✅ Меню загружено: ${menu.length} блюд`);
+                
+                // Тест 3: Информация о базе данных
+                log('🗄️ Тест 3: Информация о базе данных...');
+                const dbResponse = await fetch(`${RAILWAY_URL}/api/database`);
+                if (!dbResponse.ok) throw new Error(`Database API: ${dbResponse.status}`);
+                const dbInfo = await dbResponse.json();
+                log(`✅ База данных: ${dbInfo.users.totalUsers} пользователей, ${dbInfo.menu.totalDishes} блюд`);
+                
+                // Тест 4: Верификация пользователя
+                log('✅ Тест 4: Верификация пользователя...');
+                const verifyResponse = await fetch(`${RAILWAY_URL}/api/users/3/verify`, {
+                    method: 'POST'
+                });
+                if (!verifyResponse.ok) throw new Error(`Verify API: ${verifyResponse.status}`);
+                const verifyResult = await verifyResponse.json();
+                log(`✅ Верификация работает: ${verifyResult.user.name}`);
+                
+                log('🎉 ВСЕ ТЕСТЫ ПРОШЛИ УСПЕШНО!');
+                log('✅ Railway backend полностью функционален!');
+                
+            } catch (error) {
+                log(`❌ Ошибка в тестах: ${error.message}`);
+            }
+        }
+        
+        // Автоматически загружаем пользователей при загрузке страницы
+        window.onload = function() {
+            log('🌐 Страница загружена');
+            loadUsers();
+        };
+    </script>
+</body>
+</html>

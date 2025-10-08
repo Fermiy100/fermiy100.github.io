@@ -1,7 +1,7 @@
 // API клиент для работы с backend
 
 const API_BASE_URL = import.meta.env.PROD 
-  ? 'https://fermiy.ru/api'  // Local PHP backend
+  ? 'https://fermiy100githubio-production.up.railway.app/api'  // Railway backend
   : 'http://localhost:10000/api';       // Development URL
 
 export interface User {
@@ -135,7 +135,7 @@ class ApiClient {
 
   async verifyUser(userId: number): Promise<{ message: string }> {
     return this.request<{ message: string }>(`/users/${userId}/verify`, {
-      method: 'PATCH',
+      method: 'POST',
     });
   }
 

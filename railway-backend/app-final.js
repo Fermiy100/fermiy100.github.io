@@ -212,6 +212,9 @@ for (const day of days) {
 }
 
 console.log(`🍽️ МЕНЮ ЗАГРУЖЕНО - ${menuData.length} БЛЮД!`);
+console.log(`🌅 ЗАВТРАК: ${BREAKFAST_DISHES.length} уникальных блюд`);
+console.log(`🍽️ ОБЕД: ${LUNCH_DISHES.length} уникальных блюд`);
+console.log(`🍎 ПОЛДНИК: ${SNACK_DISHES.length} уникальных блюд`);
 
 function getDayName(dayNumber) {
     const days = ['', 'Понедельник', 'Вторник', 'Среда', 'Четверг', 'Пятница'];
@@ -290,7 +293,7 @@ const server = http.createServer((req, res) => {
         });
         res.end(JSON.stringify({
             status: 'OK',
-            message: 'Railway Server with LOGIN & AUTH & USERS & DATABASE v21.0.0 - DIFFERENT DISHES FOR EACH MEAL!',
+            message: 'Railway Server with LOGIN & AUTH & USERS & DATABASE v22.0.0 - UNIQUE DISHES FOR BREAKFAST/LUNCH/SNACK!',
             dishCount: menuData.length,
             userCount: usersData.length,
             encoding: 'UTF-8',

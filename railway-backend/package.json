@@ -1,7 +1,7 @@
 {
   "name": "school-meals-backend",
   "version": "1.0.0",
-  "description": "School Meals Backend",
+  "description": "School Meals Backend with Ultimate Excel Parser",
   "main": "app-final.js",
   "scripts": {
     "start": "node app-final.js"
@@ -9,7 +9,10 @@
   "engines": {
     "node": "18.x"
   },
-  "keywords": ["school", "meals"],
+  "dependencies": {
+    "xlsx": "^0.18.5"
+  },
+  "keywords": ["school", "meals", "excel", "parser"],
   "author": "Fermiy",
   "license": "MIT"
 }

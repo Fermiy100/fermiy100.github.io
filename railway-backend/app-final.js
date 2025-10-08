@@ -372,32 +372,42 @@ const server = http.createServer((req, res) => {
                 // Проверяем, есть ли файл для парсинга
                 if (fs.existsSync(excelFilePath)) {
                     console.log('🎯 Найден Excel файл, запускаем ULTIMATE ПАРСЕР...');
-                    newDishes = await parseExcelWithUltimateParser(excelFilePath);
+                    parseExcelWithUltimateParser(excelFilePath).then(dishes => {
+                        newDishes = dishes;
+                        processDishes();
+                    }).catch(error => {
+                        console.error('❌ Ошибка Ultimate парсера:', error);
+                        newDishes = createAllDishesFromExcel();
+                        processDishes();
+                    });
                 } else {
                     console.log('📋 Excel файл не найден, используем встроенные данные...');
                     newDishes = createAllDishesFromExcel();
+                    processDishes();
                 }
                 
-                // Очищаем старое меню и добавляем новые блюда
-                menuData = [];
-                newDishes.forEach((dish, index) => {
-                    dish.id = index + 1;
-                    menuData.push(dish);
-                });
-                
-                console.log(`🚀 ULTIMATE ПАРСЕР ЗАВЕРШИЛ РАБОТУ! Обработано ${newDishes.length} блюд`);
-                
-                res.writeHead(200, {
-                    'Content-Type': 'application/json; charset=utf-8',
-                    'Access-Control-Allow-Origin': '*'
-                });
-                res.end(JSON.stringify({
-                    success: true,
-                    message: `ULTIMATE ПАРСЕР: Меню загружено! Обработано ${newDishes.length} блюд`,
-                    addedCount: newDishes.length,
-                    totalDishes: menuData.length,
-                    parser: 'ULTIMATE v1.0.0'
-                }, null, 2));
+                function processDishes() {
+                    // Очищаем старое меню и добавляем новые блюда
+                    menuData = [];
+                    newDishes.forEach((dish, index) => {
+                        dish.id = index + 1;
+                        menuData.push(dish);
+                    });
+                    
+                    console.log(`🚀 ULTIMATE ПАРСЕР ЗАВЕРШИЛ РАБОТУ! Обработано ${newDishes.length} блюд`);
+                    
+                    res.writeHead(200, {
+                        'Content-Type': 'application/json; charset=utf-8',
+                        'Access-Control-Allow-Origin': '*'
+                    });
+                    res.end(JSON.stringify({
+                        success: true,
+                        message: `ULTIMATE ПАРСЕР: Меню загружено! Обработано ${newDishes.length} блюд`,
+                        addedCount: newDishes.length,
+                        totalDishes: menuData.length,
+                        parser: 'ULTIMATE v1.0.0'
+                    }, null, 2));
+                }
             } catch (error) {
                 console.error('❌ Ошибка ULTIMATE парсера:', error);
                 res.writeHead(500, {

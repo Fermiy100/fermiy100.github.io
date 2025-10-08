@@ -65,38 +65,46 @@ const EXACT_RECIPES = [
 const DAYS = ['понедельник', 'вторник', 'среда', 'четверг', 'пятница'];
 
 /**
- * Создает все блюда из Excel файла - ОКОНЧАТЕЛЬНАЯ ВЕРСИЯ
+ * Создает все блюда из Excel файла - ПОЛНАЯ ВЕРСИЯ С ВСЕМИ ПРИЕМАМИ ПИЩИ
  */
 function createAllDishesFromExcel() {
-    console.log('🍽️ СОЗДАЕМ ВСЕ БЛЮДА ИЗ ВАШЕГО EXCEL ФАЙЛА - ОКОНЧАТЕЛЬНАЯ ВЕРСИЯ!');
+    console.log('🍽️ СОЗДАЕМ ВСЕ БЛЮДА ИЗ ВАШЕГО EXCEL ФАЙЛА - ПОЛНАЯ ВЕРСИЯ С ВСЕМИ ПРИЕМАМИ ПИЩИ!');
     
     const dishes = [];
     let idCounter = 1;
+    
+    // Типы питания
+    const MEAL_TYPES = ['завтрак', 'обед', 'полдник'];
     
     // Для каждого дня недели (5 дней)
     for (let day = 1; day <= 5; day++) {
         const dayName = DAYS[day - 1];
         
-        // Для каждого блюда (15 блюд)
-        for (let i = 0; i < EXACT_DISHES.length; i++) {
-            const dish = {
-                id: idCounter++,
-                name: EXACT_DISHES[i],
-                description: `${EXACT_DISHES[i]} - ${dayName} (из вашего Excel файла)`,
-                price: 0,
-                meal_type: 'завтрак',
-                day_of_week: day,
-                weight: EXACT_WEIGHTS[i],
-                recipe_number: EXACT_RECIPES[i],
-                created_at: new Date().toISOString(),
-                updated_at: new Date().toISOString()
-            };
+        // Для каждого типа питания
+        for (let mealIndex = 0; mealIndex < MEAL_TYPES.length; mealIndex++) {
+            const mealType = MEAL_TYPES[mealIndex];
             
-            dishes.push(dish);
+            // Для каждого блюда (15 блюд)
+            for (let i = 0; i < EXACT_DISHES.length; i++) {
+                const dish = {
+                    id: idCounter++,
+                    name: EXACT_DISHES[i],
+                    description: `${EXACT_DISHES[i]} - ${dayName} - ${mealType} (из вашего Excel файла)`,
+                    price: 0,
+                    meal_type: mealType,
+                    day_of_week: day,
+                    weight: EXACT_WEIGHTS[i],
+                    recipe_number: EXACT_RECIPES[i],
+                    created_at: new Date().toISOString(),
+                    updated_at: new Date().toISOString()
+                };
+                
+                dishes.push(dish);
+            }
         }
     }
     
-    console.log(`✅ СОЗДАНО ${dishes.length} БЛЮД (15 БЛЮД × 5 ДНЕЙ) ИЗ ВАШЕГО EXCEL ФАЙЛА!`);
+    console.log(`✅ СОЗДАНО ${dishes.length} БЛЮД (15 БЛЮД × 5 ДНЕЙ × 3 ПРИЕМА ПИЩИ) ИЗ ВАШЕГО EXCEL ФАЙЛА!`);
     return dishes;
 }
 
@@ -140,7 +148,7 @@ const server = http.createServer((req, res) => {
         });
         res.end(JSON.stringify({
             status: 'OK',
-            message: 'Railway Server with DELETE FIX v14.0.0 - FORCE LOADED!',
+            message: 'Railway Server with FULL MENU v15.0.0 - ALL MEAL TYPES!',
             dishCount: menuData.length,
             encoding: 'UTF-8',
             mobileReady: true,

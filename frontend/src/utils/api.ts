@@ -131,7 +131,7 @@ class ApiClient {
   async getSchoolUsers(_schoolId: number): Promise<User[]> {
     if (import.meta.env.PROD) {
       // В продакшене используем JSON файл напрямую
-      const response = await fetch(`${API_BASE_URL}/data/users.json`);
+      const response = await fetch(`${API_BASE_URL}/users.json`);
       if (!response.ok) {
         throw new Error(`HTTP ${response.status}`);
       }
@@ -224,7 +224,7 @@ class ApiClient {
   async getMenu(weekStart?: string): Promise<MenuResponse> {
     if (import.meta.env.PROD) {
       // В продакшене используем JSON файл напрямую
-      const response = await fetch(`${API_BASE_URL}/data/menu.json`);
+      const response = await fetch(`${API_BASE_URL}/menu.json`);
       if (!response.ok) {
         throw new Error(`HTTP ${response.status}`);
       }

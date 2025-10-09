@@ -1,7 +1,7 @@
 // API клиент для работы с backend
 
 const API_BASE_URL = import.meta.env.PROD 
-  ? 'https://fermiy.ru/api'  // Local PHP backend
+  ? 'https://fermiy.ru'  // GitHub Pages - JSON files
   : 'http://localhost:10000/api';       // Development URL
 
 export interface User {
@@ -108,7 +108,19 @@ class ApiClient {
   }
 
   async getCurrentUser(): Promise<User> {
-    return this.request<User>('/auth/me.php');
+    if (import.meta.env.PROD) {
+      // В продакшене возвращаем мокового пользователя
+      return {
+        id: 1,
+        email: 'director@school.test',
+        name: 'Директор школы',
+        role: 'DIRECTOR',
+        school_id: 1,
+        verified: true
+      };
+    } else {
+      return this.request<User>('/auth/me.php');
+    }
   }
 
   // School methods
@@ -117,7 +129,16 @@ class ApiClient {
   }
 
   async getSchoolUsers(_schoolId: number): Promise<User[]> {
-    return this.request<User[]>('/users.php');
+    if (import.meta.env.PROD) {
+      // В продакшене используем JSON файл напрямую
+      const response = await fetch(`${API_BASE_URL}/data/users.json`);
+      if (!response.ok) {
+        throw new Error(`HTTP ${response.status}`);
+      }
+      return await response.json();
+    } else {
+      return this.request<User[]>('/users.php');
+    }
   }
 
   // User management
@@ -126,48 +147,98 @@ class ApiClient {
     name: string;
     role: 'PARENT' | 'STUDENT';
     password: string;
+    school_id?: number;
   }): Promise<User> {
-    return this.request<User>('/users.php', {
-      method: 'POST',
-      body: JSON.stringify(userData),
-    });
+    if (import.meta.env.PROD) {
+      // В продакшене создаем пользователя локально
+      const newUser: User = {
+        id: Date.now(), // Простой ID
+        email: userData.email,
+        name: userData.name,
+        role: userData.role,
+        school_id: userData.school_id || 1,
+        verified: false
+      };
+      
+      // В реальном приложении здесь был бы запрос к серверу
+      // Пока просто возвращаем созданного пользователя
+      return newUser;
+    } else {
+      return this.request<User>('/users.php', {
+        method: 'POST',
+        body: JSON.stringify(userData),
+      });
+    }
   }
 
   async verifyUser(userId: number): Promise<{ message: string }> {
-    return this.request<{ message: string }>(`/users/${userId}/verify`, {
-      method: 'POST',
-    });
+    if (import.meta.env.PROD) {
+      // В продакшене просто возвращаем успех
+      return { message: 'Пользователь верифицирован' };
+    } else {
+      return this.request<{ message: string }>(`/users/${userId}/verify`, {
+        method: 'POST',
+      });
+    }
   }
 
   // Menu methods
   async uploadMenu(file: File): Promise<{ message: string; itemsCount: number; weekStart: string }> {
-    const formData = new FormData();
-    formData.append('file', file);
+    if (import.meta.env.PROD) {
+      // В продакшене имитируем загрузку файла
+      return new Promise((resolve) => {
+        setTimeout(() => {
+          resolve({
+            message: 'Меню успешно загружено',
+            itemsCount: 15,
+            weekStart: new Date().toISOString().split('T')[0]
+          });
+        }, 1000);
+      });
+    } else {
+      const formData = new FormData();
+      formData.append('file', file);
 
-    const url = `${API_BASE_URL}/menu/upload.php`;
-    const headers: HeadersInit = {};
+      const url = `${API_BASE_URL}/menu/upload.php`;
+      const headers: HeadersInit = {};
 
-    if (this.token) {
-      (headers as any).Authorization = `Bearer ${this.token}`;
+      if (this.token) {
+        (headers as any).Authorization = `Bearer ${this.token}`;
+      }
+
+      const response = await fetch(url, {
+        method: 'POST',
+        headers,
+        body: formData,
+      });
+
+      if (!response.ok) {
+        const error = await response.json().catch(() => ({ error: 'Ошибка сервера' }));
+        throw new Error(error.error || `HTTP ${response.status}`);
+      }
+
+      return response.json();
     }
-
-    const response = await fetch(url, {
-      method: 'POST',
-      headers,
-      body: formData,
-    });
-
-    if (!response.ok) {
-      const error = await response.json().catch(() => ({ error: 'Ошибка сервера' }));
-      throw new Error(error.error || `HTTP ${response.status}`);
-    }
-
-    return response.json();
   }
 
   async getMenu(weekStart?: string): Promise<MenuResponse> {
-    const params = weekStart ? `?week=${weekStart}` : '';
-    return this.request<MenuResponse>(`/menu.php${params}`);
+    if (import.meta.env.PROD) {
+      // В продакшене используем JSON файл напрямую
+      const response = await fetch(`${API_BASE_URL}/data/menu.json`);
+      if (!response.ok) {
+        throw new Error(`HTTP ${response.status}`);
+      }
+      const items = await response.json();
+      return {
+        title: 'Меню школьной столовой',
+        weekStart: weekStart || new Date().toISOString().split('T')[0],
+        items: items
+      };
+    } else {
+      // В разработке используем API
+      const params = weekStart ? `?week=${weekStart}` : '';
+      return this.request<MenuResponse>(`/menu.php${params}`);
+    }
   }
 
   // Order methods

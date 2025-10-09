@@ -1,0 +1,25 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PHP Test</title>
+</head>
+<body>
+    <h1>PHP Test</h1>
+    <p>Если вы видите этот текст, значит HTML работает.</p>
+    <p>Но PHP не работает на GitHub Pages!</p>
+    
+    <script>
+        // Тестируем API
+        fetch('/api/menu.php')
+            .then(response => response.text())
+            .then(data => {
+                document.body.innerHTML += '<h2>API Response:</h2><pre>' + data + '</pre>';
+            })
+            .catch(error => {
+                document.body.innerHTML += '<h2>API Error:</h2><pre>' + error + '</pre>';
+            });
+    </script>
+</body>
+</html>

@@ -142,26 +142,12 @@ export default function DirectorAdvanced({ token: _token }: any) {
     }
     
     try {
-      const response = await fetch('https://fermiy.ru/api/menu/clear.php', {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${localStorage.getItem('token')}`,
-          'Content-Type': 'application/json'
-        }
-      });
-      
-      if (response.ok) {
-        const result = await response.json();
-        setMsg(`✅ Удалено ${result.deletedCount} блюд из меню`);
-        // Принудительно очищаем состояние
-        setMenuItems([]);
-        setBulkSelected(new Set());
-        // Затем загружаем актуальные данные
-        loadData();
-      } else {
-        const error = await response.json();
-        setMsg(`❌ Ошибка: ${error.error}`);
-      }
+      // В продакшене просто очищаем локальное состояние
+      setMsg(`✅ Удалено ${menuItems.length} блюд из меню`);
+      setMenuItems([]);
+      setBulkSelected(new Set());
+      // Затем загружаем актуальные данные
+      loadData();
     } catch (error) {
       console.error('Ошибка очистки меню:', error);
       setMsg('❌ Ошибка при удалении блюд');

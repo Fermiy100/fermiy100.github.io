@@ -1,6 +1,6 @@
 const http = require('http');
 
-console.log('🚀 ЗАПУСК RAILWAY SERVER v29.0.0 - FULLY WORKING VERSION!');
+console.log('🚀 ЗАПУСК RAILWAY SERVER v29.2.0 - ENTRY POINT FIXED!');
 
 // Полные данные меню (15 блюд как в mock-data.js)
 let menuData = [
@@ -65,7 +65,7 @@ const server = http.createServer((req, res) => {
         });
         res.end(JSON.stringify({
             status: 'OK',
-            message: 'Railway Server WORKING v27.0.0 - MINIMAL VERSION!',
+            message: 'Railway Server WORKING v29.2.0 - ENTRY POINT FIXED!',
             dishCount: menuData.length,
             userCount: usersData.length,
             encoding: 'UTF-8',

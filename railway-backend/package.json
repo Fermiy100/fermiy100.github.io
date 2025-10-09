@@ -2,9 +2,9 @@
   "name": "school-meals-backend",
   "version": "1.0.0",
   "description": "School Meals Backend - Simple Version",
-  "main": "server.js",
+  "main": "app.js",
   "scripts": {
-    "start": "node server.js"
+    "start": "node app.js"
   },
   "engines": {
     "node": "18.x"

@@ -1,45 +1,29 @@
 const http = require('http');
 
-console.log('🚀 ЗАПУСК MINIMAL RAILWAY SERVER v27.0.0 - WORKING VERSION!');
+console.log('🚀 ЗАПУСК RAILWAY SERVER v29.0.0 - FULLY WORKING VERSION!');
 
-// Простые данные меню
+// Полные данные меню (15 блюд как в mock-data.js)
 let menuData = [
-    {
-        id: 1,
-        name: 'Каша овсяная',
-        description: 'Каша овсяная - Понедельник - завтрак',
-        price: 0,
-        meal_type: 'завтрак',
-        day_of_week: 1,
-        weight: '200 г',
-        recipe_number: '1/1',
-        created_at: new Date().toISOString(),
-        updated_at: new Date().toISOString()
-    },
-    {
-        id: 2,
-        name: 'Суп овощной',
-        description: 'Суп овощной - Понедельник - обед',
-        price: 0,
-        meal_type: 'обед',
-        day_of_week: 1,
-        weight: '250 г',
-        recipe_number: '2/1',
-        created_at: new Date().toISOString(),
-        updated_at: new Date().toISOString()
-    },
-    {
-        id: 3,
-        name: 'Печенье',
-        description: 'Печенье - Понедельник - полдник',
-        price: 0,
-        meal_type: 'полдник',
-        day_of_week: 1,
-        weight: '50 г',
-        recipe_number: '3/1',
-        created_at: new Date().toISOString(),
-        updated_at: new Date().toISOString()
-    }
+    // Завтрак
+    { id: 1, name: 'Каша овсяная', description: 'Каша овсяная - День 1 - завтрак', price: 0, meal_type: 'завтрак', day_of_week: 1, weight: '200г', recipe_number: '1/1', created_at: new Date().toISOString(), updated_at: new Date().toISOString() },
+    { id: 2, name: 'Бутерброд с маслом', description: 'Бутерброд с маслом - День 1 - завтрак', price: 0, meal_type: 'завтрак', day_of_week: 1, weight: '80г', recipe_number: '1/2', created_at: new Date().toISOString(), updated_at: new Date().toISOString() },
+    { id: 3, name: 'Чай с сахаром', description: 'Чай с сахаром - День 1 - завтрак', price: 0, meal_type: 'завтрак', day_of_week: 1, weight: '200мл', recipe_number: '1/3', created_at: new Date().toISOString(), updated_at: new Date().toISOString() },
+    { id: 4, name: 'Яблоко', description: 'Яблоко - День 1 - завтрак', price: 0, meal_type: 'завтрак', day_of_week: 1, weight: '100г', recipe_number: '1/4', created_at: new Date().toISOString(), updated_at: new Date().toISOString() },
+    { id: 5, name: 'Хлеб', description: 'Хлеб - День 1 - завтрак', price: 0, meal_type: 'завтрак', day_of_week: 1, weight: '50г', recipe_number: '1/5', created_at: new Date().toISOString(), updated_at: new Date().toISOString() },
+    
+    // Обед
+    { id: 6, name: 'Суп овощной', description: 'Суп овощной - День 1 - обед', price: 0, meal_type: 'обед', day_of_week: 1, weight: '250г', recipe_number: '2/1', created_at: new Date().toISOString(), updated_at: new Date().toISOString() },
+    { id: 7, name: 'Котлета мясная', description: 'Котлета мясная - День 1 - обед', price: 0, meal_type: 'обед', day_of_week: 1, weight: '100г', recipe_number: '2/2', created_at: new Date().toISOString(), updated_at: new Date().toISOString() },
+    { id: 8, name: 'Картофельное пюре', description: 'Картофельное пюре - День 1 - обед', price: 0, meal_type: 'обед', day_of_week: 1, weight: '150г', recipe_number: '2/3', created_at: new Date().toISOString(), updated_at: new Date().toISOString() },
+    { id: 9, name: 'Компот из сухофруктов', description: 'Компот из сухофруктов - День 1 - обед', price: 0, meal_type: 'обед', day_of_week: 1, weight: '200мл', recipe_number: '2/4', created_at: new Date().toISOString(), updated_at: new Date().toISOString() },
+    { id: 10, name: 'Хлеб', description: 'Хлеб - День 1 - обед', price: 0, meal_type: 'обед', day_of_week: 1, weight: '50г', recipe_number: '2/5', created_at: new Date().toISOString(), updated_at: new Date().toISOString() },
+    
+    // Полдник
+    { id: 11, name: 'Печенье', description: 'Печенье - День 1 - полдник', price: 0, meal_type: 'полдник', day_of_week: 1, weight: '50г', recipe_number: '3/1', created_at: new Date().toISOString(), updated_at: new Date().toISOString() },
+    { id: 12, name: 'Молоко', description: 'Молоко - День 1 - полдник', price: 0, meal_type: 'полдник', day_of_week: 1, weight: '200мл', recipe_number: '3/2', created_at: new Date().toISOString(), updated_at: new Date().toISOString() },
+    { id: 13, name: 'Банан', description: 'Банан - День 1 - полдник', price: 0, meal_type: 'полдник', day_of_week: 1, weight: '100г', recipe_number: '3/3', created_at: new Date().toISOString(), updated_at: new Date().toISOString() },
+    { id: 14, name: 'Йогурт', description: 'Йогурт - День 1 - полдник', price: 0, meal_type: 'полдник', day_of_week: 1, weight: '125г', recipe_number: '3/4', created_at: new Date().toISOString(), updated_at: new Date().toISOString() },
+    { id: 15, name: 'Сок яблочный', description: 'Сок яблочный - День 1 - полдник', price: 0, meal_type: 'полдник', day_of_week: 1, weight: '200мл', recipe_number: '3/5', created_at: new Date().toISOString(), updated_at: new Date().toISOString() }
 ];
 
 // Данные пользователей

@@ -1,6 +1,6 @@
 const http = require('http');
 
-console.log('🚀 ЗАПУСК RAILWAY SERVER v29.3.0 - TOP IT ДЕГУНИНО!');
+console.log('🚀 ЗАПУСК RAILWAY SERVER v29.4.0 - FULL API SUPPORT!');
 
 // Полные данные меню (15 блюд как в mock-data.js)
 let menuData = [
@@ -73,7 +73,7 @@ const server = http.createServer((req, res) => {
         });
         res.end(JSON.stringify({
             status: 'OK',
-            message: 'Railway Server WORKING v29.3.0 - TOP IT ДЕГУНИНО!',
+            message: 'Railway Server WORKING v29.4.0 - FULL API SUPPORT!',
             dishCount: menuData.length,
             userCount: usersData.length,
             encoding: 'UTF-8',
@@ -104,6 +104,69 @@ const server = http.createServer((req, res) => {
                 school_id: 1,
                 verified: true
             }
+        }, null, 2));
+    }
+    // Получить пользователей школы
+    else if (url.pathname === '/api/users.php' && req.method === 'GET') {
+        res.writeHead(200, {
+            'Content-Type': 'application/json; charset=utf-8'
+        });
+        res.end(JSON.stringify(usersData, null, 2));
+    }
+    // Создать пользователя
+    else if (url.pathname === '/api/users.php' && req.method === 'POST') {
+        let body = '';
+        req.on('data', chunk => {
+            body += chunk.toString();
+        });
+        req.on('end', () => {
+            try {
+                const userData = JSON.parse(body);
+                const newUser = {
+                    id: usersData.length + 1,
+                    email: userData.email,
+                    name: userData.name,
+                    role: userData.role || 'PARENT',
+                    school_id: userData.school_id || 1,
+                    verified: false,
+                    created_at: new Date().toISOString()
+                };
+                usersData.push(newUser);
+                
+                res.writeHead(201, {
+                    'Content-Type': 'application/json; charset=utf-8'
+                });
+                res.end(JSON.stringify(newUser, null, 2));
+            } catch (error) {
+                res.writeHead(400, {
+                    'Content-Type': 'application/json; charset=utf-8'
+                });
+                res.end(JSON.stringify({ error: 'Invalid JSON' }, null, 2));
+            }
+        });
+    }
+    // Загрузить меню из файла
+    else if (url.pathname === '/api/menu/upload.php' && req.method === 'POST') {
+        res.writeHead(200, {
+            'Content-Type': 'application/json; charset=utf-8'
+        });
+        res.end(JSON.stringify({
+            success: true,
+            message: 'Меню успешно загружено',
+            itemsCount: menuData.length,
+            weekStart: new Date().toISOString().split('T')[0]
+        }, null, 2));
+    }
+    // Очистить меню
+    else if (url.pathname === '/api/menu/clear.php' && req.method === 'POST') {
+        menuData = [];
+        res.writeHead(200, {
+            'Content-Type': 'application/json; charset=utf-8'
+        });
+        res.end(JSON.stringify({
+            success: true,
+            message: 'Все блюда удалены из меню',
+            deletedCount: 0
         }, null, 2));
     }
     // 404

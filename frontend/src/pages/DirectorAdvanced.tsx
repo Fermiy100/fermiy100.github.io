@@ -113,11 +113,8 @@ export default function DirectorAdvanced({ token: _token }: any) {
       const formData = new FormData();
       formData.append("file", file);
 
-      const response = await fetch("https://fermiy100githubio-production.up.railway.app/api/menu", {
+      const response = await fetch("https://fermiy.ru/api/menu/upload.php", {
         method: "POST",
-        headers: {
-          Authorization: `Bearer ${localStorage.getItem("token")}`,
-        },
         body: formData,
       });
 
@@ -145,8 +142,8 @@ export default function DirectorAdvanced({ token: _token }: any) {
     }
     
     try {
-      const response = await fetch('https://fermiy100githubio-production.up.railway.app/api/menu/clear', {
-        method: 'DELETE',
+      const response = await fetch('https://fermiy.ru/api/menu/clear.php', {
+        method: 'POST',
         headers: {
           'Authorization': `Bearer ${localStorage.getItem('token')}`,
           'Content-Type': 'application/json'

@@ -1,5 +1,5 @@
 <?php
-header('Content-Type: application/json');
+header('Content-Type: application/json; charset=utf-8');
 header('Access-Control-Allow-Origin: *');
 header('Access-Control-Allow-Methods: GET, POST, PUT, DELETE, OPTIONS, PATCH');
 header('Access-Control-Allow-Headers: Content-Type, Authorization');
@@ -9,73 +9,131 @@ if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
     exit();
 }
 
-// Railway backend URL
-$railway_url = 'https://fermiy100githubio-production.up.railway.app';
+// Файл для хранения пользователей
+$usersFile = '../data/users.json';
 
-// Получаем путь запроса
-$request_uri = $_SERVER['REQUEST_URI'];
-$path = str_replace('/api/users', '', $request_uri);
-
-// Определяем URL для Railway
-$railway_endpoint = $railway_url . '/api/users' . $path;
-
-// Подготавливаем данные для отправки
-$post_data = null;
-if ($_SERVER['REQUEST_METHOD'] === 'POST' || $_SERVER['REQUEST_METHOD'] === 'PATCH') {
-    $post_data = file_get_contents('php://input');
+// Создаем директорию если не существует
+if (!file_exists('../data/')) {
+    mkdir('../data/', 0777, true);
 }
 
-// Настройки cURL
-$ch = curl_init();
-curl_setopt($ch, CURLOPT_URL, $railway_endpoint);
-curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-curl_setopt($ch, CURLOPT_FOLLOWLOCATION, true);
-curl_setopt($ch, CURLOPT_TIMEOUT, 30);
-curl_setopt($ch, CURLOPT_HTTPHEADER, [
-    'Content-Type: application/json',
-    'Accept: application/json'
-]);
+// Загружаем пользователей
+function loadUsers() {
+    global $usersFile;
+    if (file_exists($usersFile)) {
+        $data = json_decode(file_get_contents($usersFile), true);
+        return is_array($data) ? $data : [];
+    }
+    return [];
+}
 
-// Устанавливаем метод запроса
+// Сохраняем пользователей
+function saveUsers($users) {
+    global $usersFile;
+    file_put_contents($usersFile, json_encode($users, JSON_UNESCAPED_UNICODE | JSON_PRETTY_PRINT));
+}
+
+// Инициализируем базовых пользователей если файл пустой
+$users = loadUsers();
+if (empty($users)) {
+    $users = [
+        [
+            'id' => 1,
+            'email' => 'director@school.test',
+            'name' => 'Директор школы',
+            'role' => 'DIRECTOR',
+            'school_id' => 1,
+            'verified' => true,
+            'created_at' => '2025-01-07T10:00:00Z'
+        ]
+    ];
+    saveUsers($users);
+}
+
+// Обрабатываем запросы
 switch ($_SERVER['REQUEST_METHOD']) {
     case 'GET':
-        curl_setopt($ch, CURLOPT_HTTPGET, true);
+        // Возвращаем всех пользователей
+        echo json_encode($users, JSON_UNESCAPED_UNICODE);
         break;
+        
     case 'POST':
-        curl_setopt($ch, CURLOPT_POST, true);
-        if ($post_data) {
-            curl_setopt($ch, CURLOPT_POSTFIELDS, $post_data);
+        // Создаем нового пользователя
+        $input = json_decode(file_get_contents('php://input'), true);
+        
+        if (!$input) {
+            http_response_code(400);
+            echo json_encode(['error' => 'Неверные данные'], JSON_UNESCAPED_UNICODE);
+            exit();
         }
+        
+        // Проверяем обязательные поля
+        if (empty($input['email']) || empty($input['name']) || empty($input['school_id'])) {
+            http_response_code(400);
+            echo json_encode(['error' => 'Не указана школа или другие обязательные поля'], JSON_UNESCAPED_UNICODE);
+            exit();
+        }
+        
+        // Проверяем, что email уникален
+        foreach ($users as $user) {
+            if ($user['email'] === $input['email']) {
+                http_response_code(400);
+                echo json_encode(['error' => 'Пользователь с таким email уже существует'], JSON_UNESCAPED_UNICODE);
+                exit();
+            }
+        }
+        
+        // Создаем нового пользователя
+        $newUser = [
+            'id' => max(array_column($users, 'id')) + 1,
+            'email' => $input['email'],
+            'name' => $input['name'],
+            'role' => $input['role'] ?? 'PARENT',
+            'school_id' => $input['school_id'],
+            'verified' => false,
+            'created_at' => date('c')
+        ];
+        
+        $users[] = $newUser;
+        saveUsers($users);
+        
+        echo json_encode($newUser, JSON_UNESCAPED_UNICODE);
         break;
+        
     case 'PATCH':
-        curl_setopt($ch, CURLOPT_CUSTOMREQUEST, 'POST'); // Railway использует POST для верификации
-        if ($post_data) {
-            curl_setopt($ch, CURLOPT_POSTFIELDS, $post_data);
+        // Верификация пользователя
+        $input = json_decode(file_get_contents('php://input'), true);
+        $userId = $input['id'] ?? null;
+        
+        if (!$userId) {
+            http_response_code(400);
+            echo json_encode(['error' => 'ID пользователя не указан'], JSON_UNESCAPED_UNICODE);
+            exit();
         }
+        
+        // Находим и обновляем пользователя
+        $found = false;
+        foreach ($users as &$user) {
+            if ($user['id'] == $userId) {
+                $user['verified'] = true;
+                $found = true;
+                break;
+            }
+        }
+        
+        if (!$found) {
+            http_response_code(404);
+            echo json_encode(['error' => 'Пользователь не найден'], JSON_UNESCAPED_UNICODE);
+            exit();
+        }
+        
+        saveUsers($users);
+        echo json_encode(['success' => true, 'message' => 'Пользователь верифицирован'], JSON_UNESCAPED_UNICODE);
         break;
-    case 'DELETE':
-        curl_setopt($ch, CURLOPT_CUSTOMREQUEST, 'DELETE');
+        
+    default:
+        http_response_code(405);
+        echo json_encode(['error' => 'Метод не поддерживается'], JSON_UNESCAPED_UNICODE);
         break;
 }
-
-// Выполняем запрос
-$response = curl_exec($ch);
-$http_code = curl_getinfo($ch, CURLINFO_HTTP_CODE);
-$error = curl_error($ch);
-curl_close($ch);
-
-// Обрабатываем ошибки
-if ($error) {
-    http_response_code(500);
-    echo json_encode([
-        'error' => 'Curl error: ' . $error
-    ]);
-    exit();
-}
-
-// Устанавливаем HTTP код ответа
-http_response_code($http_code);
-
-// Возвращаем ответ от Railway
-echo $response;
 ?>

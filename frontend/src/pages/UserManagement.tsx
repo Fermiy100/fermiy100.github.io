@@ -76,7 +76,11 @@ export default function UserManagement({ currentUser, onUserCreated }: UserManag
 
     try {
       setMessage('');
-      const createdUser = await apiClient.createUser(newUser);
+      const userData = {
+        ...newUser,
+        school_id: currentUser.school_id
+      };
+      const createdUser = await apiClient.createUser(userData);
       
       setUsers(prev => [...prev, createdUser]);
       setNewUser({ email: '', name: '', role: 'PARENT', password: '' });

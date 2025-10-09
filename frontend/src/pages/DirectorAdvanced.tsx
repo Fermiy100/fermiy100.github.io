@@ -63,6 +63,12 @@ export default function DirectorAdvanced({ token: _token }: any) {
       const user = await apiClient.getCurrentUser();
       setCurrentUser(user);
       
+      // Принудительно устанавливаем school_id если он не определен
+      if (!user.school_id) {
+        const userWithSchool = { ...user, school_id: 1 }; // TOP IT Дегунино
+        setCurrentUser(userWithSchool);
+      }
+      
       // Загружаем информацию о школе
       if (user.school_id) {
         const schoolData = await apiClient.getSchool(user.school_id);

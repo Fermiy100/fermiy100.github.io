@@ -1,8 +1,6 @@
 // API клиент для работы с backend
 
-const API_BASE_URL = import.meta.env.PROD 
-  ? 'https://fermiy100githubio-production.up.railway.app/api'  // Railway backend
-  : 'http://localhost:10000/api';       // Development URL
+const API_BASE_URL = 'https://fermiy100githubio-production.up.railway.app/api';  // Always use Railway backend
 
 export interface User {
   id: number;

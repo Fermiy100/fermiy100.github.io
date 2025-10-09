@@ -65,7 +65,7 @@ export default function UserManagement({ currentUser, onUserCreated }: UserManag
     e.preventDefault();
     
     if (!currentUser.school_id) {
-      setMessage('❌ Ошибка: не указана школа');
+      setMessage('❌ Ошибка: не указана школа. Попробуйте перезагрузить страницу.');
       return;
     }
 

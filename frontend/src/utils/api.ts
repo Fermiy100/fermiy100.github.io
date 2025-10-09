@@ -130,12 +130,8 @@ class ApiClient {
 
   async getSchoolUsers(_schoolId: number): Promise<User[]> {
     if (import.meta.env.PROD) {
-      // В продакшене используем JSON файл напрямую
-      const response = await fetch(`${API_BASE_URL}/users.json`);
-      if (!response.ok) {
-        throw new Error(`HTTP ${response.status}`);
-      }
-      return await response.json();
+      // В продакшене используем встроенные данные
+      return (window as any).MOCK_DATA?.users || [];
     } else {
       return this.request<User[]>('/users.php');
     }
@@ -223,12 +219,8 @@ class ApiClient {
 
   async getMenu(weekStart?: string): Promise<MenuResponse> {
     if (import.meta.env.PROD) {
-      // В продакшене используем JSON файл напрямую
-      const response = await fetch(`${API_BASE_URL}/menu.json`);
-      if (!response.ok) {
-        throw new Error(`HTTP ${response.status}`);
-      }
-      const items = await response.json();
+      // В продакшене используем встроенные данные
+      const items = (window as any).MOCK_DATA?.menu || [];
       return {
         title: 'Меню школьной столовой',
         weekStart: weekStart || new Date().toISOString().split('T')[0],

@@ -1,6 +1,6 @@
 const http = require('http');
 
-console.log('🚀 ЗАПУСК RAILWAY SERVER v29.2.0 - ENTRY POINT FIXED!');
+console.log('🚀 ЗАПУСК RAILWAY SERVER v29.3.0 - TOP IT ДЕГУНИНО!');
 
 // Полные данные меню (15 блюд как в mock-data.js)
 let menuData = [
@@ -30,14 +30,22 @@ let menuData = [
 let usersData = [
     {
         id: 1,
-        email: 'director@school.test',
-        name: 'Директор школы',
-        role: 'director',
+        email: 'director@topit.test',
+        name: 'Директор TOP IT Дегунино',
+        role: 'DIRECTOR',
         school_id: 1,
         verified: true,
         created_at: '2025-10-07T10:00:00Z'
     }
 ];
+
+// Данные школы
+let schoolData = {
+    id: 1,
+    name: 'TOP IT Дегунино',
+    address: 'г. Москва, Дегунино',
+    director_id: 1
+};
 
 const server = http.createServer((req, res) => {
     // CORS заголовки
@@ -65,7 +73,7 @@ const server = http.createServer((req, res) => {
         });
         res.end(JSON.stringify({
             status: 'OK',
-            message: 'Railway Server WORKING v29.2.0 - ENTRY POINT FIXED!',
+            message: 'Railway Server WORKING v29.3.0 - TOP IT ДЕГУНИНО!',
             dishCount: menuData.length,
             userCount: usersData.length,
             encoding: 'UTF-8',
@@ -90,8 +98,8 @@ const server = http.createServer((req, res) => {
             success: true,
         user: {
                 id: 1,
-                email: 'director@school.test',
-                name: 'Директор школы',
+                email: 'director@topit.test',
+                name: 'Директор TOP IT Дегунино',
                 role: 'DIRECTOR',
                 school_id: 1,
                 verified: true

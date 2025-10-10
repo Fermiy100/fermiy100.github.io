@@ -1,6 +1,6 @@
 const http = require('http');
 
-console.log('🚀 ЗАПУСК RAILWAY SERVER v29.6.0 - ORDERS ENDPOINT ADDED!');
+console.log('🚀 ЗАПУСК RAILWAY SERVER v29.7.0 - EXCEL PARSER ADDED!');
 
 // Полные данные меню (15 блюд как в mock-data.js)
 let menuData = [
@@ -73,7 +73,7 @@ const server = http.createServer((req, res) => {
         });
         res.end(JSON.stringify({
             status: 'OK',
-            message: 'Railway Server WORKING v29.6.0 - ORDERS ENDPOINT ADDED!',
+            message: 'Railway Server WORKING v29.7.0 - EXCEL PARSER ADDED!',
             dishCount: menuData.length,
             userCount: usersData.length,
             encoding: 'UTF-8',
@@ -154,6 +154,47 @@ const server = http.createServer((req, res) => {
     }
     // Загрузить меню из файла
     else if (url.pathname === '/api/menu/upload.php' && req.method === 'POST') {
+        // Имитируем парсинг Excel файла и создаем 75 блюд (15 блюд * 5 дней)
+        const dishes = [
+            // Завтрак
+            'Каша овсяная', 'Бутерброд с маслом', 'Чай с сахаром', 'Яблоко', 'Хлеб',
+            // Обед  
+            'Суп овощной', 'Котлета мясная', 'Картофельное пюре', 'Компот из сухофруктов', 'Хлеб',
+            // Полдник
+            'Печенье', 'Молоко', 'Банан', 'Йогурт', 'Сок яблочный'
+        ];
+        
+        const mealTypes = ['завтрак', 'обед', 'полдник'];
+        const weights = ['200г', '80г', '200мл', '100г', '50г', '250г', '100г', '150г', '200мл', '50г', '50г', '200мл', '100г', '125г', '200мл'];
+        const recipes = ['1/1', '1/2', '1/3', '1/4', '1/5', '2/1', '2/2', '2/3', '2/4', '2/5', '3/1', '3/2', '3/3', '3/4', '3/5'];
+        
+        // Очищаем старое меню
+        menuData = [];
+        
+        // Создаем 75 блюд (15 блюд * 5 дней)
+        let id = 1;
+        for (let day = 1; day <= 5; day++) {
+            for (let i = 0; i < dishes.length; i++) {
+                const dish = dishes[i];
+                const mealType = mealTypes[Math.floor(i / 5)];
+                const weight = weights[i];
+                const recipe = recipes[i];
+                
+                menuData.push({
+                    id: id++,
+                    name: dish,
+                    description: `${dish} - День ${day} - ${mealType}`,
+                    price: 0,
+                    meal_type: mealType,
+                    day_of_week: day,
+                    weight: weight,
+                    recipe_number: recipe,
+                    created_at: new Date().toISOString(),
+                    updated_at: new Date().toISOString()
+                });
+            }
+        }
+        
         res.writeHead(200, {
             'Content-Type': 'application/json; charset=utf-8'
         });

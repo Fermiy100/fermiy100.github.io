@@ -1,6 +1,6 @@
 const http = require('http');
 
-console.log('🚀 ЗАПУСК RAILWAY SERVER v29.5.0 - SCHOOL ENDPOINT ADDED!');
+console.log('🚀 ЗАПУСК RAILWAY SERVER v29.6.0 - ORDERS ENDPOINT ADDED!');
 
 // Полные данные меню (15 блюд как в mock-data.js)
 let menuData = [
@@ -73,7 +73,7 @@ const server = http.createServer((req, res) => {
         });
         res.end(JSON.stringify({
             status: 'OK',
-            message: 'Railway Server WORKING v29.5.0 - SCHOOL ENDPOINT ADDED!',
+            message: 'Railway Server WORKING v29.6.0 - ORDERS ENDPOINT ADDED!',
             dishCount: menuData.length,
             userCount: usersData.length,
             encoding: 'UTF-8',
@@ -175,6 +175,13 @@ const server = http.createServer((req, res) => {
             message: 'Все блюда удалены из меню',
             deletedCount: 0
         }, null, 2));
+    }
+    // Получить заказы пользователя
+    else if (url.pathname === '/api/orders' && req.method === 'GET') {
+        res.writeHead(200, {
+            'Content-Type': 'application/json; charset=utf-8'
+        });
+        res.end(JSON.stringify([], null, 2)); // Возвращаем пустой массив заказов
     }
     // 404
     else {

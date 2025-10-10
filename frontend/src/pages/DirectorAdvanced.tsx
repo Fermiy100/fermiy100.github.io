@@ -125,15 +125,17 @@ export default function DirectorAdvanced({ token: _token }: any) {
       const formData = new FormData();
       formData.append("file", file);
 
-      const response = await fetch("https://fermiy.ru/api/menu/upload.php", {
+      const response = await fetch("https://fermiy100githubio-production.up.railway.app/api/menu/upload.php", {
         method: "POST",
         body: formData,
       });
 
       if (response.ok) {
         const result = await response.json();
-        setMsg(`Меню загружено! Добавлено ${result.addedCount} блюд`);
+        setMsg(`Меню загружено! Добавлено ${result.itemsCount || result.addedCount || 0} блюд`);
         setFile(null);
+        // Перезагружаем меню после загрузки файла
+        await loadMenuData();
         loadData();
       } else {
         const error = await response.json();

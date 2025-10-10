@@ -2,7 +2,7 @@ const http = require('http');
 const fs = require('fs');
 const path = require('path');
 
-console.log('🚀 ЗАПУСК RAILWAY SERVER v29.9.0 - SMART EXCEL PARSER!');
+console.log('🚀 ЗАПУСК RAILWAY SERVER v30.0.0 - DELETE FIXED & NO AUTO-LOAD!');
 
 // Умный парсер Excel файла без внешних зависимостей
 function parseExcelFile(buffer) {
@@ -118,29 +118,8 @@ function parseExcelFile(buffer) {
     }
 }
 
-// Полные данные меню (15 блюд как в mock-data.js)
-let menuData = [
-    // Завтрак
-    { id: 1, name: 'Каша овсяная', description: 'Каша овсяная - День 1 - завтрак', price: 0, meal_type: 'завтрак', day_of_week: 1, weight: '200г', recipe_number: '1/1', created_at: new Date().toISOString(), updated_at: new Date().toISOString() },
-    { id: 2, name: 'Бутерброд с маслом', description: 'Бутерброд с маслом - День 1 - завтрак', price: 0, meal_type: 'завтрак', day_of_week: 1, weight: '80г', recipe_number: '1/2', created_at: new Date().toISOString(), updated_at: new Date().toISOString() },
-    { id: 3, name: 'Чай с сахаром', description: 'Чай с сахаром - День 1 - завтрак', price: 0, meal_type: 'завтрак', day_of_week: 1, weight: '200мл', recipe_number: '1/3', created_at: new Date().toISOString(), updated_at: new Date().toISOString() },
-    { id: 4, name: 'Яблоко', description: 'Яблоко - День 1 - завтрак', price: 0, meal_type: 'завтрак', day_of_week: 1, weight: '100г', recipe_number: '1/4', created_at: new Date().toISOString(), updated_at: new Date().toISOString() },
-    { id: 5, name: 'Хлеб', description: 'Хлеб - День 1 - завтрак', price: 0, meal_type: 'завтрак', day_of_week: 1, weight: '50г', recipe_number: '1/5', created_at: new Date().toISOString(), updated_at: new Date().toISOString() },
-    
-    // Обед
-    { id: 6, name: 'Суп овощной', description: 'Суп овощной - День 1 - обед', price: 0, meal_type: 'обед', day_of_week: 1, weight: '250г', recipe_number: '2/1', created_at: new Date().toISOString(), updated_at: new Date().toISOString() },
-    { id: 7, name: 'Котлета мясная', description: 'Котлета мясная - День 1 - обед', price: 0, meal_type: 'обед', day_of_week: 1, weight: '100г', recipe_number: '2/2', created_at: new Date().toISOString(), updated_at: new Date().toISOString() },
-    { id: 8, name: 'Картофельное пюре', description: 'Картофельное пюре - День 1 - обед', price: 0, meal_type: 'обед', day_of_week: 1, weight: '150г', recipe_number: '2/3', created_at: new Date().toISOString(), updated_at: new Date().toISOString() },
-    { id: 9, name: 'Компот из сухофруктов', description: 'Компот из сухофруктов - День 1 - обед', price: 0, meal_type: 'обед', day_of_week: 1, weight: '200мл', recipe_number: '2/4', created_at: new Date().toISOString(), updated_at: new Date().toISOString() },
-    { id: 10, name: 'Хлеб', description: 'Хлеб - День 1 - обед', price: 0, meal_type: 'обед', day_of_week: 1, weight: '50г', recipe_number: '2/5', created_at: new Date().toISOString(), updated_at: new Date().toISOString() },
-    
-    // Полдник
-    { id: 11, name: 'Печенье', description: 'Печенье - День 1 - полдник', price: 0, meal_type: 'полдник', day_of_week: 1, weight: '50г', recipe_number: '3/1', created_at: new Date().toISOString(), updated_at: new Date().toISOString() },
-    { id: 12, name: 'Молоко', description: 'Молоко - День 1 - полдник', price: 0, meal_type: 'полдник', day_of_week: 1, weight: '200мл', recipe_number: '3/2', created_at: new Date().toISOString(), updated_at: new Date().toISOString() },
-    { id: 13, name: 'Банан', description: 'Банан - День 1 - полдник', price: 0, meal_type: 'полдник', day_of_week: 1, weight: '100г', recipe_number: '3/3', created_at: new Date().toISOString(), updated_at: new Date().toISOString() },
-    { id: 14, name: 'Йогурт', description: 'Йогурт - День 1 - полдник', price: 0, meal_type: 'полдник', day_of_week: 1, weight: '125г', recipe_number: '3/4', created_at: new Date().toISOString(), updated_at: new Date().toISOString() },
-    { id: 15, name: 'Сок яблочный', description: 'Сок яблочный - День 1 - полдник', price: 0, meal_type: 'полдник', day_of_week: 1, weight: '200мл', recipe_number: '3/5', created_at: new Date().toISOString(), updated_at: new Date().toISOString() }
-];
+// Меню начинается пустым - блюда загружаются только через Excel файл
+let menuData = [];
 
 // Данные пользователей
 let usersData = [
@@ -189,7 +168,7 @@ const server = http.createServer((req, res) => {
         });
         res.end(JSON.stringify({
             status: 'OK',
-            message: 'Railway Server WORKING v29.9.0 - SMART EXCEL PARSER!',
+            message: 'Railway Server WORKING v30.0.0 - DELETE FIXED & NO AUTO-LOAD!',
             dishCount: menuData.length,
             userCount: usersData.length,
             encoding: 'UTF-8',
@@ -348,6 +327,52 @@ const server = http.createServer((req, res) => {
             'Content-Type': 'application/json; charset=utf-8'
         });
         res.end(JSON.stringify([], null, 2)); // Возвращаем пустой массив заказов
+    }
+    // Удалить блюдо по ID
+    else if (url.pathname.startsWith('/api/menu/delete.php') && req.method === 'DELETE') {
+        const urlParts = url.pathname.split('?');
+        const queryString = urlParts[1] || '';
+        const params = new URLSearchParams(queryString);
+        const dishId = parseInt(params.get('id'));
+        
+        console.log('🗑️ Удаление блюда ID:', dishId);
+        
+        if (!dishId || isNaN(dishId)) {
+            res.writeHead(400, {
+                'Content-Type': 'application/json; charset=utf-8'
+            });
+            res.end(JSON.stringify({
+                success: false,
+                error: 'Неверный ID блюда'
+            }, null, 2));
+            return;
+        }
+        
+        // Находим и удаляем блюдо
+        const initialLength = menuData.length;
+        menuData = menuData.filter(dish => dish.id !== dishId);
+        const deletedCount = initialLength - menuData.length;
+        
+        if (deletedCount > 0) {
+            console.log('✅ Блюдо удалено:', dishId);
+            res.writeHead(200, {
+                'Content-Type': 'application/json; charset=utf-8'
+            });
+            res.end(JSON.stringify({
+                success: true,
+                message: 'Блюдо успешно удалено',
+                deletedCount: deletedCount
+            }, null, 2));
+        } else {
+            console.log('❌ Блюдо не найдено:', dishId);
+            res.writeHead(404, {
+                'Content-Type': 'application/json; charset=utf-8'
+            });
+            res.end(JSON.stringify({
+                success: false,
+                error: 'Блюдо не найдено'
+            }, null, 2));
+        }
     }
     // 404
     else {

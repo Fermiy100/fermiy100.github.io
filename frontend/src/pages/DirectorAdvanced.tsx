@@ -69,10 +69,16 @@ export default function DirectorAdvanced({ token: _token }: any) {
         setCurrentUser(userWithSchool);
       }
       
-      // Загружаем информацию о школе
+      // Загружаем информацию о школе (временно отключено из-за Railway)
       if (user.school_id) {
-        const schoolData = await apiClient.getSchool(user.school_id);
-        setSchool(schoolData);
+        // Временно используем mock данные школы
+        const mockSchool = {
+          id: 1,
+          name: 'TOP IT Дегунино',
+          address: 'г. Москва, Дегунино',
+          director_id: 1
+        };
+        setSchool(mockSchool);
         
         // Загружаем меню
         const menuData = await apiClient.getMenu();

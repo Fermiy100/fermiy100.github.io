@@ -45,10 +45,16 @@ export default function UserManagement({ currentUser, onUserCreated }: UserManag
     try {
       setLoading(true);
       
-      // Загружаем информацию о школе
+      // Загружаем информацию о школе (временно отключено из-за Railway)
       if (currentUser.school_id) {
-        const schoolInfo = await apiClient.getSchool(currentUser.school_id);
-        setSchool(schoolInfo);
+        // Временно используем mock данные школы
+        const mockSchool = {
+          id: 1,
+          name: 'TOP IT Дегунино',
+          address: 'г. Москва, Дегунино',
+          director_id: 1
+        };
+        setSchool(mockSchool);
         
         // Загружаем пользователей школы
         const schoolUsers = await apiClient.getSchoolUsers(currentUser.school_id);

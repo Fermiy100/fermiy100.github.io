@@ -1,6 +1,6 @@
 const http = require('http');
 
-console.log('🚀 ЗАПУСК RAILWAY SERVER v29.4.0 - FULL API SUPPORT!');
+console.log('🚀 ЗАПУСК RAILWAY SERVER v29.5.0 - SCHOOL ENDPOINT ADDED!');
 
 // Полные данные меню (15 блюд как в mock-data.js)
 let menuData = [
@@ -73,7 +73,7 @@ const server = http.createServer((req, res) => {
         });
         res.end(JSON.stringify({
             status: 'OK',
-            message: 'Railway Server WORKING v29.4.0 - FULL API SUPPORT!',
+            message: 'Railway Server WORKING v29.5.0 - SCHOOL ENDPOINT ADDED!',
             dishCount: menuData.length,
             userCount: usersData.length,
             encoding: 'UTF-8',
@@ -106,6 +106,13 @@ const server = http.createServer((req, res) => {
             }
         }, null, 2));
     }
+    // Получить информацию о школе
+    else if (url.pathname === '/api/school/1.php' && req.method === 'GET') {
+        res.writeHead(200, {
+            'Content-Type': 'application/json; charset=utf-8'
+        });
+        res.end(JSON.stringify(schoolData, null, 2));
+    }
     // Получить пользователей школы
     else if (url.pathname === '/api/users.php' && req.method === 'GET') {
         res.writeHead(200, {
@@ -137,7 +144,7 @@ const server = http.createServer((req, res) => {
                     'Content-Type': 'application/json; charset=utf-8'
                 });
                 res.end(JSON.stringify(newUser, null, 2));
-            } catch (error) {
+  } catch (error) {
                 res.writeHead(400, {
                     'Content-Type': 'application/json; charset=utf-8'
                 });

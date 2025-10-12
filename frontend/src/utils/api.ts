@@ -1,6 +1,6 @@
 // API клиент для работы с backend
 
-const API_BASE_URL = 'https://fermiy100githubio-production.up.railway.app/api';  // Always use Railway backend
+const API_BASE_URL = 'https://fermiy.ru/api';  // Use fermiy.ru PHP backend
 
 export interface User {
   id: number;

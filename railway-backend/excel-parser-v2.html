@@ -1,0 +1,691 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🍽️ Парсер Excel меню v2.0</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+            overflow: hidden;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%);
+            color: white;
+            padding: 30px;
+            text-align: center;
+        }
+
+        .header h1 {
+            font-size: 2.5rem;
+            margin-bottom: 10px;
+        }
+
+        .header p {
+            font-size: 1.1rem;
+            opacity: 0.9;
+        }
+
+        .upload-section {
+            padding: 40px;
+            text-align: center;
+        }
+
+        .file-input-wrapper {
+            position: relative;
+            display: inline-block;
+            margin: 20px 0;
+        }
+
+        .file-input {
+            position: absolute;
+            opacity: 0;
+            width: 100%;
+            height: 100%;
+            cursor: pointer;
+        }
+
+        .file-input-button {
+            background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+            color: white;
+            padding: 15px 30px;
+            border: none;
+            border-radius: 10px;
+            font-size: 1.1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: inline-flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .file-input-button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(16, 185, 129, 0.3);
+        }
+
+        .progress-bar {
+            width: 100%;
+            height: 8px;
+            background: #e5e7eb;
+            border-radius: 4px;
+            overflow: hidden;
+            margin: 20px 0;
+            display: none;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #10b981, #059669);
+            width: 0%;
+            transition: width 0.3s ease;
+        }
+
+        .progress-text {
+            text-align: center;
+            margin-top: 10px;
+            color: #6b7280;
+            font-weight: 500;
+        }
+
+        .message {
+            padding: 15px 20px;
+            border-radius: 10px;
+            margin: 20px 0;
+            font-weight: 500;
+            display: none;
+        }
+
+        .message.success {
+            background: #d1fae5;
+            color: #065f46;
+            border: 1px solid #a7f3d0;
+        }
+
+        .message.error {
+            background: #fee2e2;
+            color: #991b1b;
+            border: 1px solid #fca5a5;
+        }
+
+        .message.info {
+            background: #dbeafe;
+            color: #1e40af;
+            border: 1px solid #93c5fd;
+        }
+
+        .menu-card {
+            display: none;
+            margin-top: 30px;
+            padding: 30px;
+            background: #f8fafc;
+            border-radius: 15px;
+            border: 1px solid #e2e8f0;
+        }
+
+        .menu-title {
+            font-size: 1.8rem;
+            font-weight: 700;
+            color: #1e293b;
+            margin-bottom: 10px;
+            text-align: center;
+        }
+
+        .menu-count {
+            text-align: center;
+            color: #64748b;
+            margin-bottom: 30px;
+            font-size: 1.1rem;
+        }
+
+        .day-section {
+            margin-bottom: 30px;
+            background: white;
+            border-radius: 12px;
+            padding: 20px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+        }
+
+        .day-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            padding-bottom: 15px;
+            border-bottom: 2px solid #e2e8f0;
+        }
+
+        .day-title {
+            font-size: 1.4rem;
+            font-weight: 700;
+            color: #1e293b;
+        }
+
+        .meal-count {
+            background: #3b82f6;
+            color: white;
+            padding: 5px 12px;
+            border-radius: 20px;
+            font-size: 0.9rem;
+            font-weight: 600;
+        }
+
+        .meal-type {
+            margin-bottom: 20px;
+        }
+
+        .meal-type-title {
+            font-size: 1.2rem;
+            font-weight: 600;
+            color: #374151;
+            margin-bottom: 10px;
+            padding: 8px 15px;
+            background: #f3f4f6;
+            border-radius: 8px;
+            border-left: 4px solid #10b981;
+        }
+
+        .meals-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 15px;
+        }
+
+        .meal-item {
+            background: white;
+            padding: 15px;
+            border-radius: 10px;
+            border: 2px solid #e5e7eb;
+            transition: all 0.3s ease;
+        }
+
+        .meal-item:hover {
+            border-color: #3b82f6;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(59, 130, 246, 0.15);
+        }
+
+        .meal-name {
+            font-weight: 600;
+            color: #1e293b;
+            margin-bottom: 5px;
+            font-size: 1rem;
+        }
+
+        .meal-description {
+            color: #64748b;
+            font-size: 0.9rem;
+            margin-bottom: 8px;
+        }
+
+        .meal-price {
+            color: #059669;
+            font-weight: 600;
+            font-size: 0.9rem;
+        }
+
+        .export-section {
+            text-align: center;
+            margin-top: 30px;
+            padding: 20px;
+            background: #f8fafc;
+            border-radius: 12px;
+        }
+
+        .export-button {
+            background: linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%);
+            color: white;
+            padding: 12px 24px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 600;
+            margin: 0 10px;
+            transition: all 0.3s ease;
+        }
+
+        .export-button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 16px rgba(139, 92, 246, 0.3);
+        }
+
+        .json-output {
+            background: #1e293b;
+            color: #e2e8f0;
+            padding: 20px;
+            border-radius: 10px;
+            font-family: 'Courier New', monospace;
+            font-size: 0.9rem;
+            white-space: pre-wrap;
+            max-height: 400px;
+            overflow-y: auto;
+            margin-top: 20px;
+            display: none;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🍽️ Парсер Excel меню v2.0</h1>
+            <p>Умный парсер для структурированных меню с парами столбцов</p>
+        </div>
+
+        <div class="upload-section">
+            <div class="file-input-wrapper">
+                <input type="file" id="fileInput" class="file-input" accept=".xlsx,.xls" />
+                <button class="file-input-button">
+                    📁 Выберите Excel файл
+                </button>
+            </div>
+
+            <div class="progress-bar" id="progressBar">
+                <div class="progress-fill" id="progressFill"></div>
+            </div>
+            <div class="progress-text" id="progressText"></div>
+
+            <div id="message" class="message"></div>
+
+            <div class="menu-card" id="menuCard">
+                <div class="menu-title" id="menuTitle"></div>
+                <div class="menu-count" id="menuCount"></div>
+                <div id="menuGrid"></div>
+
+                <div class="export-section">
+                    <button class="export-button" onclick="exportToJSON()">📄 Экспорт в JSON</button>
+                    <button class="export-button" onclick="exportToCSV()">📊 Экспорт в CSV</button>
+                    <div class="json-output" id="jsonOutput"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let selectedFile = null;
+        let parsedMenu = null;
+
+        const dayNames = ["", "Понедельник", "Вторник", "Среда", "Четверг", "Пятница", "Суббота", "Воскресенье"];
+        const mealTypes = ["завтрак", "обед", "полдник"];
+
+        // Обработчик выбора файла
+        document.getElementById('fileInput').addEventListener('change', function(e) {
+            const file = e.target.files[0];
+            if (!file) return;
+
+            selectedFile = file;
+            document.querySelector('.file-input-button').textContent = `📁 ${file.name}`;
+            showMessage(`Файл выбран: ${file.name}`, 'info');
+        });
+
+        // Обработчик клика на кнопку
+        document.querySelector('.file-input-button').addEventListener('click', function() {
+            if (selectedFile) {
+                processFile();
+            }
+        });
+
+        // Обработка файла
+        async function processFile() {
+            if (!selectedFile) {
+                showMessage('❌ Сначала выберите файл', 'error');
+                return;
+            }
+
+            try {
+                showProgress(true);
+                setProgress(10, 'Чтение файла...');
+
+                const data = await readFile(selectedFile);
+                const workbook = XLSX.read(data, { type: 'array' });
+                
+                setProgress(30, 'Анализ структуры...');
+                
+                // Ищем лист с названием содержащим "НЕДЕЛЯ"
+                let targetSheet = null;
+                for (const sheetName of workbook.SheetNames) {
+                    if (sheetName.toLowerCase().includes('недел')) {
+                        targetSheet = sheetName;
+                        break;
+                    }
+                }
+
+                if (!targetSheet) {
+                    targetSheet = workbook.SheetNames[0];
+                }
+
+                const worksheet = workbook.Sheets[targetSheet];
+                const jsonData = XLSX.utils.sheet_to_json(worksheet, { 
+                    header: 1, 
+                    raw: false,
+                    defval: ''
+                });
+
+                setProgress(60, 'Парсинг структуры...');
+                
+                const menu = parseStructuredMenu(jsonData, targetSheet);
+                
+                setProgress(100, 'Готово!');
+                
+                parsedMenu = menu;
+                displayMenu(menu);
+                showMessage(`✅ Меню успешно распознано! Найдено ${menu.totalDishes} блюд`, 'success');
+
+            } catch (error) {
+                showMessage('❌ Ошибка обработки файла: ' + error.message, 'error');
+                console.error('Ошибка:', error);
+            } finally {
+                showProgress(false);
+            }
+        }
+
+        // Чтение файла
+        function readFile(file) {
+            return new Promise((resolve, reject) => {
+                const reader = new FileReader();
+                reader.onload = (e) => resolve(e.target.result);
+                reader.onerror = (e) => reject(e);
+                reader.readAsArrayBuffer(file);
+            });
+        }
+
+        // Парсинг структурированного меню
+        function parseStructuredMenu(jsonData, sheetName) {
+            const menu = {
+                Понедельник: { Завтрак: [], Обед: [], Полдник: [] },
+                Вторник: { Завтрак: [], Обед: [], Полдник: [] },
+                Среда: { Завтрак: [], Обед: [], Полдник: [] },
+                Четверг: { Завтрак: [], Обед: [], Полдник: [] },
+                Пятница: { Завтрак: [], Обед: [], Полдник: [] }
+            };
+
+            let totalDishes = 0;
+
+            // Анализируем структуру - ищем пары столбцов для каждого дня
+            const dayColumns = findDayColumns(jsonData);
+            
+            console.log('Найденные столбцы дней:', dayColumns);
+
+            // Обрабатываем каждый день
+            for (const [dayName, columns] of Object.entries(dayColumns)) {
+                const dayData = parseDayData(jsonData, columns);
+                menu[dayName] = dayData;
+                totalDishes += Object.values(dayData).flat().length;
+            }
+
+            // Извлекаем информацию о неделе
+            const weekMatch = sheetName.match(/(\d+)\s*недел/i);
+            const week = weekMatch ? `Неделя ${weekMatch[1]}` : 'Текущая неделя';
+
+            return {
+                menu,
+                week,
+                title: `Меню на ${week}`,
+                totalDishes,
+                sheetName
+            };
+        }
+
+        // Поиск столбцов для каждого дня
+        function findDayColumns(jsonData) {
+            const dayColumns = {};
+            const dayNames = ['Понедельник', 'Вторник', 'Среда', 'Четверг', 'Пятница'];
+
+            // Ищем в первых 3 строках названия дней
+            for (let rowIndex = 0; rowIndex < Math.min(3, jsonData.length); rowIndex++) {
+                const row = jsonData[rowIndex];
+                if (!row) continue;
+
+                for (let colIndex = 0; colIndex < row.length; colIndex++) {
+                    const cellValue = (row[colIndex] || '').toString().trim();
+                    
+                    // Проверяем, содержит ли ячейка название дня
+                    for (const dayName of dayNames) {
+                        if (cellValue.toLowerCase().includes(dayName.toLowerCase())) {
+                            // Найден день, ищем пару столбцов
+                            const dayCols = findDayColumnPair(jsonData, colIndex);
+                            if (dayCols.length >= 1) {
+                                dayColumns[dayName] = dayCols;
+                            }
+                            break;
+                        }
+                    }
+                }
+            }
+
+            return dayColumns;
+        }
+
+        // Поиск пары столбцов для дня
+        function findDayColumnPair(jsonData, startCol) {
+            const columns = [];
+            
+            // Ищем столбцы с данными (не пустые)
+            for (let col = startCol; col < startCol + 4; col++) {
+                let hasData = false;
+                
+                // Проверяем несколько строк на наличие данных
+                for (let row = 0; row < Math.min(20, jsonData.length); row++) {
+                    const cellValue = (jsonData[row] && jsonData[row][col]) ? 
+                        jsonData[row][col].toString().trim() : '';
+                    
+                    if (cellValue && cellValue.length > 2 && !isServiceCell(cellValue)) {
+                        hasData = true;
+                        break;
+                    }
+                }
+                
+                if (hasData) {
+                    columns.push(col);
+                }
+            }
+            
+            return columns;
+        }
+
+        // Парсинг данных дня
+        function parseDayData(jsonData, columns) {
+            const dayData = { Завтрак: [], Обед: [], Полдник: [] };
+            let currentMealType = 'Завтрак';
+
+            // Проходим по строкам и ищем секции питания
+            for (let rowIndex = 0; rowIndex < jsonData.length; rowIndex++) {
+                const row = jsonData[rowIndex];
+                if (!row) continue;
+
+                // Проверяем первую ячейку на наличие ключевых слов
+                const firstCell = (row[0] || '').toString().trim().toLowerCase();
+                
+                if (firstCell.includes('завтрак') || firstCell.includes('з  а  в  т  р  а  к')) {
+                    currentMealType = 'Завтрак';
+                    continue;
+                } else if (firstCell.includes('обед') || firstCell.includes('о  б  е  д')) {
+                    currentMealType = 'Обед';
+                    continue;
+                } else if (firstCell.includes('полдник') || firstCell.includes('п  о  л  д  н  и  к')) {
+                    currentMealType = 'Полдник';
+                    continue;
+                }
+
+                // Обрабатываем ячейки в найденных столбцах
+                for (const colIndex of columns) {
+                    const cellValue = (row[colIndex] || '').toString().trim();
+                    
+                    if (cellValue && cellValue.length > 3 && !isServiceCell(cellValue)) {
+                        const dish = cleanDishName(cellValue);
+                        if (dish && !dayData[currentMealType].includes(dish)) {
+                            dayData[currentMealType].push(dish);
+                        }
+                    }
+                }
+            }
+
+            return dayData;
+        }
+
+        // Очистка названия блюда
+        function cleanDishName(text) {
+            // Убираем номера порций (№ 1/6, № 11/2, №15/1)
+            let cleaned = text.replace(/№\s*\d+\/\d+/g, '');
+            
+            // Убираем вес (225 г, 20 г, 200 г)
+            cleaned = cleaned.replace(/\d+\s*г/g, '');
+            
+            // Убираем количество штук (2 шт)
+            cleaned = cleaned.replace(/\d+\s*шт/g, '');
+            
+            // Убираем лишние пробелы и знаки препинания
+            cleaned = cleaned.replace(/\s+/g, ' ').trim();
+            cleaned = cleaned.replace(/^[,\-\.\s]+|[,\-\.\s]+$/g, '');
+            
+            // Убираем служебные слова
+            const serviceWords = ['дополнительный', 'гарнир', 'овощной', 'соусы', 'с'];
+            for (const word of serviceWords) {
+                if (cleaned.toLowerCase().includes(word)) {
+                    return null;
+                }
+            }
+            
+            return cleaned.length > 2 ? cleaned : null;
+        }
+
+        // Проверка служебной ячейки
+        function isServiceCell(text) {
+            const lowerText = text.toLowerCase();
+            const serviceWords = [
+                '№', 'кол', 'иче', 'ств', 'количество', 'порций', 'порции', 'неделя', 'недел',
+                'понедельник', 'вторник', 'среда', 'четверг', 'пятница', 'суббота', 'воскресенье',
+                'завтрак', 'обед', 'полдник', 'ужин', 'дополнительный', 'гарнир', 'итого', 'всего',
+                'з  а  в  т  р  а  к', 'о  б  е  д', 'п  о  л  д  н  и  к'
+            ];
+            
+            return serviceWords.some(word => lowerText.includes(word.toLowerCase()));
+        }
+
+        // Отображение меню
+        function displayMenu(menu) {
+            document.getElementById('menuTitle').textContent = `📋 ${menu.title}`;
+            document.getElementById('menuCount').textContent = `Всего блюд: ${menu.totalDishes}`;
+            
+            const menuGrid = document.getElementById('menuGrid');
+            menuGrid.innerHTML = '';
+
+            for (const [dayName, dayData] of Object.entries(menu.menu)) {
+                const daySection = document.createElement('div');
+                daySection.className = 'day-section';
+                
+                let totalDayDishes = Object.values(dayData).flat().length;
+                
+                daySection.innerHTML = `
+                    <div class="day-header">
+                        <div class="day-title">${dayName}</div>
+                        <div class="meal-count">${totalDayDishes} блюд</div>
+                    </div>
+                `;
+
+                for (const [mealType, dishes] of Object.entries(dayData)) {
+                    if (dishes.length > 0) {
+                        const mealTypeDiv = document.createElement('div');
+                        mealTypeDiv.className = 'meal-type';
+                        
+                        mealTypeDiv.innerHTML = `
+                            <div class="meal-type-title">${mealType} (${dishes.length} блюд)</div>
+                            <div class="meals-grid">
+                                ${dishes.map(dish => `
+                                    <div class="meal-item">
+                                        <div class="meal-name">${dish}</div>
+                                    </div>
+                                `).join('')}
+                            </div>
+                        `;
+                        
+                        daySection.appendChild(mealTypeDiv);
+                    }
+                }
+                
+                menuGrid.appendChild(daySection);
+            }
+
+            document.getElementById('menuCard').style.display = 'block';
+        }
+
+        // Экспорт в JSON
+        function exportToJSON() {
+            if (!parsedMenu) return;
+            
+            const jsonOutput = document.getElementById('jsonOutput');
+            jsonOutput.textContent = JSON.stringify(parsedMenu.menu, null, 2);
+            jsonOutput.style.display = 'block';
+            
+            // Скачивание файла
+            const blob = new Blob([JSON.stringify(parsedMenu.menu, null, 2)], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `menu_${parsedMenu.week.replace(/\s+/g, '_')}.json`;
+            a.click();
+            URL.revokeObjectURL(url);
+        }
+
+        // Экспорт в CSV
+        function exportToCSV() {
+            if (!parsedMenu) return;
+            
+            let csv = 'День,Тип питания,Блюдо\n';
+            
+            for (const [dayName, dayData] of Object.entries(parsedMenu.menu)) {
+                for (const [mealType, dishes] of Object.entries(dayData)) {
+                    for (const dish of dishes) {
+                        csv += `"${dayName}","${mealType}","${dish}"\n`;
+                    }
+                }
+            }
+            
+            const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `menu_${parsedMenu.week.replace(/\s+/g, '_')}.csv`;
+            a.click();
+            URL.revokeObjectURL(url);
+        }
+
+        // Показать прогресс
+        function showProgress(show) {
+            document.getElementById('progressBar').style.display = show ? 'block' : 'none';
+        }
+
+        function setProgress(percent, text) {
+            document.getElementById('progressFill').style.width = `${percent}%`;
+            document.getElementById('progressText').textContent = text;
+        }
+
+        // Показать сообщение
+        function showMessage(text, type) {
+            const messageDiv = document.getElementById('message');
+            messageDiv.textContent = text;
+            messageDiv.className = `message ${type}`;
+            messageDiv.style.display = 'block';
+        }
+    </script>
+</body>
+</html>

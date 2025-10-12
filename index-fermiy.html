@@ -1,0 +1,342 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🍽️ Школьное питание - fermiy.ru</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        .header {
+            background: white;
+            border-radius: 20px;
+            padding: 40px;
+            margin-bottom: 30px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+            text-align: center;
+        }
+
+        .header h1 {
+            color: #1e293b;
+            font-size: 3rem;
+            margin-bottom: 15px;
+            background: linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .header p {
+            color: #64748b;
+            font-size: 1.2rem;
+            margin-bottom: 20px;
+        }
+
+        .header .domain {
+            background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+            color: white;
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-weight: 600;
+            display: inline-block;
+        }
+
+        .cards-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+            gap: 30px;
+            margin-bottom: 30px;
+        }
+
+        .card {
+            background: white;
+            border-radius: 20px;
+            padding: 30px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+            transition: all 0.3s ease;
+            text-decoration: none;
+            color: inherit;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 4px;
+            background: linear-gradient(90deg, #3b82f6, #8b5cf6, #10b981);
+        }
+
+        .card:hover {
+            transform: translateY(-10px);
+            box-shadow: 0 20px 40px rgba(0,0,0,0.15);
+        }
+
+        .card-icon {
+            font-size: 3rem;
+            margin-bottom: 20px;
+            display: block;
+        }
+
+        .card h3 {
+            color: #1e293b;
+            font-size: 1.5rem;
+            margin-bottom: 15px;
+            font-weight: 700;
+        }
+
+        .card p {
+            color: #64748b;
+            line-height: 1.6;
+            margin-bottom: 20px;
+        }
+
+        .card-features {
+            list-style: none;
+            margin-bottom: 20px;
+        }
+
+        .card-features li {
+            color: #475569;
+            margin-bottom: 8px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .card-features li::before {
+            content: '✅';
+            font-size: 0.9rem;
+        }
+
+        .card-button {
+            background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%);
+            color: white;
+            padding: 12px 24px;
+            border: none;
+            border-radius: 10px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            width: 100%;
+            font-size: 1rem;
+        }
+
+        .card-button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 16px rgba(59, 130, 246, 0.3);
+        }
+
+        .stats-section {
+            background: white;
+            border-radius: 20px;
+            padding: 40px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+            margin-bottom: 30px;
+        }
+
+        .stats-title {
+            text-align: center;
+            color: #1e293b;
+            font-size: 2rem;
+            margin-bottom: 30px;
+            font-weight: 700;
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+        }
+
+        .stat-card {
+            text-align: center;
+            padding: 20px;
+            background: #f8fafc;
+            border-radius: 15px;
+            border: 1px solid #e2e8f0;
+        }
+
+        .stat-number {
+            font-size: 2.5rem;
+            font-weight: 700;
+            color: #3b82f6;
+            margin-bottom: 10px;
+        }
+
+        .stat-label {
+            color: #64748b;
+            font-weight: 600;
+        }
+
+        .footer {
+            background: white;
+            border-radius: 20px;
+            padding: 30px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+            text-align: center;
+        }
+
+        .footer p {
+            color: #64748b;
+            margin-bottom: 15px;
+        }
+
+        .footer-links {
+            display: flex;
+            justify-content: center;
+            gap: 20px;
+            flex-wrap: wrap;
+        }
+
+        .footer-link {
+            color: #3b82f6;
+            text-decoration: none;
+            font-weight: 600;
+            transition: color 0.3s ease;
+        }
+
+        .footer-link:hover {
+            color: #1d4ed8;
+        }
+
+        .demo-badge {
+            position: absolute;
+            top: 15px;
+            right: 15px;
+            background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+            color: white;
+            padding: 5px 12px;
+            border-radius: 15px;
+            font-size: 0.8rem;
+            font-weight: 600;
+        }
+
+        @media (max-width: 768px) {
+            .header h1 {
+                font-size: 2rem;
+            }
+            
+            .cards-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .stats-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🍽️ Школьное питание</h1>
+            <p>Современная система управления школьным питанием</p>
+            <div class="domain">fermiy.ru</div>
+        </div>
+
+        <div class="cards-grid">
+            <a href="director-fermiy.html" class="card">
+                <div class="demo-badge">LIVE</div>
+                <div class="card-icon">👨‍💼</div>
+                <h3>Панель директора</h3>
+                <p>Управление меню, загрузка Excel файлов и контроль питания</p>
+                <ul class="card-features">
+                    <li>Загрузка Excel меню</li>
+                    <li>Умный парсер блюд</li>
+                    <li>Экспорт данных</li>
+                    <li>Статистика питания</li>
+                </ul>
+                <button class="card-button">Открыть панель</button>
+            </a>
+
+            <a href="parent-fermiy.html" class="card">
+                <div class="demo-badge">DEMO</div>
+                <div class="card-icon">👨‍👩‍👧‍👦</div>
+                <h3>Родительский портал</h3>
+                <p>Выбор меню для детей, просмотр рациона и заказ питания</p>
+                <ul class="card-features">
+                    <li>Просмотр меню на неделю</li>
+                    <li>Выбор блюд для ребенка</li>
+                    <li>Учет аллергий</li>
+                    <li>История заказов</li>
+                </ul>
+                <button class="card-button">Открыть портал</button>
+            </a>
+
+            <a href="excel-parser-v2.html" class="card">
+                <div class="demo-badge">TOOL</div>
+                <div class="card-icon">🔧</div>
+                <h3>Парсер Excel</h3>
+                <p>Инструмент для анализа и конвертации Excel файлов меню</p>
+                <ul class="card-features">
+                    <li>Анализ структуры Excel</li>
+                    <li>Распознавание блюд</li>
+                    <li>Экспорт в JSON/CSV</li>
+                    <li>Предварительный просмотр</li>
+                </ul>
+                <button class="card-button">Открыть парсер</button>
+            </a>
+        </div>
+
+        <div class="stats-section">
+            <h2 class="stats-title">📊 Статистика системы</h2>
+            <div class="stats-grid">
+                <div class="stat-card">
+                    <div class="stat-number">150+</div>
+                    <div class="stat-label">Семей</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-number">500+</div>
+                    <div class="stat-label">Блюд в базе</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-number">5</div>
+                    <div class="stat-label">Дней в неделе</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-number">3</div>
+                    <div class="stat-label">Приема пищи</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-number">99%</div>
+                    <div class="stat-label">Точность парсинга</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-number">24/7</div>
+                    <div class="stat-label">Доступность</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="footer">
+            <p>© 2024 Школьное питание - fermiy.ru</p>
+            <div class="footer-links">
+                <a href="director-fermiy.html" class="footer-link">Директор</a>
+                <a href="parent-fermiy.html" class="footer-link">Родители</a>
+                <a href="excel-parser-v2.html" class="footer-link">Парсер</a>
+                <a href="#" class="footer-link">Поддержка</a>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

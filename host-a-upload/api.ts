@@ -172,16 +172,20 @@ class ApiClient {
   }
 
   // Order methods
-  async createOrder(menuItemIds: number[], weekStart: string): Promise<{ message: string; itemsCount: number }> {
-    return this.request<{ message: string; itemsCount: number }>('/orders', {
+  async createOrder(orderData: any): Promise<{ success: boolean; message: string; order?: any }> {
+    return this.request<{ success: boolean; message: string; order?: any }>('/orders.php', {
       method: 'POST',
-      body: JSON.stringify({ menuItemIds, weekStart }),
+      body: JSON.stringify(orderData),
     });
+  }
+
+  async getOrders(): Promise<any[]> {
+    return this.request<any[]>('/orders.php');
   }
 
   async getUserOrders(weekStart?: string): Promise<Order[]> {
     const params = weekStart ? `?week=${weekStart}` : '';
-    return this.request<Order[]>(`/orders${params}`);
+    return this.request<Order[]>(`/orders.php${params}`);
   }
 
   // Health check

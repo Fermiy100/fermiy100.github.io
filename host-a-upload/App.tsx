@@ -2,8 +2,8 @@ import React, { useState, useEffect } from 'react';
 import ModernLogin from './pages/ModernLogin';
 import DirectorAdvanced from './pages/DirectorAdvanced';
 import PersonalCabinet from './components/PersonalCabinet';
-import OrderForm from './components/OrderForm';
-import { User } from './utils/api';
+import ParentMenuSelector from './components/ParentMenuSelector';
+import { User } from './api';
 
 function App() {
   const [user, setUser] = useState<User | null>(null);
@@ -162,14 +162,7 @@ function App() {
         )}
         
         {activeView === 'parent' && user.role === 'PARENT' && (
-          <OrderForm
-            menuItems={[]} // Будет загружено из API
-            user={user}
-            onOrderSubmit={(order) => {
-              console.log('Заказ создан:', order);
-              // Можно добавить уведомление
-            }}
-          />
+          <ParentMenuSelector user={user} />
         )}
         
         {activeView === 'profile' && (

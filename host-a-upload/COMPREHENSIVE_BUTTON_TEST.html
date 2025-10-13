@@ -1,0 +1,598 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🧪 Комплексный тест всех кнопок сайта</title>
+    <style>
+        body { 
+            font-family: Arial, sans-serif; 
+            margin: 20px; 
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+        .test-section { 
+            background: rgba(255,255,255,0.1); 
+            padding: 20px; 
+            margin: 20px 0; 
+            border-radius: 10px; 
+            backdrop-filter: blur(10px);
+        }
+        .result { 
+            background: rgba(255,255,255,0.2); 
+            padding: 15px; 
+            margin: 10px 0; 
+            border-radius: 8px; 
+            border-left: 4px solid #4CAF50;
+        }
+        .error { 
+            background: rgba(244, 67, 54, 0.2); 
+            border-left-color: #f44336; 
+        }
+        .success { 
+            background: rgba(76, 175, 80, 0.2); 
+            border-left-color: #4CAF50; 
+        }
+        .warning { 
+            background: rgba(255, 193, 7, 0.2); 
+            border-left-color: #ffc107; 
+        }
+        pre { 
+            white-space: pre-wrap; 
+            word-wrap: break-word; 
+            background: rgba(0,0,0,0.3);
+            padding: 10px;
+            border-radius: 5px;
+        }
+        button {
+            background: #007bff;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            margin: 5px;
+            transition: all 0.3s ease;
+        }
+        button:hover {
+            background: #0056b3;
+            transform: translateY(-2px);
+        }
+        .test-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 20px;
+        }
+        .status-indicator {
+            display: inline-block;
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            margin-right: 8px;
+        }
+        .status-success { background: #4CAF50; }
+        .status-error { background: #f44336; }
+        .status-warning { background: #ffc107; }
+        .status-pending { background: #9e9e9e; }
+    </style>
+</head>
+<body>
+    <h1>🧪 Комплексный тест всех кнопок сайта</h1>
+    <p>Этот тест проверит все функции и кнопки на сайте fermiy.ru</p>
+    
+    <div class="test-section">
+        <h2>🚀 Быстрые тесты</h2>
+        <button onclick="runAllTests()">🔄 Запустить все тесты</button>
+        <button onclick="testAPI()">🔌 Тест API</button>
+        <button onclick="testLogin()">🔐 Тест входа</button>
+        <button onclick="testMenu()">🍽️ Тест меню</button>
+        <button onclick="clearResults()">🗑️ Очистить результаты</button>
+    </div>
+
+    <div class="test-section">
+        <h2>📊 Результаты тестов</h2>
+        <div id="results"></div>
+    </div>
+
+    <div class="test-section">
+        <h2>📋 Детальные тесты</h2>
+        <div class="test-grid">
+            <div>
+                <h3>🔐 Аутентификация</h3>
+                <button onclick="testDirectorLogin()">👨‍💼 Вход директора</button>
+                <button onclick="testParentLogin()">👨‍👩‍👧‍👦 Вход родителя</button>
+                <button onclick="testRegistration()">📝 Регистрация</button>
+            </div>
+            
+            <div>
+                <h3>🍽️ Меню</h3>
+                <button onclick="testMenuLoad()">📋 Загрузка меню</button>
+                <button onclick="testMenuUpload()">📤 Загрузка Excel</button>
+                <button onclick="testMenuAdd()">➕ Добавление блюда</button>
+                <button onclick="testMenuDelete()">🗑️ Удаление блюд</button>
+            </div>
+            
+            <div>
+                <h3>👥 Пользователи</h3>
+                <button onclick="testUserCreation()">👤 Создание пользователя</button>
+                <button onclick="testUserVerification()">✅ Верификация</button>
+                <button onclick="testUserList()">📋 Список пользователей</button>
+            </div>
+            
+            <div>
+                <h3>🛒 Заказы</h3>
+                <button onclick="testOrderCreation()">🛒 Создание заказа</button>
+                <button onclick="testOrderList()">📋 Список заказов</button>
+                <button onclick="testOrderUpdate()">✏️ Обновление заказа</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let testResults = [];
+        
+        function addResult(title, status, message, details = null) {
+            const timestamp = new Date().toLocaleTimeString();
+            const statusClass = status === 'success' ? 'success' : 
+                              status === 'error' ? 'error' : 
+                              status === 'warning' ? 'warning' : 'result';
+            
+            const statusIcon = status === 'success' ? '✅' : 
+                             status === 'error' ? '❌' : 
+                             status === 'warning' ? '⚠️' : 'ℹ️';
+            
+            const resultHtml = `
+                <div class="result ${statusClass}">
+                    <span class="status-indicator status-${status}"></span>
+                    <strong>${statusIcon} ${title}</strong> 
+                    <span style="float: right; opacity: 0.7;">${timestamp}</span><br>
+                    ${message}
+                    ${details ? `<details><summary>Детали</summary><pre>${details}</pre></details>` : ''}
+                </div>
+            `;
+            
+            document.getElementById('results').innerHTML += resultHtml;
+            testResults.push({ title, status, message, details, timestamp });
+        }
+        
+        function clearResults() {
+            document.getElementById('results').innerHTML = '';
+            testResults = [];
+        }
+        
+        async function testAPI() {
+            addResult('API Тест', 'pending', 'Проверяем доступность API...');
+            
+            try {
+                const response = await fetch('/api/health.php');
+                if (response.ok) {
+                    const data = await response.json();
+                    addResult('API Тест', 'success', 'API доступен', JSON.stringify(data, null, 2));
+                } else {
+                    addResult('API Тест', 'error', `API недоступен: ${response.status}`);
+                }
+            } catch (error) {
+                addResult('API Тест', 'error', `Ошибка API: ${error.message}`);
+            }
+        }
+        
+        async function testLogin() {
+            addResult('Тест входа', 'pending', 'Тестируем систему входа...');
+            
+            try {
+                // Тест входа директора
+                const directorResponse = await fetch('/api/auth/login.php', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        email: 'director@school.test',
+                        password: 'password123'
+                    })
+                });
+                
+                if (directorResponse.ok) {
+                    const directorData = await directorResponse.json();
+                    addResult('Вход директора', 'success', 'Директор успешно вошел', 
+                        `Пользователь: ${directorData.user?.name}, Роль: ${directorData.user?.role}`);
+                } else {
+                    addResult('Вход директора', 'error', `Ошибка входа директора: ${directorResponse.status}`);
+                }
+                
+                // Тест входа родителя
+                const parentResponse = await fetch('/api/auth/login.php', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        email: 'parent@school.test',
+                        password: 'password123'
+                    })
+                });
+                
+                if (parentResponse.ok) {
+                    const parentData = await parentResponse.json();
+                    addResult('Вход родителя', 'success', 'Родитель успешно вошел', 
+                        `Пользователь: ${parentData.user?.name}, Роль: ${parentData.user?.role}`);
+                } else {
+                    addResult('Вход родителя', 'error', `Ошибка входа родителя: ${parentResponse.status}`);
+                }
+                
+            } catch (error) {
+                addResult('Тест входа', 'error', `Ошибка тестирования входа: ${error.message}`);
+            }
+        }
+        
+        async function testMenu() {
+            addResult('Тест меню', 'pending', 'Проверяем загрузку меню...');
+            
+            try {
+                const response = await fetch('/api/menu.php');
+                if (response.ok) {
+                    const menuData = await response.json();
+                    const dishCount = Array.isArray(menuData) ? menuData.length : 0;
+                    
+                    if (dishCount > 0) {
+                        addResult('Загрузка меню', 'success', `Меню загружено: ${dishCount} блюд`, 
+                            `Первые 3 блюда: ${JSON.stringify(menuData.slice(0, 3), null, 2)}`);
+                    } else {
+                        addResult('Загрузка меню', 'warning', 'Меню пустое');
+                    }
+                } else {
+                    addResult('Загрузка меню', 'error', `Ошибка загрузки меню: ${response.status}`);
+                }
+            } catch (error) {
+                addResult('Тест меню', 'error', `Ошибка тестирования меню: ${error.message}`);
+            }
+        }
+        
+        async function testDirectorLogin() {
+            addResult('Вход директора', 'pending', 'Тестируем вход директора...');
+            
+            try {
+                const response = await fetch('/api/auth/login.php', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        email: 'director@school.test',
+                        password: 'password123'
+                    })
+                });
+                
+                if (response.ok) {
+                    const data = await response.json();
+                    addResult('Вход директора', 'success', 'Директор успешно вошел', 
+                        `ID: ${data.user?.id}, Имя: ${data.user?.name}, Роль: ${data.user?.role}`);
+                } else {
+                    const errorData = await response.json().catch(() => ({}));
+                    addResult('Вход директора', 'error', `Ошибка: ${errorData.error || response.status}`);
+                }
+            } catch (error) {
+                addResult('Вход директора', 'error', `Ошибка: ${error.message}`);
+            }
+        }
+        
+        async function testParentLogin() {
+            addResult('Вход родителя', 'pending', 'Тестируем вход родителя...');
+            
+            try {
+                const response = await fetch('/api/auth/login.php', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        email: 'parent@school.test',
+                        password: 'password123'
+                    })
+                });
+                
+                if (response.ok) {
+                    const data = await response.json();
+                    addResult('Вход родителя', 'success', 'Родитель успешно вошел', 
+                        `ID: ${data.user?.id}, Имя: ${data.user?.name}, Роль: ${data.user?.role}`);
+                } else {
+                    const errorData = await response.json().catch(() => ({}));
+                    addResult('Вход родителя', 'error', `Ошибка: ${errorData.error || response.status}`);
+                }
+            } catch (error) {
+                addResult('Вход родителя', 'error', `Ошибка: ${error.message}`);
+            }
+        }
+        
+        async function testRegistration() {
+            addResult('Регистрация', 'pending', 'Тестируем регистрацию нового пользователя...');
+            
+            try {
+                const testUser = {
+                    name: 'Тестовый Пользователь',
+                    email: 'test@example.com',
+                    password: 'testpassword123',
+                    role: 'PARENT'
+                };
+                
+                const response = await fetch('/api/users/create.php', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(testUser)
+                });
+                
+                if (response.ok) {
+                    const data = await response.json();
+                    addResult('Регистрация', 'success', 'Пользователь успешно создан', 
+                        `ID: ${data.user?.id}, Имя: ${data.user?.name}`);
+                } else {
+                    const errorData = await response.json().catch(() => ({}));
+                    addResult('Регистрация', 'warning', `Регистрация: ${errorData.error || response.status}`);
+                }
+            } catch (error) {
+                addResult('Регистрация', 'error', `Ошибка: ${error.message}`);
+            }
+        }
+        
+        async function testMenuLoad() {
+            addResult('Загрузка меню', 'pending', 'Проверяем загрузку меню...');
+            
+            try {
+                const response = await fetch('/api/menu.php');
+                if (response.ok) {
+                    const menuData = await response.json();
+                    const dishCount = Array.isArray(menuData) ? menuData.length : 0;
+                    
+                    if (dishCount > 0) {
+                        // Проверяем структуру данных
+                        const firstDish = menuData[0];
+                        const hasRequiredFields = firstDish.id && firstDish.name && firstDish.meal_type;
+                        
+                        addResult('Загрузка меню', 'success', `Меню загружено: ${dishCount} блюд`, 
+                            `Структура данных: ${hasRequiredFields ? 'Корректная' : 'Некорректная'}`);
+                    } else {
+                        addResult('Загрузка меню', 'warning', 'Меню пустое');
+                    }
+                } else {
+                    addResult('Загрузка меню', 'error', `Ошибка: ${response.status}`);
+                }
+            } catch (error) {
+                addResult('Загрузка меню', 'error', `Ошибка: ${error.message}`);
+            }
+        }
+        
+        async function testMenuAdd() {
+            addResult('Добавление блюда', 'pending', 'Тестируем добавление блюда...');
+            
+            try {
+                const newDish = {
+                    name: 'Тестовое блюдо',
+                    description: 'Блюдо для тестирования',
+                    price: 200,
+                    meal_type: 'завтрак',
+                    day_of_week: 'ПОНЕДЕЛЬНИК',
+                    weight: '250г',
+                    recipe_number: 'TEST/1'
+                };
+                
+                const response = await fetch('/api/menu/add.php', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(newDish)
+                });
+                
+                if (response.ok) {
+                    const data = await response.json();
+                    addResult('Добавление блюда', 'success', 'Блюдо успешно добавлено', 
+                        `ID: ${data.dish?.id}, Название: ${data.dish?.name}`);
+                } else {
+                    const errorData = await response.json().catch(() => ({}));
+                    addResult('Добавление блюда', 'warning', `Добавление: ${errorData.error || response.status}`);
+                }
+            } catch (error) {
+                addResult('Добавление блюда', 'error', `Ошибка: ${error.message}`);
+            }
+        }
+        
+        async function testMenuDelete() {
+            addResult('Удаление блюд', 'pending', 'Тестируем удаление блюд...');
+            
+            try {
+                const response = await fetch('/api/menu/clear.php', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' }
+                });
+                
+                if (response.ok) {
+                    const data = await response.json();
+                    addResult('Удаление блюд', 'success', 'Блюда успешно удалены', 
+                        `Удалено: ${data.deletedCount || 0} блюд`);
+                } else {
+                    const errorData = await response.json().catch(() => ({}));
+                    addResult('Удаление блюд', 'warning', `Удаление: ${errorData.error || response.status}`);
+                }
+            } catch (error) {
+                addResult('Удаление блюд', 'error', `Ошибка: ${error.message}`);
+            }
+        }
+        
+        async function testUserCreation() {
+            addResult('Создание пользователя', 'pending', 'Тестируем создание пользователя...');
+            
+            try {
+                const newUser = {
+                    name: 'Новый Пользователь',
+                    email: 'newuser@example.com',
+                    password: 'newpassword123',
+                    role: 'PARENT'
+                };
+                
+                const response = await fetch('/api/users/create.php', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(newUser)
+                });
+                
+                if (response.ok) {
+                    const data = await response.json();
+                    addResult('Создание пользователя', 'success', 'Пользователь создан', 
+                        `ID: ${data.user?.id}, Имя: ${data.user?.name}`);
+                } else {
+                    const errorData = await response.json().catch(() => ({}));
+                    addResult('Создание пользователя', 'warning', `Создание: ${errorData.error || response.status}`);
+                }
+            } catch (error) {
+                addResult('Создание пользователя', 'error', `Ошибка: ${error.message}`);
+            }
+        }
+        
+        async function testUserVerification() {
+            addResult('Верификация пользователя', 'pending', 'Тестируем верификацию...');
+            
+            try {
+                const response = await fetch('/api/users/2/verify', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' }
+                });
+                
+                if (response.ok) {
+                    const data = await response.json();
+                    addResult('Верификация пользователя', 'success', 'Пользователь верифицирован', 
+                        data.message);
+                } else {
+                    addResult('Верификация пользователя', 'warning', `Верификация: ${response.status}`);
+                }
+            } catch (error) {
+                addResult('Верификация пользователя', 'error', `Ошибка: ${error.message}`);
+            }
+        }
+        
+        async function testUserList() {
+            addResult('Список пользователей', 'pending', 'Проверяем список пользователей...');
+            
+            try {
+                const response = await fetch('/api/users.php');
+                if (response.ok) {
+                    const users = await response.json();
+                    const userCount = Array.isArray(users) ? users.length : 0;
+                    
+                    addResult('Список пользователей', 'success', `Найдено пользователей: ${userCount}`, 
+                        `Пользователи: ${JSON.stringify(users.slice(0, 3), null, 2)}`);
+                } else {
+                    addResult('Список пользователей', 'error', `Ошибка: ${response.status}`);
+                }
+            } catch (error) {
+                addResult('Список пользователей', 'error', `Ошибка: ${error.message}`);
+            }
+        }
+        
+        async function testOrderCreation() {
+            addResult('Создание заказа', 'pending', 'Тестируем создание заказа...');
+            
+            try {
+                const newOrder = {
+                    user_id: 2,
+                    items: [
+                        {
+                            dish_id: 1,
+                            name: 'Тестовое блюдо',
+                            quantity: 2,
+                            price: 150
+                        }
+                    ],
+                    total_price: 300
+                };
+                
+                const response = await fetch('/api/orders.php', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(newOrder)
+                });
+                
+                if (response.ok) {
+                    const data = await response.json();
+                    addResult('Создание заказа', 'success', 'Заказ создан', 
+                        `ID: ${data.order?.id}, Сумма: ${data.order?.total_price}₽`);
+                } else {
+                    const errorData = await response.json().catch(() => ({}));
+                    addResult('Создание заказа', 'warning', `Создание заказа: ${errorData.error || response.status}`);
+                }
+            } catch (error) {
+                addResult('Создание заказа', 'error', `Ошибка: ${error.message}`);
+            }
+        }
+        
+        async function testOrderList() {
+            addResult('Список заказов', 'pending', 'Проверяем список заказов...');
+            
+            try {
+                const response = await fetch('/api/orders.php');
+                if (response.ok) {
+                    const orders = await response.json();
+                    const orderCount = Array.isArray(orders) ? orders.length : 0;
+                    
+                    addResult('Список заказов', 'success', `Найдено заказов: ${orderCount}`, 
+                        orderCount > 0 ? `Заказы: ${JSON.stringify(orders.slice(0, 2), null, 2)}` : 'Заказов нет');
+                } else {
+                    addResult('Список заказов', 'error', `Ошибка: ${response.status}`);
+                }
+            } catch (error) {
+                addResult('Список заказов', 'error', `Ошибка: ${error.message}`);
+            }
+        }
+        
+        async function testOrderUpdate() {
+            addResult('Обновление заказа', 'pending', 'Тестируем обновление заказа...');
+            
+            try {
+                const updateData = {
+                    id: 1,
+                    status: 'completed'
+                };
+                
+                const response = await fetch('/api/orders.php', {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(updateData)
+                });
+                
+                if (response.ok) {
+                    const data = await response.json();
+                    addResult('Обновление заказа', 'success', 'Заказ обновлен', data.message);
+                } else {
+                    addResult('Обновление заказа', 'warning', `Обновление: ${response.status}`);
+                }
+            } catch (error) {
+                addResult('Обновление заказа', 'error', `Ошибка: ${error.message}`);
+            }
+        }
+        
+        async function runAllTests() {
+            clearResults();
+            addResult('Комплексный тест', 'pending', 'Запускаем все тесты...');
+            
+            const tests = [
+                testAPI,
+                testDirectorLogin,
+                testParentLogin,
+                testMenuLoad,
+                testUserList,
+                testOrderList,
+                testRegistration,
+                testMenuAdd,
+                testUserCreation,
+                testOrderCreation
+            ];
+            
+            for (const test of tests) {
+                try {
+                    await test();
+                    await new Promise(resolve => setTimeout(resolve, 500)); // Пауза между тестами
+                } catch (error) {
+                    addResult('Ошибка теста', 'error', `Тест ${test.name} завершился с ошибкой: ${error.message}`);
+                }
+            }
+            
+            // Подсчет результатов
+            const successCount = testResults.filter(r => r.status === 'success').length;
+            const errorCount = testResults.filter(r => r.status === 'error').length;
+            const warningCount = testResults.filter(r => r.status === 'warning').length;
+            
+            addResult('Итоги тестирования', 'success', 
+                `Завершено: ${testResults.length} тестов. ✅ Успешно: ${successCount}, ❌ Ошибок: ${errorCount}, ⚠️ Предупреждений: ${warningCount}`);
+        }
+    </script>
+</body>
+</html>

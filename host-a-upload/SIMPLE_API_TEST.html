@@ -1,0 +1,265 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🧪 Простой тест API</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; background: #f5f5f5; }
+        .test { background: white; padding: 20px; margin: 10px 0; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
+        .success { border-left: 4px solid #4CAF50; }
+        .error { border-left: 4px solid #f44336; }
+        .warning { border-left: 4px solid #ff9800; }
+        button { background: #007bff; color: white; border: none; padding: 10px 20px; border-radius: 4px; cursor: pointer; margin: 5px; }
+        button:hover { background: #0056b3; }
+        pre { background: #f8f9fa; padding: 10px; border-radius: 4px; overflow-x: auto; }
+    </style>
+</head>
+<body>
+    <h1>🧪 Простой тест всех функций сайта</h1>
+    
+    <div class="test">
+        <h3>🔌 Тест API Health</h3>
+        <button onclick="testHealth()">Проверить</button>
+        <div id="health-result"></div>
+    </div>
+    
+    <div class="test">
+        <h3>🍽️ Тест загрузки меню</h3>
+        <button onclick="testMenu()">Проверить</button>
+        <div id="menu-result"></div>
+    </div>
+    
+    <div class="test">
+        <h3>🔐 Тест входа директора</h3>
+        <button onclick="testDirectorLogin()">Проверить</button>
+        <div id="director-result"></div>
+    </div>
+    
+    <div class="test">
+        <h3>👨‍👩‍👧‍👦 Тест входа родителя</h3>
+        <button onclick="testParentLogin()">Проверить</button>
+        <div id="parent-result"></div>
+    </div>
+    
+    <div class="test">
+        <h3>👥 Тест списка пользователей</h3>
+        <button onclick="testUsers()">Проверить</button>
+        <div id="users-result"></div>
+    </div>
+    
+    <div class="test">
+        <h3>🛒 Тест заказов</h3>
+        <button onclick="testOrders()">Проверить</button>
+        <div id="orders-result"></div>
+    </div>
+    
+    <div class="test">
+        <h3>📝 Тест создания пользователя</h3>
+        <button onclick="testCreateUser()">Проверить</button>
+        <div id="create-user-result"></div>
+    </div>
+    
+    <div class="test">
+        <h3>➕ Тест добавления блюда</h3>
+        <button onclick="testAddDish()">Проверить</button>
+        <div id="add-dish-result"></div>
+    </div>
+    
+    <div class="test">
+        <h3>🔄 Запустить все тесты</h3>
+        <button onclick="runAllTests()" style="background: #28a745; font-size: 16px; padding: 15px 30px;">🚀 ЗАПУСТИТЬ ВСЕ ТЕСТЫ</button>
+        <div id="all-results"></div>
+    </div>
+
+    <script>
+        function showResult(elementId, status, message, data = null) {
+            const element = document.getElementById(elementId);
+            const className = status === 'success' ? 'success' : status === 'error' ? 'error' : 'warning';
+            element.className = className;
+            element.innerHTML = `
+                <strong>${status === 'success' ? '✅' : status === 'error' ? '❌' : '⚠️'} ${message}</strong>
+                ${data ? `<pre>${JSON.stringify(data, null, 2)}</pre>` : ''}
+            `;
+        }
+        
+        async function testHealth() {
+            try {
+                const response = await fetch('/api/health.php');
+                const data = await response.json();
+                showResult('health-result', 'success', 'API Health работает', data);
+            } catch (error) {
+                showResult('health-result', 'error', `Ошибка: ${error.message}`);
+            }
+        }
+        
+        async function testMenu() {
+            try {
+                const response = await fetch('/api/menu.php');
+                const data = await response.json();
+                const count = Array.isArray(data) ? data.length : 0;
+                showResult('menu-result', 'success', `Меню загружено: ${count} блюд`, data.slice(0, 2));
+            } catch (error) {
+                showResult('menu-result', 'error', `Ошибка: ${error.message}`);
+            }
+        }
+        
+        async function testDirectorLogin() {
+            try {
+                const response = await fetch('/api/auth/login.php', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        email: 'director@school.test',
+                        password: 'password123'
+                    })
+                });
+                const data = await response.json();
+                if (response.ok) {
+                    showResult('director-result', 'success', `Директор вошел: ${data.user.name}`, data.user);
+                } else {
+                    showResult('director-result', 'error', `Ошибка входа: ${data.error}`);
+                }
+            } catch (error) {
+                showResult('director-result', 'error', `Ошибка: ${error.message}`);
+            }
+        }
+        
+        async function testParentLogin() {
+            try {
+                const response = await fetch('/api/auth/login.php', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        email: 'parent@school.test',
+                        password: 'password123'
+                    })
+                });
+                const data = await response.json();
+                if (response.ok) {
+                    showResult('parent-result', 'success', `Родитель вошел: ${data.user.name}`, data.user);
+                } else {
+                    showResult('parent-result', 'error', `Ошибка входа: ${data.error}`);
+                }
+            } catch (error) {
+                showResult('parent-result', 'error', `Ошибка: ${error.message}`);
+            }
+        }
+        
+        async function testUsers() {
+            try {
+                const response = await fetch('/api/users.php');
+                const data = await response.json();
+                const count = Array.isArray(data) ? data.length : 0;
+                showResult('users-result', 'success', `Найдено пользователей: ${count}`, data);
+            } catch (error) {
+                showResult('users-result', 'error', `Ошибка: ${error.message}`);
+            }
+        }
+        
+        async function testOrders() {
+            try {
+                const response = await fetch('/api/orders.php');
+                const data = await response.json();
+                const count = Array.isArray(data) ? data.length : 0;
+                showResult('orders-result', 'success', `Найдено заказов: ${count}`, data);
+            } catch (error) {
+                showResult('orders-result', 'error', `Ошибка: ${error.message}`);
+            }
+        }
+        
+        async function testCreateUser() {
+            try {
+                const response = await fetch('/api/users/create.php', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        name: 'Тестовый Пользователь',
+                        email: 'testuser@example.com',
+                        password: 'testpass123',
+                        role: 'PARENT'
+                    })
+                });
+                const data = await response.json();
+                if (response.ok) {
+                    showResult('create-user-result', 'success', `Пользователь создан: ${data.user.name}`, data.user);
+                } else {
+                    showResult('create-user-result', 'warning', `Создание: ${data.error}`);
+                }
+            } catch (error) {
+                showResult('create-user-result', 'error', `Ошибка: ${error.message}`);
+            }
+        }
+        
+        async function testAddDish() {
+            try {
+                const response = await fetch('/api/menu/add.php', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        name: 'Тестовое блюдо',
+                        description: 'Блюдо для тестирования',
+                        price: 200,
+                        meal_type: 'завтрак',
+                        day_of_week: 'ПОНЕДЕЛЬНИК',
+                        weight: '250г',
+                        recipe_number: 'TEST/1'
+                    })
+                });
+                const data = await response.json();
+                if (response.ok) {
+                    showResult('add-dish-result', 'success', `Блюдо добавлено: ${data.dish.name}`, data.dish);
+                } else {
+                    showResult('add-dish-result', 'warning', `Добавление: ${data.error}`);
+                }
+            } catch (error) {
+                showResult('add-dish-result', 'error', `Ошибка: ${error.message}`);
+            }
+        }
+        
+        async function runAllTests() {
+            const tests = [
+                { name: 'API Health', func: testHealth },
+                { name: 'Меню', func: testMenu },
+                { name: 'Вход директора', func: testDirectorLogin },
+                { name: 'Вход родителя', func: testParentLogin },
+                { name: 'Пользователи', func: testUsers },
+                { name: 'Заказы', func: testOrders },
+                { name: 'Создание пользователя', func: testCreateUser },
+                { name: 'Добавление блюда', func: testAddDish }
+            ];
+            
+            document.getElementById('all-results').innerHTML = '<p>⏳ Запускаем все тесты...</p>';
+            
+            let successCount = 0;
+            let errorCount = 0;
+            let warningCount = 0;
+            
+            for (const test of tests) {
+                try {
+                    await test.func();
+                    await new Promise(resolve => setTimeout(resolve, 1000));
+                    
+                    // Проверяем результат
+                    const resultElement = document.getElementById(test.name.toLowerCase().replace(/\s+/g, '-').replace('api-', '').replace('вход-', '').replace('создание-', '').replace('добавление-', '') + '-result');
+                    if (resultElement.classList.contains('success')) successCount++;
+                    else if (resultElement.classList.contains('error')) errorCount++;
+                    else if (resultElement.classList.contains('warning')) warningCount++;
+                } catch (error) {
+                    errorCount++;
+                }
+            }
+            
+            document.getElementById('all-results').innerHTML = `
+                <div class="success">
+                    <h3>🎉 Тестирование завершено!</h3>
+                    <p><strong>✅ Успешно:</strong> ${successCount}</p>
+                    <p><strong>❌ Ошибок:</strong> ${errorCount}</p>
+                    <p><strong>⚠️ Предупреждений:</strong> ${warningCount}</p>
+                    <p><strong>📊 Всего тестов:</strong> ${tests.length}</p>
+                </div>
+            `;
+        }
+    </script>
+</body>
+</html>

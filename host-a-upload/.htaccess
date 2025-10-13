@@ -1,38 +1,39 @@
 RewriteEngine On
 
-# Обработка OPTIONS запросов для CORS
-RewriteCond %{REQUEST_METHOD} OPTIONS
-RewriteRule .* - [R=200,L]
-
-# Включение PHP
-AddType application/x-httpd-php .php
-DirectoryIndex index.html index.php
-
-# CORS заголовки для всех ответов
+# Разрешить CORS для всех запросов
 Header always set Access-Control-Allow-Origin "*"
 Header always set Access-Control-Allow-Methods "GET, POST, PUT, DELETE, OPTIONS"
 Header always set Access-Control-Allow-Headers "Content-Type, Authorization, X-Requested-With"
-Header always set Access-Control-Max-Age "3600"
 
-# Обработка API запросов - PHP файлы в папке api/
-RewriteCond %{REQUEST_URI} ^/api/
-RewriteCond %{REQUEST_FILENAME} !-f
-RewriteCond %{REQUEST_FILENAME} !-d
-RewriteRule ^api/(.*)$ api/$1 [L]
+# Обработка preflight запросов
+RewriteCond %{REQUEST_METHOD} OPTIONS
+RewriteRule ^(.*)$ $1 [R=200,L]
 
-# Client-side routing для SPA - только если файл не существует
+# Перенаправление всех запросов на index.html для SPA
 RewriteCond %{REQUEST_FILENAME} !-f
 RewriteCond %{REQUEST_FILENAME} !-d
 RewriteCond %{REQUEST_URI} !^/api/
-RewriteRule . /index.html [L]
+RewriteRule ^(.*)$ /index.html [QSA,L]
+
+# Настройки для PHP
+php_value upload_max_filesize 10M
+php_value post_max_size 10M
+php_value max_execution_time 300
+php_value memory_limit 256M
+
+# Кэширование статических файлов
+<FilesMatch "\.(css|js|png|jpg|jpeg|gif|ico|svg)$">
+    ExpiresActive On
+    ExpiresDefault "access plus 1 month"
+</FilesMatch>
 
 # Безопасность
-<Files "*.php">
+<Files "*.json">
     Order Allow,Deny
-    Allow from all
+    Deny from all
 </Files>
 
-# Настройка для загрузки файлов
-php_value upload_max_filesize 50M
-php_value post_max_size 50M
-php_value max_execution_time 300
+<Files "*.md">
+    Order Allow,Deny
+    Deny from all
+</Files>

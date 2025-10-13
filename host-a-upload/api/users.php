@@ -1,7 +1,7 @@
 <?php
 header('Content-Type: application/json; charset=utf-8');
 header('Access-Control-Allow-Origin: *');
-header('Access-Control-Allow-Methods: GET, POST, PUT, DELETE, OPTIONS, PATCH');
+header('Access-Control-Allow-Methods: GET, POST, OPTIONS');
 header('Access-Control-Allow-Headers: Content-Type, Authorization');
 
 if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
@@ -9,131 +9,108 @@ if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
     exit();
 }
 
-// Файл для хранения пользователей
-$usersFile = '../data/users.json';
-
-// Создаем директорию если не существует
-if (!file_exists('../data/')) {
-    mkdir('../data/', 0777, true);
-}
-
-// Загружаем пользователей
-function loadUsers() {
-    global $usersFile;
-    if (file_exists($usersFile)) {
-        $data = json_decode(file_get_contents($usersFile), true);
-        return is_array($data) ? $data : [];
-    }
-    return [];
-}
-
-// Сохраняем пользователей
-function saveUsers($users) {
-    global $usersFile;
-    file_put_contents($usersFile, json_encode($users, JSON_UNESCAPED_UNICODE | JSON_PRETTY_PRINT));
-}
-
-// Инициализируем базовых пользователей если файл пустой
-$users = loadUsers();
-if (empty($users)) {
-    $users = [
-        [
-            'id' => 1,
-            'email' => 'director@school.test',
-            'name' => 'Директор школы',
-            'role' => 'DIRECTOR',
-            'school_id' => 1,
-            'verified' => true,
-            'created_at' => '2025-01-07T10:00:00Z'
-        ]
-    ];
-    saveUsers($users);
-}
-
-// Обрабатываем запросы
-switch ($_SERVER['REQUEST_METHOD']) {
-    case 'GET':
-        // Возвращаем всех пользователей
-        echo json_encode($users, JSON_UNESCAPED_UNICODE);
-        break;
+if ($_SERVER['REQUEST_METHOD'] === 'GET') {
+    // Получить всех пользователей
+    try {
+        $usersFile = __DIR__ . '/../users.json';
+        $users = [];
         
-    case 'POST':
-        // Создаем нового пользователя
+        if (file_exists($usersFile)) {
+            $users = json_decode(file_get_contents($usersFile), true) ?: [];
+        }
+        
+        echo json_encode($users, JSON_UNESCAPED_UNICODE | JSON_PRETTY_PRINT);
+        
+    } catch (Exception $e) {
+        error_log("❌ Ошибка получения пользователей: " . $e->getMessage());
+        http_response_code(500);
+        echo json_encode([
+            'error' => $e->getMessage()
+        ], JSON_UNESCAPED_UNICODE);
+    }
+    
+} elseif ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    // Создать нового пользователя
+    try {
         $input = json_decode(file_get_contents('php://input'), true);
         
-        if (!$input) {
-            http_response_code(400);
-            echo json_encode(['error' => 'Неверные данные'], JSON_UNESCAPED_UNICODE);
-            exit();
+        if (!$input || !isset($input['email']) || !isset($input['name'])) {
+            throw new Exception('Недостаточно данных для создания пользователя');
         }
         
-        // Проверяем обязательные поля
-        if (empty($input['email']) || empty($input['name']) || empty($input['school_id'])) {
-            http_response_code(400);
-            echo json_encode(['error' => 'Не указана школа или другие обязательные поля'], JSON_UNESCAPED_UNICODE);
-            exit();
+        $usersFile = __DIR__ . '/../users.json';
+        $users = [];
+        
+        if (file_exists($usersFile)) {
+            $users = json_decode(file_get_contents($usersFile), true) ?: [];
         }
         
-        // Проверяем, что email уникален
+        // Проверяем, не существует ли уже пользователь с таким email
         foreach ($users as $user) {
             if ($user['email'] === $input['email']) {
-                http_response_code(400);
-                echo json_encode(['error' => 'Пользователь с таким email уже существует'], JSON_UNESCAPED_UNICODE);
-                exit();
+                throw new Exception('Пользователь с таким email уже существует');
             }
         }
         
-        // Создаем нового пользователя
+        // Находим максимальный ID
+        $maxId = 0;
+        foreach ($users as $user) {
+            if (isset($user['id']) && $user['id'] > $maxId) {
+                $maxId = $user['id'];
+            }
+        }
+        
+        // Генерируем пароль
+        $password = generatePassword();
+        
         $newUser = [
-            'id' => max(array_column($users, 'id')) + 1,
+            'id' => $maxId + 1,
             'email' => $input['email'],
             'name' => $input['name'],
-            'role' => $input['role'] ?? 'PARENT',
-            'school_id' => $input['school_id'],
-            'verified' => false,
-            'created_at' => date('c')
+            'password' => $password,
+            'role' => $input['role'] ?? 'parent',
+            'school_id' => $input['school_id'] ?? 1,
+            'created_at' => date('c'),
+            'verified' => false
         ];
         
         $users[] = $newUser;
-        saveUsers($users);
         
-        echo json_encode($newUser, JSON_UNESCAPED_UNICODE);
-        break;
+        file_put_contents($usersFile, json_encode($users, JSON_UNESCAPED_UNICODE | JSON_PRETTY_PRINT));
         
-    case 'PATCH':
-        // Верификация пользователя
-        $input = json_decode(file_get_contents('php://input'), true);
-        $userId = $input['id'] ?? null;
+        echo json_encode([
+            'success' => true,
+            'message' => 'Пользователь успешно создан',
+            'user' => [
+                'id' => $newUser['id'],
+                'email' => $newUser['email'],
+                'name' => $newUser['name'],
+                'role' => $newUser['role'],
+                'school_id' => $newUser['school_id'],
+                'password' => $password
+            ]
+        ], JSON_UNESCAPED_UNICODE);
         
-        if (!$userId) {
-            http_response_code(400);
-            echo json_encode(['error' => 'ID пользователя не указан'], JSON_UNESCAPED_UNICODE);
-            exit();
-        }
-        
-        // Находим и обновляем пользователя
-        $found = false;
-        foreach ($users as &$user) {
-            if ($user['id'] == $userId) {
-                $user['verified'] = true;
-                $found = true;
-                break;
-            }
-        }
-        
-        if (!$found) {
-            http_response_code(404);
-            echo json_encode(['error' => 'Пользователь не найден'], JSON_UNESCAPED_UNICODE);
-            exit();
-        }
-        
-        saveUsers($users);
-        echo json_encode(['success' => true, 'message' => 'Пользователь верифицирован'], JSON_UNESCAPED_UNICODE);
-        break;
-        
-    default:
-        http_response_code(405);
-        echo json_encode(['error' => 'Метод не поддерживается'], JSON_UNESCAPED_UNICODE);
-        break;
+    } catch (Exception $e) {
+        error_log("❌ Ошибка создания пользователя: " . $e->getMessage());
+        http_response_code(500);
+        echo json_encode([
+            'success' => false,
+            'error' => $e->getMessage()
+        ], JSON_UNESCAPED_UNICODE);
+    }
+    
+} else {
+    http_response_code(405);
+    echo json_encode(['error' => 'Method not allowed']);
+}
+
+function generatePassword($length = 12) {
+    $characters = '0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ';
+    $password = '';
+    for ($i = 0; $i < $length; $i++) {
+        $password .= $characters[rand(0, strlen($characters) - 1)];
+    }
+    return $password;
 }
 ?>

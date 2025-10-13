@@ -113,7 +113,21 @@ export default function DirectorAdvanced({ token: _token }: any) {
   const handleFileUpload = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!file) {
-      setMsg("Выберите файл");
+      setMsg("❌ Выберите файл для загрузки");
+      return;
+    }
+
+    // Проверяем тип файла
+    const allowedTypes = ['.xlsx', '.xls'];
+    const fileExtension = file.name.toLowerCase().substring(file.name.lastIndexOf('.'));
+    if (!allowedTypes.includes(fileExtension)) {
+      setMsg("❌ Некорректный формат файла. Поддерживаются только Excel файлы (.xlsx, .xls)");
+      return;
+    }
+
+    // Проверяем размер файла (максимум 10MB)
+    if (file.size > 10 * 1024 * 1024) {
+      setMsg("❌ Файл слишком большой. Максимальный размер: 10MB");
       return;
     }
 
@@ -125,25 +139,50 @@ export default function DirectorAdvanced({ token: _token }: any) {
       const formData = new FormData();
       formData.append("file", file);
 
-      const response = await fetch("https://fermiy100githubio-production.up.railway.app/api/menu/upload.php", {
+      // Используем fermiy.ru API вместо Railway
+      const response = await fetch("https://fermiy.ru/api/menu/upload.php", {
         method: "POST",
         body: formData,
       });
 
       if (response.ok) {
         const result = await response.json();
-        setMsg(`Меню загружено! Добавлено ${result.itemsCount || result.addedCount || 0} блюд`);
-        setFile(null);
-        // Перезагружаем меню после загрузки файла
-        await loadMenuData();
-        loadData();
+        if (result.success) {
+          const itemsCount = result.itemsCount || 0;
+          setMsg(`✅ Меню успешно загружено! Добавлено ${itemsCount} блюд`);
+          
+          // Перезагружаем меню после загрузки файла
+          await loadMenuData();
+          
+          // НЕ очищаем файл сразу - оставляем для повторной загрузки
+          // setFile(null);
+        } else {
+          setMsg(`❌ Ошибка загрузки: ${result.error || 'Неизвестная ошибка'}`);
+        }
       } else {
-        const error = await response.json();
-        setMsg(`❌ Ошибка: ${error.error}`);
+        let errorMessage = "Ошибка сервера";
+        try {
+          const error = await response.json();
+          errorMessage = error.error || error.message || errorMessage;
+        } catch {
+          // Если не удалось распарсить JSON, используем статус
+          errorMessage = `HTTP ${response.status}: ${response.statusText}`;
+        }
+        
+        // Определяем тип ошибки для пользователя
+        if (errorMessage.includes('format') || errorMessage.includes('файл')) {
+          setMsg("❌ Некорректный формат файла. Убедитесь, что файл является Excel документом");
+        } else if (errorMessage.includes('size') || errorMessage.includes('размер')) {
+          setMsg("❌ Файл слишком большой. Максимальный размер: 10MB");
+        } else if (errorMessage.includes('empty') || errorMessage.includes('пуст')) {
+          setMsg("❌ Файл пустой или не содержит данных о меню");
+        } else {
+          setMsg(`❌ Ошибка загрузки: ${errorMessage}`);
+        }
       }
     } catch (error) {
       console.error("Ошибка загрузки:", error);
-      setMsg("❌ Ошибка при загрузке файла");
+      setMsg("❌ Ошибка при загрузке файла. Проверьте подключение к интернету");
     } finally {
       setLoading(false);
       setUploadProgress(0);
@@ -342,7 +381,39 @@ export default function DirectorAdvanced({ token: _token }: any) {
                 >
                   {loading ? 'Загружаем...' : 'Загрузить'}
                 </button>
+                {file && (
+                  <button 
+                    type="button"
+                    onClick={() => setFile(null)}
+                    style={{
+                      padding: '8px 12px',
+                      backgroundColor: '#ef4444',
+                      color: 'white',
+                      border: 'none',
+                      borderRadius: '6px',
+                      cursor: 'pointer',
+                      fontSize: '12px'
+                    }}
+                    title="Очистить выбранный файл"
+                  >
+                    ❌
+                  </button>
+                )}
               </div>
+              
+              {file && (
+                <div style={{ 
+                  marginBottom: '15px', 
+                  padding: '8px 12px', 
+                  backgroundColor: '#f0f9ff', 
+                  border: '1px solid #0ea5e9', 
+                  borderRadius: '6px',
+                  fontSize: '14px',
+                  color: '#0c4a6e'
+                }}>
+                  📁 Выбран файл: <strong>{file.name}</strong> ({(file.size / 1024).toFixed(1)} KB)
+                </div>
+              )}
 
               {uploadProgress > 0 && (
                 <div style={{ marginBottom: '10px' }}>
@@ -479,30 +550,36 @@ export default function DirectorAdvanced({ token: _token }: any) {
             <div style={{ display: 'flex', gap: '10px', marginBottom: '20px' }}>
               <button
                 onClick={selectAllItems}
+                disabled={menuItems.length === 0}
                 style={{
                   padding: '8px 12px',
-                  backgroundColor: '#3b82f6',
+                  backgroundColor: menuItems.length === 0 ? '#9ca3af' : '#3b82f6',
                   color: 'white',
                   border: 'none',
                   borderRadius: '6px',
-                  cursor: 'pointer',
-                  fontSize: '14px'
+                  cursor: menuItems.length === 0 ? 'not-allowed' : 'pointer',
+                  fontSize: '14px',
+                  opacity: menuItems.length === 0 ? 0.6 : 1
                 }}
+                title={menuItems.length === 0 ? 'Нет блюд для выбора' : 'Выбрать все блюда'}
               >
                 ✅ Выбрать все
               </button>
               
               <button
                 onClick={clearSelection}
+                disabled={bulkSelected.size === 0}
                 style={{
                   padding: '8px 12px',
-                  backgroundColor: '#6b7280',
+                  backgroundColor: bulkSelected.size === 0 ? '#9ca3af' : '#6b7280',
                   color: 'white',
                   border: 'none',
                   borderRadius: '6px',
-                  cursor: 'pointer',
-                  fontSize: '14px'
+                  cursor: bulkSelected.size === 0 ? 'not-allowed' : 'pointer',
+                  fontSize: '14px',
+                  opacity: bulkSelected.size === 0 ? 0.6 : 1
                 }}
+                title={bulkSelected.size === 0 ? 'Нет выбранных блюд' : 'Снять выбор со всех блюд'}
               >
                 ❌ Снять выбор
               </button>

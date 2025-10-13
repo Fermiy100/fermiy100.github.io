@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Тест API меню</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; }
+        .result { background: #f0f0f0; padding: 10px; margin: 10px 0; border-radius: 5px; }
+        .error { background: #ffebee; color: #c62828; }
+        .success { background: #e8f5e8; color: #2e7d32; }
+        pre { white-space: pre-wrap; word-wrap: break-word; }
+    </style>
+</head>
+<body>
+    <h1>🧪 Тест API меню</h1>
+    
+    <button onclick="testMenuAPI()">🔍 Тестировать API меню</button>
+    <button onclick="testMenuIndexAPI()">🔍 Тестировать API menu/index</button>
+    
+    <div id="results"></div>
+
+    <script>
+        async function testMenuAPI() {
+            const resultsDiv = document.getElementById('results');
+            resultsDiv.innerHTML = '<div class="result">⏳ Тестируем /api/menu.php...</div>';
+            
+            try {
+                const response = await fetch('/api/menu.php');
+                const data = await response.json();
+                
+                if (response.ok) {
+                    resultsDiv.innerHTML += `
+                        <div class="result success">
+                            ✅ /api/menu.php работает!<br>
+                            📊 Получено блюд: ${data.length}<br>
+                            <details>
+                                <summary>📋 Первые 3 блюда:</summary>
+                                <pre>${JSON.stringify(data.slice(0, 3), null, 2)}</pre>
+                            </details>
+                        </div>
+                    `;
+                } else {
+                    resultsDiv.innerHTML += `
+                        <div class="result error">
+                            ❌ Ошибка /api/menu.php: ${data.error || 'Неизвестная ошибка'}
+                        </div>
+                    `;
+                }
+            } catch (error) {
+                resultsDiv.innerHTML += `
+                    <div class="result error">
+                        ❌ Ошибка запроса: ${error.message}
+                    </div>
+                `;
+            }
+        }
+        
+        async function testMenuIndexAPI() {
+            const resultsDiv = document.getElementById('results');
+            resultsDiv.innerHTML += '<div class="result">⏳ Тестируем /api/menu/...</div>';
+            
+            try {
+                const response = await fetch('/api/menu/');
+                const data = await response.json();
+                
+                if (response.ok) {
+                    resultsDiv.innerHTML += `
+                        <div class="result success">
+                            ✅ /api/menu/ работает!<br>
+                            📊 Получено блюд: ${data.length}<br>
+                            <details>
+                                <summary>📋 Первые 3 блюда:</summary>
+                                <pre>${JSON.stringify(data.slice(0, 3), null, 2)}</pre>
+                            </details>
+                        </div>
+                    `;
+                } else {
+                    resultsDiv.innerHTML += `
+                        <div class="result error">
+                            ❌ Ошибка /api/menu/: ${data.error || 'Неизвестная ошибка'}
+                        </div>
+                    `;
+                }
+            } catch (error) {
+                resultsDiv.innerHTML += `
+                    <div class="result error">
+                        ❌ Ошибка запроса: ${error.message}
+                    </div>
+                `;
+            }
+        }
+    </script>
+</body>
+</html>

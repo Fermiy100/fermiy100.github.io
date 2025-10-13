@@ -16,7 +16,7 @@ if ($_SERVER['REQUEST_METHOD'] !== 'GET') {
 }
 
 try {
-    $menuFile = __DIR__ . '/../../menu_data.json';
+    $menuFile = __DIR__ . '/../../data/menu.json';
     
     if (!file_exists($menuFile)) {
         // Если файл не существует, возвращаем пустой массив
@@ -28,6 +28,29 @@ try {
     
     if ($menuData === null) {
         throw new Exception('Ошибка чтения данных меню');
+    }
+    
+    // Преобразуем числовые дни недели в строки
+    $dayNames = [
+        1 => 'ПОНЕДЕЛЬНИК',
+        2 => 'ВТОРНИК', 
+        3 => 'СРЕДА',
+        4 => 'ЧЕТВЕРГ',
+        5 => 'ПЯТНИЦА'
+    ];
+    
+    foreach ($menuData as &$item) {
+        if (isset($item['day_of_week']) && is_numeric($item['day_of_week'])) {
+            $dayNumber = (int)$item['day_of_week'];
+            if (isset($dayNames[$dayNumber])) {
+                $item['day_of_week'] = $dayNames[$dayNumber];
+            }
+        }
+        
+        // Устанавливаем цену по умолчанию, если она 0
+        if (!isset($item['price']) || $item['price'] == 0) {
+            $item['price'] = 150; // Цена по умолчанию
+        }
     }
     
     echo json_encode($menuData, JSON_UNESCAPED_UNICODE | JSON_PRETTY_PRINT);

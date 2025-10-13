@@ -19,59 +19,52 @@ try {
     $menuFile = __DIR__ . '/../data/menu.json';
     
     if (!file_exists($menuFile)) {
-        // Если файл не существует, создаем тестовые данные
-        $testMenuData = [
-            [
-                'id' => 1,
-                'name' => 'Каша овсяная',
-                'description' => 'Каша овсяная с молоком',
-                'price' => 150,
-                'meal_type' => 'завтрак',
-                'day_of_week' => 'ПОНЕДЕЛЬНИК',
-                'weight' => '200г',
-                'recipe_number' => '1/1'
+        // Если файл не существует, создаем полные тестовые данные
+        $testMenuData = [];
+        $id = 1;
+        
+        // Дни недели
+        $days = ['ПОНЕДЕЛЬНИК', 'ВТОРНИК', 'СРЕДА', 'ЧЕТВЕРГ', 'ПЯТНИЦА'];
+        
+        // Блюда для каждого дня
+        $dishes = [
+            'завтрак' => [
+                'Каша овсяная с молоком',
+                'Бутерброд с маслом и сыром',
+                'Чай с сахаром',
+                'Печенье'
             ],
-            [
-                'id' => 2,
-                'name' => 'Бутерброд с маслом',
-                'description' => 'Бутерброд с маслом и сыром',
-                'price' => 120,
-                'meal_type' => 'завтрак',
-                'day_of_week' => 'ПОНЕДЕЛЬНИК',
-                'weight' => '100г',
-                'recipe_number' => '1/2'
+            'обед' => [
+                'Суп овощной',
+                'Котлета мясная',
+                'Картофельное пюре',
+                'Компот из сухофруктов'
             ],
-            [
-                'id' => 3,
-                'name' => 'Суп овощной',
-                'description' => 'Суп из свежих овощей',
-                'price' => 200,
-                'meal_type' => 'обед',
-                'day_of_week' => 'ПОНЕДЕЛЬНИК',
-                'weight' => '300г',
-                'recipe_number' => '2/1'
-            ],
-            [
-                'id' => 4,
-                'name' => 'Котлета мясная',
-                'description' => 'Котлета из говядины',
-                'price' => 250,
-                'meal_type' => 'обед',
-                'day_of_week' => 'ПОНЕДЕЛЬНИК',
-                'weight' => '150г',
-                'recipe_number' => '2/2'
-            ],
-            [
-                'id' => 5,
-                'name' => 'Фрукты',
-                'description' => 'Свежие фрукты',
-                'price' => 100,
-                'meal_type' => 'полдник',
-                'day_of_week' => 'ПОНЕДЕЛЬНИК',
-                'weight' => '150г',
-                'recipe_number' => '3/1'
+            'полдник' => [
+                'Фрукты',
+                'Йогурт',
+                'Печенье',
+                'Сок'
             ]
         ];
+        
+        // Создаем блюда для каждого дня и типа питания
+        foreach ($days as $day) {
+            foreach ($dishes as $mealType => $mealDishes) {
+                foreach ($mealDishes as $dishName) {
+                    $testMenuData[] = [
+                        'id' => $id++,
+                        'name' => $dishName,
+                        'description' => $dishName . ' - ' . $day . ' - ' . $mealType,
+                        'price' => rand(100, 300),
+                        'meal_type' => $mealType,
+                        'day_of_week' => $day,
+                        'weight' => rand(150, 300) . 'г',
+                        'recipe_number' => rand(1, 10) . '/' . rand(1, 5)
+                    ];
+                }
+            }
+        }
         
         echo json_encode($testMenuData, JSON_UNESCAPED_UNICODE | JSON_PRETTY_PRINT);
         exit();

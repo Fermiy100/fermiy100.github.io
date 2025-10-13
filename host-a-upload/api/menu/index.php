@@ -19,8 +19,54 @@ try {
     $menuFile = __DIR__ . '/../../data/menu.json';
     
     if (!file_exists($menuFile)) {
-        // Если файл не существует, возвращаем пустой массив
-        echo json_encode([], JSON_UNESCAPED_UNICODE);
+        // Если файл не существует, создаем полные тестовые данные
+        $testMenuData = [];
+        $id = 1;
+        
+        // Дни недели
+        $days = ['ПОНЕДЕЛЬНИК', 'ВТОРНИК', 'СРЕДА', 'ЧЕТВЕРГ', 'ПЯТНИЦА'];
+        
+        // Блюда для каждого дня
+        $dishes = [
+            'завтрак' => [
+                'Каша овсяная с молоком',
+                'Бутерброд с маслом и сыром',
+                'Чай с сахаром',
+                'Печенье'
+            ],
+            'обед' => [
+                'Суп овощной',
+                'Котлета мясная',
+                'Картофельное пюре',
+                'Компот из сухофруктов'
+            ],
+            'полдник' => [
+                'Фрукты',
+                'Йогурт',
+                'Печенье',
+                'Сок'
+            ]
+        ];
+        
+        // Создаем блюда для каждого дня и типа питания
+        foreach ($days as $day) {
+            foreach ($dishes as $mealType => $mealDishes) {
+                foreach ($mealDishes as $dishName) {
+                    $testMenuData[] = [
+                        'id' => $id++,
+                        'name' => $dishName,
+                        'description' => $dishName . ' - ' . $day . ' - ' . $mealType,
+                        'price' => rand(100, 300),
+                        'meal_type' => $mealType,
+                        'day_of_week' => $day,
+                        'weight' => rand(150, 300) . 'г',
+                        'recipe_number' => rand(1, 10) . '/' . rand(1, 5)
+                    ];
+                }
+            }
+        }
+        
+        echo json_encode($testMenuData, JSON_UNESCAPED_UNICODE | JSON_PRETTY_PRINT);
         exit();
     }
     

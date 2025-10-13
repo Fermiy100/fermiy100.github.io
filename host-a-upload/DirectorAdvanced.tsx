@@ -37,10 +37,12 @@ export default function DirectorAdvanced({ token: _token }: any) {
         const schoolData = await apiClient.getSchool(user.school_id);
         setSchool(schoolData);
         
-        // Загружаем меню
-        const menuData = await apiClient.getMenu();
-        // API теперь возвращает прямой массив блюд
-        setMenuItems(Array.isArray(menuData) ? menuData : menuData.items || []);
+           // Загружаем меню
+           const menuData = await apiClient.getMenu();
+           // API теперь возвращает прямой массив блюд
+           const items = Array.isArray(menuData) ? menuData : menuData.items || [];
+           // Фильтруем undefined/null элементы
+           setMenuItems(items.filter(item => item && item.id));
       }
     } catch (error: any) {
       setMsg(`Ошибка загрузки: ${error.message}`);
@@ -168,7 +170,7 @@ export default function DirectorAdvanced({ token: _token }: any) {
   };
 
   const selectAllItems = () => {
-    const allIds = new Set(menuItems.map(item => item.id));
+    const allIds = new Set(menuItems.filter(item => item && item.id).map(item => item.id));
     setBulkSelected(allIds);
   };
 
@@ -484,7 +486,7 @@ export default function DirectorAdvanced({ token: _token }: any) {
                 gridTemplateColumns: menuView === 'grid' ? 'repeat(auto-fill, minmax(300px, 1fr))' : 'none',
                 gap: '15px'
               }}>
-                {menuItems.map((item) => (
+                {menuItems.filter(item => item && item.id).map((item) => (
                   <MenuItemCard
                     key={item.id}
                     item={item}
@@ -547,7 +549,7 @@ export default function DirectorAdvanced({ token: _token }: any) {
         <MenuItemEditor
           item={editingItem}
           onSave={async (updatedItem) => {
-            setMenuItems(prev => prev.map(item => 
+            setMenuItems(prev => prev.filter(item => item && item.id).map(item => 
               item.id === editingItem.id ? { ...item, ...updatedItem } : item
             ));
             setEditingItem(null);

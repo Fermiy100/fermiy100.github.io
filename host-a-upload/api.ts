@@ -168,7 +168,7 @@ class ApiClient {
 
   async getMenu(weekStart?: string): Promise<MenuResponse> {
     const params = weekStart ? `?week=${weekStart}` : '';
-    return this.request<MenuResponse>(`/menu.php${params}`);
+    return this.request<MenuResponse>(`/menu-test.php${params}`);
   }
 
   // Order methods

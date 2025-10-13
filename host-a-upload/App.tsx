@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import Login from './pages/Login';
+import ModernLogin from './pages/ModernLogin';
 import DirectorAdvanced from './pages/DirectorAdvanced';
 import PersonalCabinet from './components/PersonalCabinet';
 import OrderForm from './components/OrderForm';
@@ -26,10 +26,12 @@ function App() {
     setLoading(false);
   }, []);
 
-  const handleLogin = (userData: User) => {
-    setUser(userData);
-    localStorage.setItem('user', JSON.stringify(userData));
-    setActiveView(userData.role === 'DIRECTOR' ? 'director' : 'parent');
+  const handleLogin = (userData: any) => {
+    const user = userData.user || userData;
+    setUser(user);
+    localStorage.setItem('user', JSON.stringify(user));
+    localStorage.setItem('token', userData.token || 'demo-token');
+    setActiveView(user.role === 'DIRECTOR' ? 'director' : 'parent');
   };
 
   const handleLogout = () => {
@@ -59,7 +61,7 @@ function App() {
   }
 
   if (!user) {
-    return <Login onLogin={handleLogin} />;
+    return <ModernLogin onLogin={handleLogin} />;
   }
 
   return (

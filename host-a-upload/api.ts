@@ -1,8 +1,6 @@
 // API клиент для работы с backend
 
-const API_BASE_URL = import.meta.env.PROD 
-  ? 'https://fermiy100githubio-production.up.railway.app/api'  // Railway backend
-  : 'http://localhost:10000/api';       // Development URL
+const API_BASE_URL = 'https://fermiy.ru/api';  // PHP backend
 
 export interface User {
   id: number;
@@ -100,7 +98,10 @@ class ApiClient {
   }
 
   // Auth methods
-  async login(email: string, password: string): Promise<AuthResponse> {
+  async login(emailOrLogin: string, password: string): Promise<AuthResponse> {
+    // Если это логин (не содержит @), преобразуем в email
+    const email = emailOrLogin.includes('@') ? emailOrLogin : `${emailOrLogin}@school.local`;
+    
     return this.request<AuthResponse>('/auth/login.php', {
       method: 'POST',
       body: JSON.stringify({ email, password }),

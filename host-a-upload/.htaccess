@@ -16,10 +16,20 @@ RewriteRule ^api/menu/$ /api/menu/index.php [L]
 RewriteCond %{REQUEST_URI} ^/api/users/([0-9]+)/verify$
 RewriteRule ^api/users/([0-9]+)/verify$ /api/users/$1/verify.php [L]
 
-# Перенаправление всех запросов на index.html для SPA
+# Правильные MIME типы для статических файлов
+<FilesMatch "\.(js|mjs)$">
+    Header set Content-Type "application/javascript; charset=utf-8"
+</FilesMatch>
+
+<FilesMatch "\.css$">
+    Header set Content-Type "text/css; charset=utf-8"
+</FilesMatch>
+
+# Перенаправление всех запросов на index.html для SPA (кроме статических файлов)
 RewriteCond %{REQUEST_FILENAME} !-f
 RewriteCond %{REQUEST_FILENAME} !-d
 RewriteCond %{REQUEST_URI} !^/api/
+RewriteCond %{REQUEST_URI} !\.(js|css|png|jpg|jpeg|gif|ico|svg|woff|woff2|ttf|eot)$
 RewriteRule ^(.*)$ /index.html [QSA,L]
 
 # Настройки для PHP

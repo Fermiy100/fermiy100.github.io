@@ -240,12 +240,33 @@ let menuData = [];
 let usersData = [
     {
         id: 1,
-        email: 'director@topit.test',
-        name: 'Директор TOP IT Дегунино',
+        email: 'director@school.test',
+        name: 'Директор школы',
+        password: 'password123',
         role: 'DIRECTOR',
         school_id: 1,
         verified: true,
-        created_at: '2025-10-07T10:00:00Z'
+        created_at: '2025-01-07T10:00:00Z'
+    },
+    {
+        id: 2,
+        email: 'fermiy2013@gmail.com',
+        name: 'Клетка Конфетка',
+        password: 'password123',
+        role: 'PARENT',
+        school_id: 1,
+        verified: true,
+        created_at: '2025-01-07T10:00:00Z'
+    },
+    {
+        id: 3,
+        email: 'parent@school.test',
+        name: 'Родитель',
+        password: 'password123',
+        role: 'PARENT',
+        school_id: 1,
+        verified: true,
+        created_at: '2025-01-07T10:00:00Z'
     }
 ];
 
@@ -305,6 +326,71 @@ const server = http.createServer((req, res) => {
             'Content-Type': 'application/json; charset=utf-8'
         });
         res.end(JSON.stringify(menuData, null, 2));
+    }
+    // Вход пользователя
+    else if (url.pathname === '/api/auth/login.php' && req.method === 'POST') {
+        console.log('🔐 Получен запрос на вход');
+        
+        let body = '';
+        req.on('data', chunk => {
+            body += chunk.toString();
+        });
+        
+        req.on('end', () => {
+            try {
+                const loginData = JSON.parse(body);
+                const { email, password } = loginData;
+                
+                console.log('📧 Попытка входа:', email);
+                
+                // Ищем пользователя
+                const user = usersData.find(u => u.email === email && u.password === password);
+
+      if (!user) {
+                    console.log('❌ Пользователь не найден или неверный пароль');
+                    res.writeHead(401, {
+                        'Content-Type': 'application/json; charset=utf-8'
+                    });
+                    res.end(JSON.stringify({
+                        success: false,
+                        error: 'Неверный email или пароль'
+                    }, null, 2));
+                    return;
+                }
+                
+                console.log('✅ Пользователь найден:', user.name);
+                
+                // Создаем токен
+                const token = Buffer.from(`${user.email}:${Date.now()}`).toString('base64');
+                
+                res.writeHead(200, {
+                    'Content-Type': 'application/json; charset=utf-8'
+                });
+                res.end(JSON.stringify({
+                    success: true,
+                    message: 'Вход выполнен успешно',
+        user: {
+          id: user.id,
+          email: user.email,
+          name: user.name,
+          role: user.role,
+          school_id: user.school_id,
+          verified: user.verified
+                    },
+                    token: token
+                }, null, 2));
+                
+            } catch (error) {
+                console.error('❌ Ошибка входа:', error);
+                res.writeHead(500, {
+                    'Content-Type': 'application/json; charset=utf-8'
+                });
+                res.end(JSON.stringify({
+                    success: false,
+                    error: 'Ошибка сервера'
+                }, null, 2));
+            }
+        });
     }
     // Получить информацию о текущем пользователе
     else if (url.pathname === '/api/auth/me.php' && req.method === 'GET') {
@@ -403,9 +489,9 @@ const server = http.createServer((req, res) => {
                         recipe_number: dish.recipe_number,
                         created_at: new Date().toISOString(),
                         updated_at: new Date().toISOString()
-                    });
-                });
-                
+        });
+      });
+
                 console.log('✅ Меню обновлено! Блюд:', menuData.length);
                 
                 res.writeHead(200, {

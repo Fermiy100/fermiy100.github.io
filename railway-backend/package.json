@@ -1,22 +1,18 @@
 {
-  "name": "fermiy-ru-backend",
-  "version": "31.0.0",
-  "description": "Fermiy.ru School Meals Backend - Structured Excel Parser",
-  "main": "app.js",
+  "name": "school-meals-railway",
+  "version": "33.0.0",
+  "description": "School Meals Management System - Railway Backend with Security",
+  "main": "server-final.js",
   "scripts": {
-    "start": "node app.js"
+    "start": "node server-final.js",
+    "dev": "node server-final.js"
   },
   "engines": {
-    "node": "18.x"
+    "node": ">=18.0.0"
   },
-  "keywords": [
-    "fermiy",
-    "school",
-    "meals",
-    "excel",
-    "parser",
-    "structured"
-  ],
-  "author": "Fermiy",
+  "dependencies": {
+    "bcrypt": "^5.1.1"
+  },
+  "author": "",
   "license": "MIT"
 }

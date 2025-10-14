@@ -1,0 +1,11 @@
+# Минимальная версия .htaccess для диагностики
+DirectoryIndex index.php index.html
+
+# Если есть ошибки PHP
+php_flag display_errors on
+php_value error_reporting E_ALL
+
+# CORS для API
+<IfModule mod_headers.c>
+    Header set Access-Control-Allow-Origin "*"
+</IfModule>

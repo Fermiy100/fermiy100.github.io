@@ -1,17 +1,17 @@
-import { useState, useEffect } from "react";
-import { apiClient, User, MenuItem, School } from "../utils/api";
+доimport { useState, useEffect } from "react";
+import { apiClient, User, MenuItem, School } from "./api";
 import UserManagement from "./UserManagement";
-import MenuItemEditor from "../components/MenuItemEditor";
-import MenuItemCard from "../components/MenuItemCard";
-import AddItemForm from "../components/AddItemForm";
+import ProfileSettings from "./ProfileSettings";
 
 export default function DirectorAdvanced({ token: _token }: any) {
   const [file, setFile] = useState<File | null>(null);
+  const [fileError, setFileError] = useState<string>("");
   const [msg, setMsg] = useState("");
   const [menuItems, setMenuItems] = useState<MenuItem[]>([]);
   const [loading, setLoading] = useState(false);
+  const [actionLoading, setActionLoading] = useState<boolean>(false);
   const [uploadProgress, setUploadProgress] = useState(0);
-  const [activeTab, setActiveTab] = useState<'menu' | 'users'>('menu');
+  const [activeTab, setActiveTab] = useState<'menu' | 'users' | 'profile'>('menu');
   const [currentUser, setCurrentUser] = useState<User | null>(null);
   const [_school, setSchool] = useState<School | null>(null);
   const [editingItem, setEditingItem] = useState<MenuItem | null>(null);
@@ -43,6 +43,7 @@ export default function DirectorAdvanced({ token: _token }: any) {
            const items = Array.isArray(menuData) ? menuData : menuData.items || [];
            // Фильтруем undefined/null элементы
            setMenuItems(items.filter(item => item && item.id));
+          setBulkSelected(new Set());
       }
     } catch (error: any) {
       setMsg(`Ошибка загрузки: ${error.message}`);
@@ -51,12 +52,21 @@ export default function DirectorAdvanced({ token: _token }: any) {
     }
   }
 
+  const validateFile = (f: File | null): string => {
+    if (!f) return 'Файл не выбран';
+    const allowed = ['application/vnd.openxmlformats-officedocument.spreadsheetml.sheet', 'application/vnd.ms-excel'];
+    const ext = f.name.toLowerCase().split('.').pop() || '';
+    const allowedExt = ['xlsx','xls'];
+    if (!allowed.includes(f.type) && !allowedExt.includes(ext)) return 'Некорректный формат файла. Допустимы .xlsx или .xls';
+    const maxSizeMb = 10;
+    if (f.size > maxSizeMb * 1024 * 1024) return `Слишком большой файл (> ${maxSizeMb} МБ)`;
+    return '';
+  };
+
   const handleFileUpload = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!file) {
-      setMsg("Выберите файл");
-      return;
-    }
+    const err = validateFile(file);
+    if (err) { setFileError(err); setMsg(`❌ ${err}`); return; }
 
     try {
       setLoading(true);
@@ -78,6 +88,7 @@ export default function DirectorAdvanced({ token: _token }: any) {
         const result = await response.json();
         setMsg(`Меню загружено! Добавлено ${result.addedCount} блюд`);
         setFile(null);
+        setFileError("");
         loadData();
       } else {
         const error = await response.json();
@@ -98,6 +109,7 @@ export default function DirectorAdvanced({ token: _token }: any) {
     }
     
     try {
+      setActionLoading(true);
       const response = await fetch('https://fermiy100githubio-production.up.railway.app/api/menu/clear', {
         method: 'DELETE',
         headers: {
@@ -121,6 +133,8 @@ export default function DirectorAdvanced({ token: _token }: any) {
     } catch (error) {
       console.error('Ошибка очистки меню:', error);
       setMsg('❌ Ошибка при удалении блюд');
+    } finally {
+      setActionLoading(false);
     }
   };
 
@@ -135,6 +149,11 @@ export default function DirectorAdvanced({ token: _token }: any) {
     }
 
     try {
+      // Оптимистичное обновление счётчика/списка
+      setMenuItems(prev => prev.filter(item => item && !bulkSelected.has(item.id)));
+      const optimisticCount = bulkSelected.size;
+      setMsg(`⏳ Удаляем ${optimisticCount} блюд...`);
+      setActionLoading(true);
       const response = await fetch('/api/menu/bulk-delete.php', {
         method: 'POST',
         headers: {
@@ -148,14 +167,20 @@ export default function DirectorAdvanced({ token: _token }: any) {
         const result = await response.json();
         setMsg(`✅ Удалено ${result.deletedCount} блюд`);
         setBulkSelected(new Set());
+        // Перезагружаем данные для консистентности
         loadData();
       } else {
         const error = await response.json();
         setMsg(`❌ Ошибка: ${error.error}`);
+        // Восстановим список при ошибке
+        loadData();
       }
     } catch (error) {
       console.error('Ошибка массового удаления:', error);
       setMsg('❌ Ошибка при удалении');
+      loadData();
+    } finally {
+      setActionLoading(false);
     }
   };
 
@@ -170,6 +195,7 @@ export default function DirectorAdvanced({ token: _token }: any) {
   };
 
   const selectAllItems = () => {
+    if (!menuItems.length) return;
     const allIds = new Set(menuItems.filter(item => item && item.id).map(item => item.id));
     setBulkSelected(allIds);
   };
@@ -195,11 +221,19 @@ export default function DirectorAdvanced({ token: _token }: any) {
     }
     
     try {
+      // Оптимистичное удаление
+      setMenuItems(prev => prev.filter(item => item && item.id !== itemId));
+      setActionLoading(true);
       await apiClient.deleteMenuItem(itemId);
       setMsg('✅ Блюдо удалено');
-      loadData(); // Перезагружаем данные
+      // Подтянем серверные данные для консистентности
+      loadData();
     } catch (error: any) {
       setMsg(`❌ Ошибка при удалении блюда: ${error.message}`);
+      // Откатим состояние, если нужно
+      loadData();
+    } finally {
+      setActionLoading(false);
     }
   };
 
@@ -241,6 +275,8 @@ export default function DirectorAdvanced({ token: _token }: any) {
             borderRadius: '5px',
             cursor: 'pointer'
           }}
+          aria-label="Открыть вкладку Меню"
+          title="Меню"
         >
           Меню
         </button>
@@ -254,8 +290,25 @@ export default function DirectorAdvanced({ token: _token }: any) {
             borderRadius: '5px',
             cursor: 'pointer'
           }}
+          aria-label="Открыть вкладку Пользователи"
+          title="Пользователи"
         >
           Пользователи
+        </button>
+        <button
+          onClick={() => setActiveTab('profile')}
+          style={{
+            padding: '10px 20px',
+            backgroundColor: activeTab === 'profile' ? '#007bff' : '#f8f9fa',
+            color: activeTab === 'profile' ? 'white' : 'black',
+            border: '1px solid #dee2e6',
+            borderRadius: '5px',
+            cursor: 'pointer'
+          }}
+          aria-label="Открыть вкладку Профиль"
+          title="Настройки профиля"
+        >
+          Профиль
         </button>
       </div>
 
@@ -277,29 +330,42 @@ export default function DirectorAdvanced({ token: _token }: any) {
                 <input
                   type="file"
                   accept=".xlsx,.xls"
-                  onChange={(e) => setFile(e.target.files?.[0] || null)}
+                  onChange={(e) => {
+                    const f = e.target.files?.[0] || null;
+                    setFile(f);
+                    setFileError(validateFile(f));
+                  }}
                   style={{
                     flex: 1,
                     padding: '8px',
                     border: '1px solid #d1d5db',
                     borderRadius: '6px'
                   }}
+                  aria-label="Выберите Excel файл (.xlsx, .xls)"
                 />
                 <button
                   type="submit"
-                  disabled={loading || !file}
+                  disabled={loading || !!fileError || !file}
                   style={{
                     padding: '8px 16px',
-                    backgroundColor: loading ? '#6b7280' : '#3b82f6',
+                    backgroundColor: (loading || !!fileError || !file) ? '#6b7280' : '#3b82f6',
                     color: 'white',
                     border: 'none',
                     borderRadius: '6px',
-                    cursor: loading ? 'not-allowed' : 'pointer'
+                    cursor: (loading || !!fileError || !file) ? 'not-allowed' : 'pointer'
                   }}
+                  aria-busy={loading}
+                  aria-label="Загрузить меню из Excel"
+                  title={fileError ? fileError : 'Загрузить меню'}
                 >
                   {loading ? 'Загружаем...' : 'Загрузить'}
                 </button>
               </div>
+              {fileError && (
+                <div style={{ color: '#b91c1c', marginBottom: '10px' }}>
+                  ❌ {fileError}
+                </div>
+              )}
               
               {uploadProgress > 0 && (
                 <div style={{ marginBottom: '10px' }}>
@@ -348,6 +414,8 @@ export default function DirectorAdvanced({ token: _token }: any) {
                   cursor: 'pointer',
                   fontSize: '14px'
                 }}
+                aria-label="Добавить блюдо"
+                title="Добавить блюдо"
               >
                 Добавить блюдо
               </button>
@@ -360,9 +428,13 @@ export default function DirectorAdvanced({ token: _token }: any) {
                   color: 'white',
                   border: 'none',
                   borderRadius: '6px',
-                  cursor: 'pointer',
+                  cursor: actionLoading ? 'not-allowed' : 'pointer',
                   fontSize: '14px'
                 }}
+                disabled={actionLoading}
+                aria-busy={actionLoading}
+                aria-label="Удалить все блюда"
+                title="Удалить все блюда"
               >
                 Удалить все
               </button>
@@ -378,6 +450,8 @@ export default function DirectorAdvanced({ token: _token }: any) {
                   cursor: 'pointer',
                   fontSize: '14px'
                 }}
+                aria-label="Переключить вид списка блюд"
+                title="Переключить вид"
               >
                 {menuView === 'grid' ? '📋 Список' : '🔲 Сетка'}
               </button>
@@ -405,9 +479,13 @@ export default function DirectorAdvanced({ token: _token }: any) {
                       color: 'white',
                       border: 'none',
                       borderRadius: '6px',
-                      cursor: 'pointer',
+                      cursor: actionLoading ? 'not-allowed' : 'pointer',
                       fontSize: '14px'
                     }}
+                    disabled={actionLoading}
+                    aria-busy={actionLoading}
+                    aria-label="Удалить выбранные блюда"
+                    title="Удалить выбранные блюда"
                   >
                     🗑️ Удалить выбранные
                   </button>
@@ -423,6 +501,8 @@ export default function DirectorAdvanced({ token: _token }: any) {
                       cursor: 'pointer',
                       fontSize: '14px'
                     }}
+                    aria-label="Снять выбор всех блюд"
+                    title="Снять выбор"
                   >
                     ❌ Отменить выбор
                   </button>
@@ -440,9 +520,12 @@ export default function DirectorAdvanced({ token: _token }: any) {
                   color: 'white',
                   border: 'none',
                   borderRadius: '6px',
-                  cursor: 'pointer',
+                  cursor: menuItems.length ? 'pointer' : 'not-allowed',
                   fontSize: '14px'
                 }}
+                disabled={!menuItems.length}
+                aria-label="Выбрать все блюда"
+                title="Выбрать все блюда"
               >
                 ✅ Выбрать все
               </button>
@@ -458,6 +541,8 @@ export default function DirectorAdvanced({ token: _token }: any) {
                   cursor: 'pointer',
                   fontSize: '14px'
                 }}
+                aria-label="Снять выбор"
+                title="Снять выбор"
               >
                 ❌ Снять выбор
               </button>
@@ -508,6 +593,16 @@ export default function DirectorAdvanced({ token: _token }: any) {
           currentUser={currentUser} 
           onUserCreated={() => {
             setMsg('✅ Пользователь создан');
+          }}
+        />
+      )}
+
+      {activeTab === 'profile' && currentUser && (
+        <ProfileSettings 
+          currentUser={currentUser} 
+          onProfileUpdated={(updatedUser) => {
+            setCurrentUser(updatedUser);
+            setMsg('✅ Профиль обновлен');
           }}
         />
       )}

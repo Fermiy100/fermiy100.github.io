@@ -20,7 +20,7 @@ if (preg_match('#/api/users/(\d+)/(verify)(?:\/?$)#', $uri, $m)) {
     }
 
     $userId = intval($m[1]);
-    $usersFile = __DIR__ . '/../../users.json';
+    $usersFile = __DIR__ . '/../../data/users.json';
 
     if (!file_exists($usersFile)) {
         http_response_code(500);

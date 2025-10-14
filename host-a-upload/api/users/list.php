@@ -21,18 +21,7 @@ try {
     $authHeader = $headers['Authorization'] ?? '';
     
     if (!$authHeader || !str_starts_with($authHeader, 'Bearer ')) {
-        // Возвращаем тестового пользователя для демо
-        echo json_encode([
-            'success' => true,
-            'user' => [
-                'id' => 1,
-                'email' => 'director@school.test',
-                'name' => 'Директор школы',
-                'role' => 'director',
-                'school_id' => 1
-            ]
-        ], JSON_UNESCAPED_UNICODE);
-        exit();
+        throw new Exception('Не авторизован');
     }
     
     $token = substr($authHeader, 7);
@@ -47,42 +36,61 @@ try {
         throw new Exception('Неверный формат токена');
     }
     
-    $email = $parts[0];
+    $currentEmail = $parts[0];
     
-    // Ищем пользователя
+    // Загружаем пользователей
     $usersFile = __DIR__ . '/../../data/users.json';
-    $users = [];
     
-    if (file_exists($usersFile)) {
-        $users = json_decode(file_get_contents($usersFile), true) ?: [];
+    if (!file_exists($usersFile)) {
+        throw new Exception('Файл пользователей не найден');
     }
     
-    $user = null;
-    foreach ($users as $u) {
-        if ($u['email'] === $email) {
-            $user = $u;
+    $users = json_decode(file_get_contents($usersFile), true) ?: [];
+    
+    // Находим текущего пользователя
+    $currentUser = null;
+    foreach ($users as $user) {
+        if ($user['email'] === $currentEmail) {
+            $currentUser = $user;
             break;
         }
     }
     
-    if (!$user) {
+    if (!$currentUser) {
         throw new Exception('Пользователь не найден');
     }
     
-    echo json_encode([
-        'success' => true,
-        'user' => [
+    // Проверяем права директора
+    if ($currentUser['role'] !== 'DIRECTOR') {
+        throw new Exception('Недостаточно прав для просмотра списка пользователей');
+    }
+    
+    // МАСКИРУЕМ ПАРОЛИ - БЕЗОПАСНОСТЬ!
+    $safeUsers = array_map(function($user) {
+        // УДАЛЯЕМ ВСЕ СЛЕДЫ ПАРОЛЕЙ
+        unset($user['password']);
+        unset($user['password_hash']);
+        
+        return [
             'id' => $user['id'],
             'email' => $user['email'],
             'name' => $user['name'],
             'role' => $user['role'],
-            'school_id' => $user['school_id'] ?? 1
-        ]
+            'school_id' => $user['school_id'] ?? 1,
+            'verified' => $user['verified'] ?? false,
+            'created_at' => $user['created_at'] ?? null,
+            'updated_at' => $user['updated_at'] ?? null
+        ];
+    }, $users);
+    
+    echo json_encode([
+        'success' => true,
+        'users' => $safeUsers
     ], JSON_UNESCAPED_UNICODE);
     
 } catch (Exception $e) {
-    error_log("❌ Ошибка получения пользователя: " . $e->getMessage());
-    http_response_code(500);
+    error_log("❌ Ошибка получения списка пользователей: " . $e->getMessage());
+    http_response_code(400);
     echo json_encode([
         'success' => false,
         'error' => $e->getMessage()

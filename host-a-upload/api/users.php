@@ -1,4 +1,6 @@
 <?php
+require_once __DIR__ . '/security/validate.php';
+
 header('Content-Type: application/json; charset=utf-8');
 header('Access-Control-Allow-Origin: *');
 header('Access-Control-Allow-Methods: GET, POST, OPTIONS');
@@ -10,16 +12,23 @@ if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
 }
 
 if ($_SERVER['REQUEST_METHOD'] === 'GET') {
-    // Получить всех пользователей
+    // Получить всех пользователей (БЕЗ ПАРОЛЕЙ)
     try {
-        $usersFile = __DIR__ . '/../users.json';
+        $usersFile = __DIR__ . '/data/users.json';
         $users = [];
         
         if (file_exists($usersFile)) {
             $users = json_decode(file_get_contents($usersFile), true) ?: [];
         }
         
-        echo json_encode($users, JSON_UNESCAPED_UNICODE | JSON_PRETTY_PRINT);
+        // УДАЛЯЕМ ПАРОЛИ ИЗ ВЫВОДА - БЕЗОПАСНОСТЬ!
+        $safeUsers = array_map(function($user) {
+            unset($user['password']);
+            unset($user['password_hash']);
+            return $user;
+        }, $users);
+        
+        echo json_encode($safeUsers, JSON_UNESCAPED_UNICODE | JSON_PRETTY_PRINT);
         
     } catch (Exception $e) {
         error_log("❌ Ошибка получения пользователей: " . $e->getMessage());
@@ -38,7 +47,27 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET') {
             throw new Exception('Недостаточно данных для создания пользователя');
         }
         
-        $usersFile = __DIR__ . '/../users.json';
+        // Валидация входных данных
+        $emailValidation = SecurityValidator::validateEmail($input['email']);
+        if (!$emailValidation['valid']) {
+            throw new Exception($emailValidation['error']);
+        }
+        
+        $nameValidation = SecurityValidator::validateName($input['name']);
+        if (!$nameValidation['valid']) {
+            throw new Exception($nameValidation['error']);
+        }
+        
+        $roleValidation = SecurityValidator::validateRole($input['role'] ?? 'PARENT');
+        if (!$roleValidation['valid']) {
+            throw new Exception($roleValidation['error']);
+        }
+        
+        // Санитизация данных
+        $input['email'] = SecurityValidator::sanitizeString($input['email'], 100);
+        $input['name'] = SecurityValidator::sanitizeString($input['name'], 50);
+        
+        $usersFile = __DIR__ . '/data/users.json';
         $users = [];
         
         if (file_exists($usersFile)) {
@@ -67,7 +96,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET') {
             'id' => $maxId + 1,
             'email' => $input['email'],
             'name' => $input['name'],
-            'password' => $password,
+            'password_hash' => password_hash($password, PASSWORD_DEFAULT),
             'role' => $input['role'] ?? 'parent',
             'school_id' => $input['school_id'] ?? 1,
             'created_at' => date('c'),
@@ -87,7 +116,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET') {
                 'name' => $newUser['name'],
                 'role' => $newUser['role'],
                 'school_id' => $newUser['school_id'],
-                'password' => $password
+                'password' => $password // Показываем пароль только при создании
             ]
         ], JSON_UNESCAPED_UNICODE);
         

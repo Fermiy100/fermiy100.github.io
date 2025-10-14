@@ -1,69 +1,33 @@
 RewriteEngine On
 
-# Отдаём существующие файлы напрямую
-RewriteCond %{REQUEST_FILENAME} -f [OR]
-RewriteCond %{REQUEST_FILENAME} -d
-RewriteRule ^ - [L]
-
-# Совместимость API: /api/orders -> /api/orders/index.php
-RewriteRule ^api/orders/?$ api/orders/index.php [L,QSA]
-
-# Совместимость API: /api/users/{id}/verify -> /api/users/index.php
-RewriteRule ^api/users/[0-9]+/verify/?$ api/users/index.php [L,QSA]
-
-RewriteEngine On
-
-# Разрешить CORS для всех запросов
-Header always set Access-Control-Allow-Origin "*"
-Header always set Access-Control-Allow-Methods "GET, POST, PUT, DELETE, OPTIONS"
-Header always set Access-Control-Allow-Headers "Content-Type, Authorization, X-Requested-With"
-
-# Обработка preflight запросов
-RewriteCond %{REQUEST_METHOD} OPTIONS
-RewriteRule ^(.*)$ $1 [R=200,L]
-
-# API маршруты
-RewriteCond %{REQUEST_URI} ^/api/menu/$
-RewriteRule ^api/menu/$ /api/menu/index.php [L]
-
-RewriteCond %{REQUEST_URI} ^/api/users/([0-9]+)/verify$
-RewriteRule ^api/users/([0-9]+)/verify$ /api/users/$1/verify.php [L]
-
-# Правильные MIME типы для статических файлов
-<FilesMatch "\.(js|mjs)$">
-    Header set Content-Type "application/javascript; charset=utf-8"
+# БЕЗОПАСНОСТЬ: Закрываем доступ к данным
+<FilesMatch "(users|menu|orders)\.json$">
+    Require all denied
 </FilesMatch>
 
-<FilesMatch "\.css$">
-    Header set Content-Type "text/css; charset=utf-8"
+# Закрываем доступ к логам и кешу
+<IfModule mod_authz_core.c>
+    <Directory "logs">
+        Require all denied
+    </Directory>
+    <Directory "cache">
+        Require all denied
+    </Directory>
+</IfModule>
+
+# Закрываем доступ к утилитам миграции
+<FilesMatch "migrate-passwords\.php$">
+    Require all denied
 </FilesMatch>
 
-# Перенаправление всех запросов на index.html для SPA (кроме статических файлов)
+# API routing
+RewriteRule ^api/profile/update$ api/profile/update.php [L]
+RewriteRule ^api/users/([0-9]+)/delete$ api/users/delete.php [L]
+RewriteRule ^api/users/list$ api/users/list.php [L]
+RewriteRule ^api/users/([0-9]+)/verify$ api/users/index.php [L]
+RewriteRule ^api/orders$ api/orders/index.php [L]
+
+# Frontend routing
 RewriteCond %{REQUEST_FILENAME} !-f
 RewriteCond %{REQUEST_FILENAME} !-d
-RewriteCond %{REQUEST_URI} !^/api/
-RewriteCond %{REQUEST_URI} !\.(js|css|png|jpg|jpeg|gif|ico|svg|woff|woff2|ttf|eot)$
-RewriteRule ^(.*)$ /index.html [QSA,L]
-
-# Настройки для PHP
-php_value upload_max_filesize 10M
-php_value post_max_size 10M
-php_value max_execution_time 300
-php_value memory_limit 256M
-
-# Кэширование статических файлов
-<FilesMatch "\.(css|js|png|jpg|jpeg|gif|ico|svg)$">
-    ExpiresActive On
-    ExpiresDefault "access plus 1 month"
-</FilesMatch>
-
-# Безопасность
-<Files "*.json">
-    Order Allow,Deny
-    Deny from all
-</Files>
-
-<Files "*.md">
-    Order Allow,Deny
-    Deny from all
-</Files>
+RewriteRule ^(.*)$ index.html [QSA,L]

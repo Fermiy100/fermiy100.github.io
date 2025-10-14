@@ -141,6 +141,23 @@ class ApiClient {
     });
   }
 
+  async deleteUser(userId: number): Promise<{ message: string }> {
+    return this.request<{ message: string }>(`/users/${userId}/delete`, {
+      method: 'DELETE'
+    });
+  }
+
+  async updateProfile(data: {
+    name: string;
+    email: string;
+    password?: string;
+  }): Promise<{ message: string; user: User }> {
+    return this.request<{ message: string; user: User }>('/profile/update.php', {
+      method: 'POST',
+      body: JSON.stringify(data)
+    });
+  }
+
   // Menu methods
   async uploadMenu(file: File): Promise<{ message: string; itemsCount: number; weekStart: string }> {
     const formData = new FormData();

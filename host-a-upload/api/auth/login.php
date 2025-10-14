@@ -1,4 +1,6 @@
 <?php
+require_once __DIR__ . '/../security/validate.php';
+
 header('Content-Type: application/json; charset=utf-8');
 header('Access-Control-Allow-Origin: *');
 header('Access-Control-Allow-Methods: POST, OPTIONS');
@@ -25,8 +27,20 @@ try {
     $email = $input['email'];
     $password = $input['password'];
     
+    // RATE LIMITING - защита от брутфорса
+    $rateLimitKey = 'login_' . $_SERVER['REMOTE_ADDR'];
+    $rateCheck = SecurityValidator::checkRateLimit($rateLimitKey, 5, 300); // 5 попыток за 5 минут
+    if (!$rateCheck['valid']) {
+        http_response_code(429);
+        echo json_encode([
+            'success' => false,
+            'error' => $rateCheck['error']
+        ], JSON_UNESCAPED_UNICODE);
+        exit();
+    }
+    
     // Проверяем пользователей
-    $usersFile = __DIR__ . '/../../users.json';
+    $usersFile = __DIR__ . '/../../data/users.json';
     $users = [];
     
     if (file_exists($usersFile)) {
@@ -36,13 +50,26 @@ try {
     // Ищем пользователя
     $user = null;
     foreach ($users as $u) {
-        if ($u['email'] === $email && $u['password'] === $password) {
-            $user = $u;
-            break;
+        if ($u['email'] === $email) {
+            // ПРОВЕРЯЕМ ХЕШИРОВАННЫЙ ПАРОЛЬ
+            if (isset($u['password_hash']) && password_verify($password, $u['password_hash'])) {
+                $user = $u;
+                break;
+            }
+            // Временная совместимость со старыми паролями
+            elseif (isset($u['password']) && $u['password'] === $password) {
+                $user = $u;
+                break;
+            }
         }
     }
     
     if (!$user) {
+        SecurityValidator::logSecurityEvent('failed_login', [
+            'email' => $email,
+            'ip' => $_SERVER['REMOTE_ADDR']
+        ]);
+        
         http_response_code(401);
         echo json_encode([
             'success' => false,
@@ -54,6 +81,11 @@ try {
     // Создаем токен (простой)
     $token = base64_encode($user['email'] . ':' . time());
     
+    SecurityValidator::logSecurityEvent('successful_login', [
+        'user_id' => $user['id'],
+        'email' => $user['email']
+    ]);
+    
     echo json_encode([
         'success' => true,
         'message' => 'Вход выполнен успешно',
@@ -62,7 +94,8 @@ try {
             'email' => $user['email'],
             'name' => $user['name'],
             'role' => $user['role'],
-            'school_id' => $user['school_id'] ?? 1
+            'school_id' => $user['school_id'] ?? 1,
+            'verified' => $user['verified'] ?? false
         ],
         'token' => $token
     ], JSON_UNESCAPED_UNICODE);

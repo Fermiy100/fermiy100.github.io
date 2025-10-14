@@ -4,8 +4,8 @@
     RewriteBase /
 </IfModule>
 
-# Устанавливаем index файлы по порядку
-DirectoryIndex index.php index.html
+# ВАЖНО: index.html первым (старый React интерфейс)
+DirectoryIndex index.html index.php
 
 # БЕЗОПАСНОСТЬ: Закрываем доступ к JSON файлам
 <FilesMatch "\.(json)$">
@@ -29,13 +29,6 @@ DirectoryIndex index.php index.html
     RewriteRule ^api/users$ api/users.php [L]
     RewriteRule ^api/menu$ api/menu.php [L]
     RewriteRule ^api/orders$ api/orders/index.php [L]
-</IfModule>
-
-# Настройки PHP (только если доступны)
-<IfModule mod_php7.c>
-    php_flag display_errors Off
-    php_flag log_errors On
-    php_value error_log logs/php-error.log
 </IfModule>
 
 # CORS headers для API

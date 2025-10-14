@@ -1,37 +1,48 @@
-RewriteEngine On
-
-# БЕЗОПАСНОСТЬ: Закрываем доступ к данным
-<FilesMatch "(users|menu|orders)\.json$">
-    Require all denied
-</FilesMatch>
-
-# Закрываем доступ к логам и кешу
-<IfModule mod_authz_core.c>
-    <Directory "logs">
-        Require all denied
-    </Directory>
-    <Directory "cache">
-        Require all denied
-    </Directory>
+# Включаем RewriteEngine только если модуль доступен
+<IfModule mod_rewrite.c>
+    RewriteEngine On
+    RewriteBase /
 </IfModule>
 
-# Закрываем доступ к утилитам миграции
-<FilesMatch "migrate-passwords\.php$">
-    Require all denied
-</FilesMatch>
-
-# API routing - ВАЖНО: должно быть перед frontend routing!
-RewriteRule ^api/profile/update$ api/profile/update.php [L]
-RewriteRule ^api/users/([0-9]+)/delete$ api/users/delete.php [L]
-RewriteRule ^api/users/list$ api/users/list.php [L]
-RewriteRule ^api/users/([0-9]+)/verify$ api/users/index.php [L]
-RewriteRule ^api/orders$ api/orders/index.php [L]
-
-# Если запрашивается корень, показываем index.php
+# Устанавливаем index файлы по порядку
 DirectoryIndex index.php index.html
 
-# Frontend routing - только если файл не существует
-RewriteCond %{REQUEST_FILENAME} !-f
-RewriteCond %{REQUEST_FILENAME} !-d
-RewriteCond %{REQUEST_URI} !^/api/
-RewriteRule ^(.*)$ index.php [QSA,L]
+# БЕЗОПАСНОСТЬ: Закрываем доступ к JSON файлам
+<FilesMatch "\.(json)$">
+    <IfModule mod_authz_core.c>
+        Require all denied
+    </IfModule>
+    <IfModule !mod_authz_core.c>
+        Order allow,deny
+        Deny from all
+    </IfModule>
+</FilesMatch>
+
+# API routing - только если mod_rewrite доступен
+<IfModule mod_rewrite.c>
+    # Не трогаем существующие файлы и папки
+    RewriteCond %{REQUEST_FILENAME} -f [OR]
+    RewriteCond %{REQUEST_FILENAME} -d
+    RewriteRule ^ - [L]
+    
+    # API endpoints перенаправляем на соответствующие PHP файлы
+    RewriteRule ^api/users$ api/users.php [L]
+    RewriteRule ^api/menu$ api/menu.php [L]
+    RewriteRule ^api/orders$ api/orders/index.php [L]
+</IfModule>
+
+# Настройки PHP (только если доступны)
+<IfModule mod_php7.c>
+    php_flag display_errors Off
+    php_flag log_errors On
+    php_value error_log logs/php-error.log
+</IfModule>
+
+# CORS headers для API
+<IfModule mod_headers.c>
+    <FilesMatch "\.php$">
+        Header set Access-Control-Allow-Origin "*"
+        Header set Access-Control-Allow-Methods "GET, POST, PUT, DELETE, OPTIONS"
+        Header set Access-Control-Allow-Headers "Content-Type, Authorization"
+    </FilesMatch>
+</IfModule>

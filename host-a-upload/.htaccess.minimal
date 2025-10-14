@@ -1,0 +1,2 @@
+# МИНИМАЛЬНАЯ ВЕРСИЯ - используйте если основной .htaccess не работает
+DirectoryIndex index.php index.html

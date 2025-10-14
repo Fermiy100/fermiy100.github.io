@@ -1,5 +1,18 @@
 RewriteEngine On
 
+# Отдаём существующие файлы напрямую
+RewriteCond %{REQUEST_FILENAME} -f [OR]
+RewriteCond %{REQUEST_FILENAME} -d
+RewriteRule ^ - [L]
+
+# Совместимость API: /api/orders -> /api/orders/index.php
+RewriteRule ^api/orders/?$ api/orders/index.php [L,QSA]
+
+# Совместимость API: /api/users/{id}/verify -> /api/users/index.php
+RewriteRule ^api/users/[0-9]+/verify/?$ api/users/index.php [L,QSA]
+
+RewriteEngine On
+
 # Разрешить CORS для всех запросов
 Header always set Access-Control-Allow-Origin "*"
 Header always set Access-Control-Allow-Methods "GET, POST, PUT, DELETE, OPTIONS"

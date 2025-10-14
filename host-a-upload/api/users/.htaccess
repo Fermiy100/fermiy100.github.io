@@ -1,0 +1,8 @@
+RewriteEngine On
+
+# Маршрутизация: /api/users/{id}/verify -> /api/users/index.php
+RewriteCond %{REQUEST_FILENAME} !-f
+RewriteCond %{REQUEST_FILENAME} !-d
+RewriteRule ^([0-9]+)/verify/?$ index.php [L,QSA]
+
+

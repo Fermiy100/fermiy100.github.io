@@ -1,4 +1,4 @@
-доimport { useState, useEffect } from "react";
+import { useState, useEffect } from "react";
 import { apiClient, User, MenuItem, School } from "./api";
 import UserManagement from "./UserManagement";
 import ProfileSettings from "./ProfileSettings";
@@ -14,8 +14,6 @@ export default function DirectorAdvanced({ token: _token }: any) {
   const [activeTab, setActiveTab] = useState<'menu' | 'users' | 'profile'>('menu');
   const [currentUser, setCurrentUser] = useState<User | null>(null);
   const [_school, setSchool] = useState<School | null>(null);
-  const [editingItem, setEditingItem] = useState<MenuItem | null>(null);
-  const [showAddForm, setShowAddForm] = useState(false);
   const [menuView, setMenuView] = useState<'grid' | 'list'>('grid');
   const [bulkSelected, setBulkSelected] = useState<Set<number>>(new Set());
 
@@ -74,7 +72,7 @@ export default function DirectorAdvanced({ token: _token }: any) {
       setMsg("📤 Загружаем файл...");
 
       const formData = new FormData();
-      formData.append("file", file);
+      formData.append("file", file!);
 
       const response = await fetch("https://fermiy100githubio-production.up.railway.app/api/menu", {
         method: "POST",
@@ -121,10 +119,8 @@ export default function DirectorAdvanced({ token: _token }: any) {
       if (response.ok) {
         const result = await response.json();
         setMsg(`✅ Удалено ${result.deletedCount} блюд из меню`);
-        // Принудительно очищаем состояние
         setMenuItems([]);
         setBulkSelected(new Set());
-        // Затем загружаем актуальные данные
         loadData();
       } else {
         const error = await response.json();
@@ -149,7 +145,6 @@ export default function DirectorAdvanced({ token: _token }: any) {
     }
 
     try {
-      // Оптимистичное обновление счётчика/списка
       setMenuItems(prev => prev.filter(item => item && !bulkSelected.has(item.id)));
       const optimisticCount = bulkSelected.size;
       setMsg(`⏳ Удаляем ${optimisticCount} блюд...`);
@@ -167,12 +162,10 @@ export default function DirectorAdvanced({ token: _token }: any) {
         const result = await response.json();
         setMsg(`✅ Удалено ${result.deletedCount} блюд`);
         setBulkSelected(new Set());
-        // Перезагружаем данные для консистентности
         loadData();
       } else {
         const error = await response.json();
         setMsg(`❌ Ошибка: ${error.error}`);
-        // Восстановим список при ошибке
         loadData();
       }
     } catch (error) {
@@ -204,33 +197,19 @@ export default function DirectorAdvanced({ token: _token }: any) {
     setBulkSelected(new Set());
   };
 
-  const handleAddItem = async (formData: any) => {
-    try {
-      const response = await apiClient.addMenuItem(formData);
-      setMsg(`✅ Блюдо "${formData.name}" добавлено`);
-      setShowAddForm(false);
-      loadData(); // Перезагружаем данные
-    } catch (error: any) {
-      setMsg(`❌ Ошибка добавления: ${error.message}`);
-    }
-  };
-
   const handleDeleteItem = async (itemId: number) => {
     if (!confirm('Удалить это блюдо?')) {
       return;
     }
     
     try {
-      // Оптимистичное удаление
       setMenuItems(prev => prev.filter(item => item && item.id !== itemId));
       setActionLoading(true);
       await apiClient.deleteMenuItem(itemId);
       setMsg('✅ Блюдо удалено');
-      // Подтянем серверные данные для консистентности
       loadData();
     } catch (error: any) {
       setMsg(`❌ Ошибка при удалении блюда: ${error.message}`);
-      // Откатим состояние, если нужно
       loadData();
     } finally {
       setActionLoading(false);
@@ -275,8 +254,6 @@ export default function DirectorAdvanced({ token: _token }: any) {
             borderRadius: '5px',
             cursor: 'pointer'
           }}
-          aria-label="Открыть вкладку Меню"
-          title="Меню"
         >
           Меню
         </button>
@@ -284,14 +261,13 @@ export default function DirectorAdvanced({ token: _token }: any) {
           onClick={() => setActiveTab('users')}
           style={{
             padding: '10px 20px',
+            marginRight: '10px',
             backgroundColor: activeTab === 'users' ? '#007bff' : '#f8f9fa',
             color: activeTab === 'users' ? 'white' : 'black',
             border: '1px solid #dee2e6',
             borderRadius: '5px',
             cursor: 'pointer'
           }}
-          aria-label="Открыть вкладку Пользователи"
-          title="Пользователи"
         >
           Пользователи
         </button>
@@ -305,8 +281,6 @@ export default function DirectorAdvanced({ token: _token }: any) {
             borderRadius: '5px',
             cursor: 'pointer'
           }}
-          aria-label="Открыть вкладку Профиль"
-          title="Настройки профиля"
         >
           Профиль
         </button>
@@ -320,13 +294,12 @@ export default function DirectorAdvanced({ token: _token }: any) {
             border: '1px solid #e5e7eb',
             borderRadius: '12px',
             padding: '20px',
-            marginBottom: '20px',
-            boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)'
+            marginBottom: '20px'
           }}>
-            <h3 style={{ margin: '0 0 20px 0' }}>📤 Загрузить меню из Excel</h3>
+            <h3>📤 Загрузить меню из Excel</h3>
             
             <form onSubmit={handleFileUpload}>
-              <div style={{ display: 'flex', gap: '10px', alignItems: 'center', marginBottom: '15px' }}>
+              <div style={{ display: 'flex', gap: '10px', marginBottom: '15px' }}>
                 <input
                   type="file"
                   accept=".xlsx,.xls"
@@ -335,13 +308,7 @@ export default function DirectorAdvanced({ token: _token }: any) {
                     setFile(f);
                     setFileError(validateFile(f));
                   }}
-                  style={{
-                    flex: 1,
-                    padding: '8px',
-                    border: '1px solid #d1d5db',
-                    borderRadius: '6px'
-                  }}
-                  aria-label="Выберите Excel файл (.xlsx, .xls)"
+                  style={{ flex: 1, padding: '8px' }}
                 />
                 <button
                   type="submit"
@@ -354,9 +321,6 @@ export default function DirectorAdvanced({ token: _token }: any) {
                     borderRadius: '6px',
                     cursor: (loading || !!fileError || !file) ? 'not-allowed' : 'pointer'
                   }}
-                  aria-busy={loading}
-                  aria-label="Загрузить меню из Excel"
-                  title={fileError ? fileError : 'Загрузить меню'}
                 >
                   {loading ? 'Загружаем...' : 'Загрузить'}
                 </button>
@@ -364,28 +328,6 @@ export default function DirectorAdvanced({ token: _token }: any) {
               {fileError && (
                 <div style={{ color: '#b91c1c', marginBottom: '10px' }}>
                   ❌ {fileError}
-                </div>
-              )}
-              
-              {uploadProgress > 0 && (
-                <div style={{ marginBottom: '10px' }}>
-                  <div style={{
-                    width: '100%',
-                    height: '8px',
-                    backgroundColor: '#e5e7eb',
-                    borderRadius: '4px',
-                    overflow: 'hidden'
-                  }}>
-                    <div style={{
-                      width: `${uploadProgress}%`,
-                      height: '100%',
-                      backgroundColor: '#3b82f6',
-                      transition: 'width 0.3s ease'
-                    }} />
-                  </div>
-                  <div style={{ fontSize: '12px', color: '#6b7280', marginTop: '5px' }}>
-                    {uploadProgress}%
-                  </div>
                 </div>
               )}
             </form>
@@ -397,44 +339,22 @@ export default function DirectorAdvanced({ token: _token }: any) {
             border: '1px solid #e5e7eb',
             borderRadius: '12px',
             padding: '20px',
-            marginBottom: '20px',
-            boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)'
+            marginBottom: '20px'
           }}>
-            <h3 style={{ margin: '0 0 20px 0' }}>⚙️ Управление меню</h3>
+            <h3>⚙️ Управление меню</h3>
             
-            <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap', marginBottom: '20px' }}>
-              <button
-                onClick={() => setShowAddForm(true)}
-                style={{
-                  padding: '10px 15px',
-                  backgroundColor: '#10b981',
-                  color: 'white',
-                  border: 'none',
-                  borderRadius: '6px',
-                  cursor: 'pointer',
-                  fontSize: '14px'
-                }}
-                aria-label="Добавить блюдо"
-                title="Добавить блюдо"
-              >
-                Добавить блюдо
-              </button>
-              
+            <div style={{ display: 'flex', gap: '10px', marginBottom: '20px' }}>
               <button
                 onClick={clearAllMenu}
+                disabled={actionLoading}
                 style={{
                   padding: '10px 15px',
                   backgroundColor: '#ef4444',
                   color: 'white',
                   border: 'none',
                   borderRadius: '6px',
-                  cursor: actionLoading ? 'not-allowed' : 'pointer',
-                  fontSize: '14px'
+                  cursor: actionLoading ? 'not-allowed' : 'pointer'
                 }}
-                disabled={actionLoading}
-                aria-busy={actionLoading}
-                aria-label="Удалить все блюда"
-                title="Удалить все блюда"
               >
                 Удалить все
               </button>
@@ -447,11 +367,8 @@ export default function DirectorAdvanced({ token: _token }: any) {
                   color: 'white',
                   border: 'none',
                   borderRadius: '6px',
-                  cursor: 'pointer',
-                  fontSize: '14px'
+                  cursor: 'pointer'
                 }}
-                aria-label="Переключить вид списка блюд"
-                title="Переключить вид"
               >
                 {menuView === 'grid' ? '📋 Список' : '🔲 Сетка'}
               </button>
@@ -459,33 +376,21 @@ export default function DirectorAdvanced({ token: _token }: any) {
 
             {/* Массовые операции */}
             {bulkSelected.size > 0 && (
-              <div style={{
-                padding: '15px',
-                backgroundColor: '#f3f4f6',
-                borderRadius: '8px',
-                marginBottom: '20px',
-                border: '2px solid #3b82f6'
-              }}>
-                <div style={{ display: 'flex', gap: '10px', alignItems: 'center', flexWrap: 'wrap' }}>
-                  <span style={{ fontWeight: '600', color: '#1f2937' }}>
-                    Выбрано: {bulkSelected.size} блюд
-                  </span>
+              <div style={{ padding: '15px', backgroundColor: '#f3f4f6', borderRadius: '8px', marginBottom: '20px' }}>
+                <div style={{ display: 'flex', gap: '10px', alignItems: 'center' }}>
+                  <span>Выбрано: {bulkSelected.size} блюд</span>
                   
                   <button
                     onClick={deleteSelectedItems}
+                    disabled={actionLoading}
                     style={{
                       padding: '8px 12px',
                       backgroundColor: '#ef4444',
                       color: 'white',
                       border: 'none',
                       borderRadius: '6px',
-                      cursor: actionLoading ? 'not-allowed' : 'pointer',
-                      fontSize: '14px'
+                      cursor: actionLoading ? 'not-allowed' : 'pointer'
                     }}
-                    disabled={actionLoading}
-                    aria-busy={actionLoading}
-                    aria-label="Удалить выбранные блюда"
-                    title="Удалить выбранные блюда"
                   >
                     🗑️ Удалить выбранные
                   </button>
@@ -498,11 +403,8 @@ export default function DirectorAdvanced({ token: _token }: any) {
                       color: 'white',
                       border: 'none',
                       borderRadius: '6px',
-                      cursor: 'pointer',
-                      fontSize: '14px'
+                      cursor: 'pointer'
                     }}
-                    aria-label="Снять выбор всех блюд"
-                    title="Снять выбор"
                   >
                     ❌ Отменить выбор
                   </button>
@@ -510,41 +412,20 @@ export default function DirectorAdvanced({ token: _token }: any) {
               </div>
             )}
 
-            {/* Кнопки выбора */}
             <div style={{ display: 'flex', gap: '10px', marginBottom: '20px' }}>
               <button
                 onClick={selectAllItems}
+                disabled={!menuItems.length}
                 style={{
                   padding: '8px 12px',
                   backgroundColor: '#3b82f6',
                   color: 'white',
                   border: 'none',
                   borderRadius: '6px',
-                  cursor: menuItems.length ? 'pointer' : 'not-allowed',
-                  fontSize: '14px'
+                  cursor: menuItems.length ? 'pointer' : 'not-allowed'
                 }}
-                disabled={!menuItems.length}
-                aria-label="Выбрать все блюда"
-                title="Выбрать все блюда"
               >
                 ✅ Выбрать все
-              </button>
-              
-              <button
-                onClick={clearSelection}
-                style={{
-                  padding: '8px 12px',
-                  backgroundColor: '#6b7280',
-                  color: 'white',
-                  border: 'none',
-                  borderRadius: '6px',
-                  cursor: 'pointer',
-                  fontSize: '14px'
-                }}
-                aria-label="Снять выбор"
-                title="Снять выбор"
-              >
-                ❌ Снять выбор
               </button>
             </div>
           </div>
@@ -554,16 +435,13 @@ export default function DirectorAdvanced({ token: _token }: any) {
             background: 'white',
             border: '1px solid #e5e7eb',
             borderRadius: '12px',
-            padding: '20px',
-            boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)'
+            padding: '20px'
           }}>
-            <h3 style={{ margin: '0 0 20px 0' }}>
-              🍽️ Блюда меню ({menuItems.length})
-            </h3>
+            <h3>🍽️ Блюда меню ({menuItems.length})</h3>
             
             {menuItems.length === 0 ? (
               <div style={{ textAlign: 'center', padding: '40px', color: '#6b7280' }}>
-                📋 Меню пусто. Загрузите файл Excel или добавьте блюда вручную.
+                📋 Меню пусто. Загрузите файл Excel.
               </div>
             ) : (
               <div style={{
@@ -572,15 +450,47 @@ export default function DirectorAdvanced({ token: _token }: any) {
                 gap: '15px'
               }}>
                 {menuItems.filter(item => item && item.id).map((item) => (
-                  <MenuItemCard
+                  <div
                     key={item.id}
-                    item={item}
-                    onEdit={setEditingItem}
-                    onDelete={() => handleDeleteItem(item.id)}
-                    showBulkSelection={true}
-                    isBulkSelected={bulkSelected.has(item.id)}
-                    onBulkSelect={() => toggleBulkSelection(item.id)}
-                  />
+                    style={{
+                      border: '1px solid #e5e7eb',
+                      borderRadius: '8px',
+                      padding: '15px',
+                      backgroundColor: bulkSelected.has(item.id) ? '#eff6ff' : 'white'
+                    }}
+                  >
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'start' }}>
+                      <div style={{ flex: 1 }}>
+                        <div style={{ fontWeight: 'bold', marginBottom: '5px' }}>{item.name}</div>
+                        <div style={{ fontSize: '14px', color: '#6b7280' }}>
+                          {item.meal_type} • {item.day_of_week}
+                        </div>
+                        {item.weight && <div style={{ fontSize: '12px', color: '#9ca3af' }}>Вес: {item.weight}</div>}
+                        {item.recipe_number && <div style={{ fontSize: '12px', color: '#9ca3af' }}>Рецепт: {item.recipe_number}</div>}
+                      </div>
+                      <div style={{ display: 'flex', gap: '5px' }}>
+                        <input
+                          type="checkbox"
+                          checked={bulkSelected.has(item.id)}
+                          onChange={() => toggleBulkSelection(item.id)}
+                        />
+                        <button
+                          onClick={() => handleDeleteItem(item.id)}
+                          style={{
+                            padding: '4px 8px',
+                            backgroundColor: '#ef4444',
+                            color: 'white',
+                            border: 'none',
+                            borderRadius: '4px',
+                            cursor: 'pointer',
+                            fontSize: '12px'
+                          }}
+                        >
+                          🗑️
+                        </button>
+                      </div>
+                    </div>
+                  </div>
                 ))}
               </div>
             )}
@@ -604,66 +514,6 @@ export default function DirectorAdvanced({ token: _token }: any) {
             setCurrentUser(updatedUser);
             setMsg('✅ Профиль обновлен');
           }}
-        />
-      )}
-
-      {/* Форма добавления блюда */}
-      {showAddForm && (
-        <div style={{
-          position: 'fixed',
-          top: 0,
-          left: 0,
-          right: 0,
-          bottom: 0,
-          backgroundColor: 'rgba(0, 0, 0, 0.5)',
-          display: 'flex',
-          justifyContent: 'center',
-          alignItems: 'center',
-          zIndex: 1000
-        }}>
-          <div style={{
-            backgroundColor: 'white',
-            padding: '30px',
-            borderRadius: '10px',
-            width: '500px',
-            maxHeight: '80vh',
-            overflow: 'auto'
-          }}>
-            <h3 style={{ margin: '0 0 20px 0' }}>➕ Добавить новое блюдо</h3>
-            
-            <AddItemForm 
-              onAdd={handleAddItem}
-              onCancel={() => setShowAddForm(false)}
-            />
-          </div>
-        </div>
-      )}
-
-      {/* Модальные окна */}
-      {editingItem && (
-        <MenuItemEditor
-          item={editingItem}
-          onSave={async (updatedItem) => {
-            setMenuItems(prev => prev.filter(item => item && item.id).map(item => 
-              item.id === editingItem.id ? { ...item, ...updatedItem } : item
-            ));
-            setEditingItem(null);
-            setMsg('✅ Блюдо обновлено');
-          }}
-          onCancel={() => setEditingItem(null)}
-        />
-      )}
-
-      {showAddForm && (
-        <MenuItemEditor
-          item={undefined}
-          onSave={async (newItem) => {
-            const itemWithId = { ...newItem, id: Date.now(), school_id: currentUser?.school_id || 0, week_start: new Date().toISOString().split('T')[0] };
-            setMenuItems(prev => [...prev, itemWithId]);
-            setShowAddForm(false);
-            setMsg('✅ Блюдо добавлено');
-          }}
-          onCancel={() => setShowAddForm(false)}
         />
       )}
     </div>

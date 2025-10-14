@@ -97,6 +97,14 @@ try {
         if (!isset($item['price']) || $item['price'] == 0) {
             $item['price'] = 150; // Цена по умолчанию
         }
+
+        // Нормализуем строки для стабильного фронтенда
+        if (isset($item['weight']) && !is_string($item['weight'])) {
+            $item['weight'] = strval($item['weight']);
+        }
+        if (isset($item['recipe_number']) && !is_string($item['recipe_number'])) {
+            $item['recipe_number'] = strval($item['recipe_number']);
+        }
     }
     
     echo json_encode($menuData, JSON_UNESCAPED_UNICODE | JSON_PRETTY_PRINT);

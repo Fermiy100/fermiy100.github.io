@@ -135,8 +135,9 @@ class ApiClient {
   }
 
   async verifyUser(userId: number): Promise<{ message: string }> {
-    return this.request<{ message: string }>(`/users/${userId}/verify`, {
-      method: 'PATCH',
+    return this.request<{ message: string }>(`/users/verify.php`, {
+      method: 'POST',
+      body: JSON.stringify({ userId })
     });
   }
 

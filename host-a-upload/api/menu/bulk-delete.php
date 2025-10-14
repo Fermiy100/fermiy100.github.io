@@ -1,5 +1,5 @@
 <?php
-header('Content-Type: application/json');
+header('Content-Type: application/json; charset=utf-8');
 header('Access-Control-Allow-Origin: *');
 header('Access-Control-Allow-Methods: GET, POST, PUT, DELETE, OPTIONS');
 header('Access-Control-Allow-Headers: Content-Type, Authorization');
@@ -24,13 +24,24 @@ if (!$input || !isset($input['ids']) || !is_array($input['ids'])) {
 }
 
 $ids = $input['ids'];
-$deletedCount = count($ids);
+// Удаляем из файла данных
+$menuFile = __DIR__ . '/../../data/menu.json';
+$menuData = [];
+if (file_exists($menuFile)) {
+    $menuData = json_decode(file_get_contents($menuFile), true) ?: [];
+}
 
-// Mock successful bulk delete response
-$response = [
+$initial = count($menuData);
+$idSet = array_flip(array_map('intval', $ids));
+$menuData = array_values(array_filter($menuData, function($dish) use ($idSet) {
+    return !isset($idSet[(int)($dish['id'] ?? -1)]);
+}));
+$deletedCount = $initial - count($menuData);
+
+file_put_contents($menuFile, json_encode($menuData, JSON_UNESCAPED_UNICODE | JSON_PRETTY_PRINT));
+
+echo json_encode([
     'message' => 'Выбранные блюда удалены',
     'deletedCount' => $deletedCount
-];
-
-echo json_encode($response);
+], JSON_UNESCAPED_UNICODE);
 ?>

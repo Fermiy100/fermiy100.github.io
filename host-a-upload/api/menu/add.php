@@ -22,7 +22,7 @@ try {
         throw new Exception('Недостаточно данных для создания блюда');
     }
     
-    $menuFile = __DIR__ . '/../../menu_data.json';
+    $menuFile = __DIR__ . '/../../data/menu.json';
     $menuData = [];
     
     if (file_exists($menuFile)) {

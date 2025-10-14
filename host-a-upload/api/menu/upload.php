@@ -16,18 +16,35 @@ if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
 }
 
 try {
-    if (!isset($_FILES['file']) || $_FILES['file']['error'] !== UPLOAD_ERR_OK) {
+    if (!isset($_FILES['file'])) {
         throw new Exception('Файл не был загружен');
+    }
+    if ($_FILES['file']['error'] !== UPLOAD_ERR_OK) {
+        $errors = [
+            UPLOAD_ERR_INI_SIZE => 'Файл превышает upload_max_filesize',
+            UPLOAD_ERR_FORM_SIZE => 'Файл превышает MAX_FILE_SIZE формы',
+            UPLOAD_ERR_PARTIAL => 'Файл загружен частично',
+            UPLOAD_ERR_NO_FILE => 'Файл не был загружен',
+            UPLOAD_ERR_NO_TMP_DIR => 'Отсутствует временная папка',
+            UPLOAD_ERR_CANT_WRITE => 'Не удалось сохранить файл',
+            UPLOAD_ERR_EXTENSION => 'PHP-расширение остановило загрузку файла'
+        ];
+        $code = (int)$_FILES['file']['error'];
+        throw new Exception($errors[$code] ?? ('Ошибка загрузки файла (код ' . $code . ')'));
     }
 
     $file = $_FILES['file'];
     $fileName = $file['name'];
     $fileSize = $file['size'];
     
-    // Проверяем, что это Excel файл
+    // Проверяем, что это Excel файл + лимит размера
     $fileExtension = strtolower(pathinfo($fileName, PATHINFO_EXTENSION));
     if (!in_array($fileExtension, ['xlsx', 'xls'])) {
         throw new Exception('Поддерживаются только Excel файлы (.xlsx, .xls)');
+    }
+    $maxSize = 10 * 1024 * 1024; // 10MB
+    if ($fileSize > $maxSize) {
+        throw new Exception('Слишком большой файл. Максимум 10 МБ');
     }
     
     error_log("📊 Начинаем парсинг Excel файла: $fileName ($fileSize байт)");
@@ -36,7 +53,7 @@ try {
     $parsedDishes = parseExcelFileStructure();
     
     // Сохраняем данные в JSON файл
-    $menuFile = __DIR__ . '/../../menu_data.json';
+    $menuFile = __DIR__ . '/../../data/menu.json';
     file_put_contents($menuFile, json_encode($parsedDishes, JSON_UNESCAPED_UNICODE | JSON_PRETTY_PRINT));
     
     error_log("✅ Парсер создал: " . count($parsedDishes) . " блюд");

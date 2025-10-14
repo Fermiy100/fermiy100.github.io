@@ -22,7 +22,7 @@ try {
         throw new Exception('Неверный ID блюда');
     }
     
-    $menuFile = __DIR__ . '/../../menu_data.json';
+    $menuFile = __DIR__ . '/../../data/menu.json';
     
     if (!file_exists($menuFile)) {
         throw new Exception('Меню не найдено');

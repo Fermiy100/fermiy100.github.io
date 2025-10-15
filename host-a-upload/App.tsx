@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import ModernLogin from './pages/ModernLogin';
 import DirectorAdvanced from './pages/DirectorAdvanced';
 import PersonalCabinet from './components/PersonalCabinet';
+import ProfileInfo from './components/ProfileInfo';
 import ParentMenuSelector from './components/ParentMenuSelector';
 import { User } from './api';
 
@@ -102,6 +103,19 @@ function App() {
               >
                 👨‍💼 Панель директора
               </button>
+              <button
+                onClick={() => setActiveView('profile')}
+                style={{
+                  background: activeView === 'profile' ? '#007bff' : '#f8f9fa',
+                  color: activeView === 'profile' ? 'white' : '#333',
+                  border: 'none',
+                  padding: '8px 16px',
+                  borderRadius: '5px',
+                  cursor: 'pointer'
+                }}
+              >
+                👤 Профиль
+              </button>
             </div>
           ) : (
             <div style={{ display: 'flex', gap: '10px' }}>
@@ -166,7 +180,7 @@ function App() {
         )}
         
         {activeView === 'profile' && (
-          <PersonalCabinet
+          <ProfileInfo
             user={user}
             onLogout={handleLogout}
           />

@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { User, MenuItem } from '../utils/api';
+import { User, MenuItem } from '../api';
 
 interface PersonalCabinetProps {
   user: User;
@@ -39,7 +39,7 @@ export default function PersonalCabinet({ user, onLogout }: PersonalCabinetProps
   const loadUserOrders = async () => {
     try {
       setLoading(true);
-      const response = await fetch('/api/orders.php');
+      const response = await fetch('/api/orders/index.php');
       if (response.ok) {
         const allOrders = await response.json();
         const userOrders = allOrders.filter((order: UserOrder) => order.user_id === user.id);

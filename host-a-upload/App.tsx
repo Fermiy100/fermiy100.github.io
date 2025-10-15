@@ -9,7 +9,7 @@ import { User } from './api';
 function App() {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
-  const [activeView, setActiveView] = useState<'login' | 'director' | 'parent' | 'profile'>('login');
+  const [activeView, setActiveView] = useState<'login' | 'director' | 'parent' | 'profile' | 'cabinet'>('login');
 
   useEffect(() => {
     // Проверяем сохраненную сессию
@@ -133,10 +133,10 @@ function App() {
                 🍽️ Заказ питания
               </button>
               <button
-                onClick={() => setActiveView('profile')}
+                onClick={() => setActiveView('cabinet')}
                 style={{
-                  background: activeView === 'profile' ? '#007bff' : '#f8f9fa',
-                  color: activeView === 'profile' ? 'white' : '#333',
+                  background: activeView === 'cabinet' ? '#007bff' : '#f8f9fa',
+                  color: activeView === 'cabinet' ? 'white' : '#333',
                   border: 'none',
                   padding: '8px 16px',
                   borderRadius: '5px',
@@ -181,6 +181,13 @@ function App() {
         
         {activeView === 'profile' && (
           <ProfileInfo
+            user={user}
+            onLogout={handleLogout}
+          />
+        )}
+        
+        {activeView === 'cabinet' && (
+          <PersonalCabinet
             user={user}
             onLogout={handleLogout}
           />

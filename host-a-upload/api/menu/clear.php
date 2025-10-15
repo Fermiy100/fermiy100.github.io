@@ -16,7 +16,21 @@ if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
 }
 
 try {
-    $menuFile = __DIR__ . '/../../menu_data.json';
+    $menuFile = __DIR__ . '/../../data/menu.json';
+    
+    // Проверяем существование файла
+    if (!file_exists($menuFile)) {
+        echo json_encode([
+            'success' => true,
+            'message' => 'Меню уже пустое',
+            'deletedCount' => 0
+        ], JSON_UNESCAPED_UNICODE);
+        exit();
+    }
+    
+    // Читаем текущее меню для подсчета
+    $currentMenu = json_decode(file_get_contents($menuFile), true);
+    $deletedCount = is_array($currentMenu) ? count($currentMenu) : 0;
     
     // Очищаем файл меню
     file_put_contents($menuFile, json_encode([], JSON_UNESCAPED_UNICODE | JSON_PRETTY_PRINT));
@@ -24,7 +38,21 @@ try {
     echo json_encode([
         'success' => true,
         'message' => 'Все блюда удалены из меню',
-        'deletedCount' => 0
+        'deletedCount' => $deletedCount
+    ], JSON_UNESCAPED_UNICODE);
+    
+} catch (Exception $e) {
+    error_log("❌ Ошибка очистки меню: " . $e->getMessage());
+    http_response_code(500);
+    echo json_encode([
+        'success' => false,
+        'error' => $e->getMessage()
+    ], JSON_UNESCAPED_UNICODE);
+}
+?>
+        'success' => true,
+        'message' => 'Все блюда удалены из меню',
+        'deletedCount' => $deletedCount
     ], JSON_UNESCAPED_UNICODE);
     
 } catch (Exception $e) {

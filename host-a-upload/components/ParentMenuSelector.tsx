@@ -20,8 +20,11 @@ export default function ParentMenuSelector({ user }: ParentMenuSelectorProps) {
     { key: 'snack', name: 'ПОЛДНИК', icon: '🍎', color: '#ffc107' }
   ];
 
+  const [autoLoad, setAutoLoad] = useState(false);
+
   useEffect(() => {
-    loadMenuData();
+    // Не загружаем автоматически, только по требованию
+    // loadMenuData();
   }, []);
 
   const loadMenuData = async () => {
@@ -191,6 +194,38 @@ export default function ParentMenuSelector({ user }: ParentMenuSelectorProps) {
         }}>
           🍽️ Выбор блюд
         </h2>
+
+        {/* Кнопка загрузки меню */}
+        {menuItems.length === 0 && !loading && (
+          <div style={{
+            textAlign: 'center',
+            marginBottom: '30px',
+            padding: '20px',
+            background: '#f8f9fa',
+            borderRadius: '10px',
+            border: '2px dashed #dee2e6'
+          }}>
+            <p style={{ marginBottom: '15px', color: '#666' }}>
+              Меню не загружено. Нажмите кнопку для загрузки блюд.
+            </p>
+            <button
+              onClick={loadMenuData}
+              disabled={loading}
+              style={{
+                background: '#007bff',
+                color: 'white',
+                border: 'none',
+                padding: '12px 24px',
+                borderRadius: '8px',
+                cursor: loading ? 'not-allowed' : 'pointer',
+                fontSize: '1rem',
+                opacity: loading ? 0.6 : 1
+              }}
+            >
+              {loading ? '⏳ Загружаем...' : '📋 Загрузить меню'}
+            </button>
+          </div>
+        )}
 
         {msg && (
           <div style={{

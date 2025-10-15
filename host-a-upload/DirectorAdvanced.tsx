@@ -19,7 +19,8 @@ export default function DirectorAdvanced({ token: _token }: any) {
 
   // Загружаем данные при входе
   useEffect(() => {
-    loadData();
+    // Отключаем автоматическую загрузку меню
+    // loadData();
   }, []);
 
   async function loadData() {
@@ -108,8 +109,8 @@ export default function DirectorAdvanced({ token: _token }: any) {
     
     try {
       setActionLoading(true);
-      const response = await fetch('https://fermiy100githubio-production.up.railway.app/api/menu/clear', {
-        method: 'DELETE',
+      const response = await fetch('/api/menu/clear.php', {
+        method: 'POST',
         headers: {
           'Authorization': `Bearer ${localStorage.getItem('token')}`,
           'Content-Type': 'application/json'
@@ -343,17 +344,49 @@ export default function DirectorAdvanced({ token: _token }: any) {
           }}>
             <h3>⚙️ Управление меню</h3>
             
+            {/* Кнопка загрузки меню */}
+            {menuItems.length === 0 && !loading && (
+              <div style={{
+                textAlign: 'center',
+                marginBottom: '20px',
+                padding: '15px',
+                background: '#f8f9fa',
+                borderRadius: '8px',
+                border: '2px dashed #dee2e6'
+              }}>
+                <p style={{ marginBottom: '10px', color: '#666' }}>
+                  Меню не загружено. Нажмите кнопку для загрузки блюд.
+                </p>
+                <button
+                  onClick={loadData}
+                  disabled={loading}
+                  style={{
+                    background: '#007bff',
+                    color: 'white',
+                    border: 'none',
+                    padding: '10px 20px',
+                    borderRadius: '6px',
+                    cursor: loading ? 'not-allowed' : 'pointer',
+                    fontSize: '0.9rem',
+                    opacity: loading ? 0.6 : 1
+                  }}
+                >
+                  {loading ? '⏳ Загружаем...' : '📋 Загрузить меню'}
+                </button>
+              </div>
+            )}
+            
             <div style={{ display: 'flex', gap: '10px', marginBottom: '20px' }}>
               <button
                 onClick={clearAllMenu}
-                disabled={actionLoading}
+                disabled={actionLoading || menuItems.length === 0}
                 style={{
                   padding: '10px 15px',
-                  backgroundColor: '#ef4444',
+                  backgroundColor: menuItems.length === 0 ? '#6c757d' : '#ef4444',
                   color: 'white',
                   border: 'none',
                   borderRadius: '6px',
-                  cursor: actionLoading ? 'not-allowed' : 'pointer'
+                  cursor: (actionLoading || menuItems.length === 0) ? 'not-allowed' : 'pointer'
                 }}
               >
                 Удалить все

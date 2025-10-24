@@ -32,8 +32,50 @@
       }
       
       body {
-        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        background: #f8f9fa;
         min-height: 100vh;
+      }
+      
+      /* Мобильные стили */
+      @media (max-width: 768px) {
+        body {
+          font-size: 16px;
+          line-height: 1.5;
+        }
+        
+        #root {
+          width: 100vw;
+          min-height: 100vh;
+        }
+        
+        /* Улучшаем touch-взаимодействия */
+        button, input, select, textarea {
+          min-height: 44px;
+          font-size: 16px;
+        }
+        
+        /* Оптимизируем для мобильных */
+        .container {
+          width: 100vw;
+          min-height: 100vh;
+          padding: 10px;
+          margin: 0;
+        }
+        
+        /* Убираем горизонтальную прокрутку */
+        * {
+          max-width: 100%;
+        }
+      }
+      
+      @media (max-width: 480px) {
+        body {
+          font-size: 14px;
+        }
+        
+        .container {
+          padding: 5px;
+        }
       }
       
       #root {
@@ -72,7 +114,7 @@
   </head>
   <body>
     <div id="root"></div>
-    <script type="module" crossorigin src="/assets/index-4968c965.js"></script>
+    <script type="module" crossorigin src="/assets/index-fe77e47d.js"></script>
     <link rel="stylesheet" href="/assets/index-924301c3.css">
   </body>
 </html>

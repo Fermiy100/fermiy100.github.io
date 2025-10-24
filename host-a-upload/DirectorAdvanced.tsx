@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+доimport { useState, useEffect } from "react";
 import { apiClient, User, MenuItem, School } from "./api";
 import UserManagement from "./UserManagement";
 import ProfileSettings from "./ProfileSettings";
@@ -226,8 +226,20 @@ export default function DirectorAdvanced({ token: _token }: any) {
   }
 
   return (
-    <div style={{ maxWidth: '1200px', margin: '0 auto', padding: '20px' }}>
-      <h1>Панель директора</h1>
+    <div style={{ 
+      maxWidth: '1200px', 
+      margin: '0 auto', 
+      padding: window.innerWidth <= 768 ? '10px' : '20px',
+      width: '100%',
+      boxSizing: 'border-box'
+    }}>
+      <h1 style={{
+        fontSize: window.innerWidth <= 768 ? '1.5rem' : '2rem',
+        textAlign: window.innerWidth <= 768 ? 'center' : 'left',
+        marginBottom: window.innerWidth <= 768 ? '15px' : '20px'
+      }}>
+        Панель директора
+      </h1>
       
       {msg && (
         <div style={{
@@ -243,17 +255,25 @@ export default function DirectorAdvanced({ token: _token }: any) {
       )}
 
       {/* Навигация */}
-      <div style={{ marginBottom: '20px' }}>
+      <div style={{ 
+        marginBottom: '20px',
+        display: 'flex',
+        flexDirection: window.innerWidth <= 768 ? 'column' : 'row',
+        gap: window.innerWidth <= 768 ? '10px' : '0'
+      }}>
         <button
           onClick={() => setActiveTab('menu')}
           style={{
-            padding: '10px 20px',
-            marginRight: '10px',
+            padding: window.innerWidth <= 768 ? '15px 20px' : '10px 20px',
+            marginRight: window.innerWidth <= 768 ? '0' : '10px',
             backgroundColor: activeTab === 'menu' ? '#007bff' : '#f8f9fa',
             color: activeTab === 'menu' ? 'white' : 'black',
             border: '1px solid #dee2e6',
             borderRadius: '5px',
-            cursor: 'pointer'
+            cursor: 'pointer',
+            fontSize: window.innerWidth <= 768 ? '16px' : '14px',
+            minHeight: window.innerWidth <= 768 ? '44px' : 'auto',
+            width: window.innerWidth <= 768 ? '100%' : 'auto'
           }}
         >
           Меню
@@ -261,13 +281,16 @@ export default function DirectorAdvanced({ token: _token }: any) {
         <button
           onClick={() => setActiveTab('users')}
           style={{
-            padding: '10px 20px',
-            marginRight: '10px',
+            padding: window.innerWidth <= 768 ? '15px 20px' : '10px 20px',
+            marginRight: window.innerWidth <= 768 ? '0' : '10px',
             backgroundColor: activeTab === 'users' ? '#007bff' : '#f8f9fa',
             color: activeTab === 'users' ? 'white' : 'black',
             border: '1px solid #dee2e6',
             borderRadius: '5px',
-            cursor: 'pointer'
+            cursor: 'pointer',
+            fontSize: window.innerWidth <= 768 ? '16px' : '14px',
+            minHeight: window.innerWidth <= 768 ? '44px' : 'auto',
+            width: window.innerWidth <= 768 ? '100%' : 'auto'
           }}
         >
           Пользователи
@@ -275,12 +298,15 @@ export default function DirectorAdvanced({ token: _token }: any) {
         <button
           onClick={() => setActiveTab('profile')}
           style={{
-            padding: '10px 20px',
+            padding: window.innerWidth <= 768 ? '15px 20px' : '10px 20px',
             backgroundColor: activeTab === 'profile' ? '#007bff' : '#f8f9fa',
             color: activeTab === 'profile' ? 'white' : 'black',
             border: '1px solid #dee2e6',
             borderRadius: '5px',
-            cursor: 'pointer'
+            cursor: 'pointer',
+            fontSize: window.innerWidth <= 768 ? '16px' : '14px',
+            minHeight: window.innerWidth <= 768 ? '44px' : 'auto',
+            width: window.innerWidth <= 768 ? '100%' : 'auto'
           }}
         >
           Профиль

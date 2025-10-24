@@ -68,37 +68,60 @@ function App() {
   return (
     <div style={{
       minHeight: '100vh',
-      background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
-      padding: '20px'
+      background: '#f8f9fa',
+      padding: window.innerWidth <= 768 ? '10px' : '20px',
+      width: '100%',
+      boxSizing: 'border-box'
     }}>
       {/* Навигационная панель */}
       <div style={{
         maxWidth: '1200px',
         margin: '0 auto 20px auto',
         background: 'white',
-        borderRadius: '15px',
-        padding: '15px 20px',
-        boxShadow: '0 5px 15px rgba(0,0,0,0.1)',
+        borderRadius: window.innerWidth <= 768 ? '10px' : '15px',
+        padding: window.innerWidth <= 768 ? '10px 15px' : '15px 20px',
+        boxShadow: '0 2px 10px rgba(0,0,0,0.1)',
         display: 'flex',
+        flexDirection: window.innerWidth <= 768 ? 'column' : 'row',
         justifyContent: 'space-between',
-        alignItems: 'center'
+        alignItems: window.innerWidth <= 768 ? 'stretch' : 'center',
+        gap: window.innerWidth <= 768 ? '15px' : '0'
       }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '20px' }}>
-          <h1 style={{ margin: 0, color: '#333', fontSize: '1.5rem' }}>
+        <div style={{ 
+          display: 'flex', 
+          alignItems: 'center', 
+          gap: window.innerWidth <= 768 ? '10px' : '20px',
+          flexDirection: window.innerWidth <= 768 ? 'column' : 'row',
+          width: window.innerWidth <= 768 ? '100%' : 'auto'
+        }}>
+          <h1 style={{ 
+            margin: 0, 
+            color: '#333', 
+            fontSize: window.innerWidth <= 768 ? '1.2rem' : '1.5rem',
+            textAlign: window.innerWidth <= 768 ? 'center' : 'left'
+          }}>
             🍽️ Школьное питание
           </h1>
           
           {user.role === 'DIRECTOR' ? (
-            <div style={{ display: 'flex', gap: '10px' }}>
+            <div style={{ 
+              display: 'flex', 
+              gap: '10px',
+              flexDirection: window.innerWidth <= 768 ? 'column' : 'row',
+              width: window.innerWidth <= 768 ? '100%' : 'auto'
+            }}>
               <button
                 onClick={() => setActiveView('director')}
                 style={{
                   background: activeView === 'director' ? '#007bff' : '#f8f9fa',
                   color: activeView === 'director' ? 'white' : '#333',
                   border: 'none',
-                  padding: '8px 16px',
+                  padding: window.innerWidth <= 768 ? '12px 20px' : '8px 16px',
                   borderRadius: '5px',
-                  cursor: 'pointer'
+                  cursor: 'pointer',
+                  fontSize: window.innerWidth <= 768 ? '16px' : '14px',
+                  minHeight: window.innerWidth <= 768 ? '44px' : 'auto',
+                  width: window.innerWidth <= 768 ? '100%' : 'auto'
                 }}
               >
                 👨‍💼 Панель директора
@@ -109,25 +132,36 @@ function App() {
                   background: activeView === 'profile' ? '#007bff' : '#f8f9fa',
                   color: activeView === 'profile' ? 'white' : '#333',
                   border: 'none',
-                  padding: '8px 16px',
+                  padding: window.innerWidth <= 768 ? '12px 20px' : '8px 16px',
                   borderRadius: '5px',
-                  cursor: 'pointer'
+                  cursor: 'pointer',
+                  fontSize: window.innerWidth <= 768 ? '16px' : '14px',
+                  minHeight: window.innerWidth <= 768 ? '44px' : 'auto',
+                  width: window.innerWidth <= 768 ? '100%' : 'auto'
                 }}
               >
                 👤 Профиль
               </button>
             </div>
           ) : (
-            <div style={{ display: 'flex', gap: '10px' }}>
+            <div style={{ 
+              display: 'flex', 
+              gap: '10px',
+              flexDirection: window.innerWidth <= 768 ? 'column' : 'row',
+              width: window.innerWidth <= 768 ? '100%' : 'auto'
+            }}>
               <button
                 onClick={() => setActiveView('parent')}
                 style={{
                   background: activeView === 'parent' ? '#007bff' : '#f8f9fa',
                   color: activeView === 'parent' ? 'white' : '#333',
                   border: 'none',
-                  padding: '8px 16px',
+                  padding: window.innerWidth <= 768 ? '12px 20px' : '8px 16px',
                   borderRadius: '5px',
-                  cursor: 'pointer'
+                  cursor: 'pointer',
+                  fontSize: window.innerWidth <= 768 ? '16px' : '14px',
+                  minHeight: window.innerWidth <= 768 ? '44px' : 'auto',
+                  width: window.innerWidth <= 768 ? '100%' : 'auto'
                 }}
               >
                 🍽️ Заказ питания
@@ -138,9 +172,12 @@ function App() {
                   background: activeView === 'cabinet' ? '#007bff' : '#f8f9fa',
                   color: activeView === 'cabinet' ? 'white' : '#333',
                   border: 'none',
-                  padding: '8px 16px',
+                  padding: window.innerWidth <= 768 ? '12px 20px' : '8px 16px',
                   borderRadius: '5px',
-                  cursor: 'pointer'
+                  cursor: 'pointer',
+                  fontSize: window.innerWidth <= 768 ? '16px' : '14px',
+                  minHeight: window.innerWidth <= 768 ? '44px' : 'auto',
+                  width: window.innerWidth <= 768 ? '100%' : 'auto'
                 }}
               >
                 👤 Личный кабинет
@@ -149,8 +186,18 @@ function App() {
           )}
         </div>
         
-        <div style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
-          <span style={{ color: '#666' }}>
+        <div style={{ 
+          display: 'flex', 
+          alignItems: 'center', 
+          gap: '15px',
+          flexDirection: window.innerWidth <= 768 ? 'column' : 'row',
+          width: window.innerWidth <= 768 ? '100%' : 'auto'
+        }}>
+          <span style={{ 
+            color: '#666',
+            fontSize: window.innerWidth <= 768 ? '14px' : '16px',
+            textAlign: window.innerWidth <= 768 ? 'center' : 'left'
+          }}>
             👋 Привет, {user.name}!
           </span>
           <button
@@ -159,9 +206,12 @@ function App() {
               background: '#dc3545',
               color: 'white',
               border: 'none',
-              padding: '8px 16px',
+              padding: window.innerWidth <= 768 ? '12px 20px' : '8px 16px',
               borderRadius: '5px',
-              cursor: 'pointer'
+              cursor: 'pointer',
+              fontSize: window.innerWidth <= 768 ? '16px' : '14px',
+              minHeight: window.innerWidth <= 768 ? '44px' : 'auto',
+              width: window.innerWidth <= 768 ? '100%' : 'auto'
             }}
           >
             🚪 Выйти

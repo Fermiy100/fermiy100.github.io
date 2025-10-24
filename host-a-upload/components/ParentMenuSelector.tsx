@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { apiClient, MenuItem, User } from '../api';
+import { useMobile, MobileButton, MobileForm, MobileInput } from './MobileOptimized';
 
 interface ParentMenuSelectorProps {
   user: User;
@@ -12,6 +13,7 @@ export default function ParentMenuSelector({ user }: ParentMenuSelectorProps) {
   const [selectedDay, setSelectedDay] = useState<string>('ПОНЕДЕЛЬНИК');
   const [selectedDishes, setSelectedDishes] = useState<{[key: string]: number}>({});
   const [msg, setMsg] = useState<string | null>(null);
+  const isMobile = useMobile();
 
   const days = ['ПОНЕДЕЛЬНИК', 'ВТОРНИК', 'СРЕДА', 'ЧЕТВЕРГ', 'ПЯТНИЦА'];
   const mealTypes = [
@@ -175,22 +177,27 @@ export default function ParentMenuSelector({ user }: ParentMenuSelectorProps) {
   }
 
   return (
-    <div style={{ padding: '20px', maxWidth: '1200px', margin: '0 auto' }}>
+    <div style={{ 
+      padding: window.innerWidth <= 768 ? '10px' : '20px', 
+      maxWidth: '1200px', 
+      margin: '0 auto',
+      width: '100%',
+      boxSizing: 'border-box'
+    }}>
       <div style={{
         background: 'white',
-        borderRadius: '15px',
-        padding: '30px',
-        boxShadow: '0 10px 30px rgba(0,0,0,0.1)',
-        border: '2px solid transparent',
-        backgroundImage: 'linear-gradient(white, white), linear-gradient(45deg, #ff6b6b, #4ecdc4)',
-        backgroundOrigin: 'border-box',
-        backgroundClip: 'content-box, border-box'
+        borderRadius: window.innerWidth <= 768 ? '10px' : '15px',
+        padding: window.innerWidth <= 768 ? '15px' : '30px',
+        boxShadow: '0 5px 15px rgba(0,0,0,0.1)',
+        border: '1px solid #e5e7eb',
+        width: '100%',
+        boxSizing: 'border-box'
       }}>
         <h2 style={{ 
           textAlign: 'center', 
-          marginBottom: '30px', 
+          marginBottom: window.innerWidth <= 768 ? '20px' : '30px', 
           color: '#333',
-          fontSize: '2rem'
+          fontSize: window.innerWidth <= 768 ? '1.5rem' : '2rem'
         }}>
           🍽️ Выбор блюд
         </h2>
@@ -241,9 +248,20 @@ export default function ParentMenuSelector({ user }: ParentMenuSelectorProps) {
         )}
 
         {/* Выбор дня */}
-        <div style={{ marginBottom: '30px' }}>
-          <h3 style={{ marginBottom: '15px', color: '#333' }}>📅 ВЫБОР ДНЯ</h3>
-          <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap' }}>
+        <div style={{ marginBottom: window.innerWidth <= 768 ? '20px' : '30px' }}>
+          <h3 style={{ 
+            marginBottom: '15px', 
+            color: '#333',
+            fontSize: window.innerWidth <= 768 ? '1.1rem' : '1.2rem'
+          }}>
+            📅 ВЫБОР ДНЯ
+          </h3>
+          <div style={{ 
+            display: 'flex', 
+            gap: window.innerWidth <= 768 ? '5px' : '10px', 
+            flexWrap: 'wrap',
+            justifyContent: window.innerWidth <= 768 ? 'center' : 'flex-start'
+          }}>
             {days.map(day => (
               <button
                 key={day}
@@ -252,11 +270,15 @@ export default function ParentMenuSelector({ user }: ParentMenuSelectorProps) {
                   background: selectedDay === day ? '#dc3545' : '#f8f9fa',
                   color: selectedDay === day ? 'white' : '#333',
                   border: '2px solid #dee2e6',
-                  padding: '12px 20px',
+                  padding: window.innerWidth <= 768 ? '12px 16px' : '12px 20px',
                   borderRadius: '8px',
                   cursor: 'pointer',
                   fontWeight: 'bold',
-                  transition: 'all 0.3s ease'
+                  transition: 'all 0.3s ease',
+                  minHeight: window.innerWidth <= 768 ? '44px' : 'auto',
+                  flex: window.innerWidth <= 768 ? '1' : 'none',
+                  minWidth: window.innerWidth <= 768 ? '80px' : 'auto',
+                  fontSize: window.innerWidth <= 768 ? '12px' : '14px'
                 }}
               >
                 {day}

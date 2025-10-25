@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { apiClient, User } from '../utils/api';
+import { apiClient, User } from '../api';
 
 interface LoginProps {
   onLogin: (user: User) => void;

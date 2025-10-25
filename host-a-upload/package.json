@@ -6,7 +6,14 @@
   "scripts": {
     "dev": "vite",
     "build": "vite build",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "deploy:railway": "node auto-deploy.js",
+    "deploy:manual": "railway up",
+    "railway:login": "railway login",
+    "railway:status": "railway status",
+    "railway:logs": "railway logs",
+    "railway:variables": "railway variables",
+    "railway:redeploy": "railway redeploy"
   },
   "dependencies": {
     "react": "^18.2.0",

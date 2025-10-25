@@ -68,6 +68,8 @@ class ApiClient {
     const url = `${API_BASE_URL}${endpoint}`;
     const headers: HeadersInit = {
       'Content-Type': 'application/json',
+      'Accept': 'application/json',
+      'Cache-Control': 'no-cache',
       ...options.headers,
     };
 
@@ -76,23 +78,53 @@ class ApiClient {
     }
 
     try {
+      console.log(`🌐 API Request: ${options.method || 'GET'} ${url}`);
+      
       const response = await fetch(url, {
         ...options,
         headers,
+        credentials: 'include',
+        mode: 'cors',
       });
 
+      console.log(`📊 Response status: ${response.status} ${response.statusText}`);
+
       if (!response.ok) {
-        const error = await response.json().catch(() => ({ error: 'Ошибка сервера' }));
-        throw new Error(error.error || `HTTP ${response.status}`);
+        let errorMessage = `HTTP ${response.status}`;
+        try {
+          const errorData = await response.json();
+          errorMessage = errorData.error || errorData.message || errorMessage;
+        } catch (parseError) {
+          console.warn('Could not parse error response:', parseError);
+        }
+        throw new Error(errorMessage);
+      }
+
+      const contentType = response.headers.get('content-type');
+      if (!contentType || !contentType.includes('application/json')) {
+        const text = await response.text();
+        console.warn('Non-JSON response:', text);
+        throw new Error('Сервер вернул некорректный ответ');
       }
 
       const data = await response.json();
+      console.log(`✅ API Response:`, data);
       return data;
     } catch (error: any) {
-      console.error('API Request Error:', error);
+      console.error('❌ API Request Error:', error);
+      
+      if (error.name === 'TypeError' && error.message.includes('fetch')) {
+        throw new Error('Нет подключения к серверу. Проверьте интернет-соединение.');
+      }
+      
       if (error.message.includes('Unexpected token')) {
+        throw new Error('Сервер вернул некорректные данные. Попробуйте позже.');
+      }
+      
+      if (error.message.includes('Failed to fetch')) {
         throw new Error('Сервер недоступен. Попробуйте позже.');
       }
+      
       throw error;
     }
   }

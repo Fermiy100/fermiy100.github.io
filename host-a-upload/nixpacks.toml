@@ -1,0 +1,15 @@
+[phases.setup]
+nixPkgs = ["nodejs", "npm"]
+
+[phases.install]
+cmds = [
+  "cd railway-backend && npm install",
+  "npm install",
+  "npm run build"
+]
+
+[phases.build]
+cmds = ["npm run build"]
+
+[start]
+cmd = "cd railway-backend && npm start"

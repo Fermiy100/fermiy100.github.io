@@ -1,0 +1,52 @@
+name: Deploy to Railway
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '18'
+        cache: 'npm'
+        
+    - name: Install dependencies
+      run: |
+        npm install
+        cd railway-backend && npm install
+        
+    - name: Build application
+      run: npm run build
+      
+    - name: Install Railway CLI
+      run: npm install -g @railway/cli
+      
+    - name: Deploy to Railway
+      run: |
+        railway login --token ${{ secrets.RAILWAY_TOKEN }}
+        railway up --detach
+      env:
+        RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN }}
+        
+    - name: Set environment variables
+      run: |
+        railway variables set NODE_ENV=production
+        railway variables set JWT_SECRET=${{ secrets.JWT_SECRET }}
+        railway variables set FRONTEND_URL=https://${{ github.event.repository.name }}.railway.app
+      env:
+        RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN }}
+        
+    - name: Health check
+      run: |
+        sleep 30
+        curl -f https://${{ github.event.repository.name }}.railway.app/api/health || exit 1

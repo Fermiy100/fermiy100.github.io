@@ -5,6 +5,10 @@ import PersonalCabinet from './components/PersonalCabinet';
 import ProfileInfo from './components/ProfileInfo';
 import ParentMenuSelector from './components/ParentMenuSelector';
 import { NotificationProvider } from './components/NotificationSystem';
+import ErrorBoundary from './components/ErrorBoundary';
+import PerformanceMonitor from './components/PerformanceMonitor';
+import SecurityEnhancer from './components/SecurityEnhancer';
+import TestingSuite from './components/TestingSuite';
 import { User } from './api';
 
 function App() {
@@ -67,14 +71,17 @@ function App() {
   }
 
   return (
-    <NotificationProvider>
-      <div style={{
-        minHeight: '100vh',
-        background: '#f8f9fa',
-        padding: window.innerWidth <= 768 ? '10px' : '20px',
-        width: '100%',
-        boxSizing: 'border-box'
-      }}>
+    <ErrorBoundary>
+      <SecurityEnhancer>
+        <PerformanceMonitor>
+          <NotificationProvider>
+            <div style={{
+              minHeight: '100vh',
+              background: '#f8f9fa',
+              padding: window.innerWidth <= 768 ? '10px' : '20px',
+              width: '100%',
+              boxSizing: 'border-box'
+            }}>
       {/* Навигационная панель */}
       <div style={{
         maxWidth: '1200px',
@@ -244,9 +251,12 @@ function App() {
             onLogout={handleLogout}
           />
         )}
-      </div>
-      </div>
-    </NotificationProvider>
+            </div>
+          </div>
+        </NotificationProvider>
+      </PerformanceMonitor>
+    </SecurityEnhancer>
+  </ErrorBoundary>
   );
 }
 

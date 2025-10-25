@@ -173,6 +173,13 @@ class ApiClient {
     });
   }
 
+  async updateUser(userId: number, userData: Partial<User>): Promise<User> {
+    return this.request<User>(`/users/${userId}/update.php`, {
+      method: 'PUT',
+      body: JSON.stringify(userData)
+    });
+  }
+
   async deleteUser(userId: number): Promise<{ message: string }> {
     return this.request<{ message: string }>(`/users/${userId}/delete`, {
       method: 'DELETE'

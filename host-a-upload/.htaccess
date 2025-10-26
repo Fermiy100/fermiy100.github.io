@@ -1,41 +1,165 @@
-# Включаем RewriteEngine только если модуль доступен
-<IfModule mod_rewrite.c>
-    RewriteEngine On
-    RewriteBase /
+# School Meals App - Optimized .htaccess for fermiy.ru
+# Version: 2.0 - Production Ready
+
+# Enable rewrite engine
+RewriteEngine On
+
+# Security Headers
+<IfModule mod_headers.c>
+    # Prevent clickjacking
+    Header always set X-Frame-Options "DENY"
+    
+    # Prevent MIME type sniffing
+    Header always set X-Content-Type-Options "nosniff"
+    
+    # Enable XSS protection
+    Header always set X-XSS-Protection "1; mode=block"
+    
+    # Referrer Policy
+    Header always set Referrer-Policy "strict-origin-when-cross-origin"
+    
+    # Content Security Policy
+    Header always set Content-Security-Policy "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval' https://fermiy.ru; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: https:; connect-src 'self' https://fermiy.ru https://fermiy100githubio-production.up.railway.app; frame-ancestors 'none'; base-uri 'self'; form-action 'self'"
+    
+    # CORS Headers for API
+    Header always set Access-Control-Allow-Origin "https://fermiy.ru"
+    Header always set Access-Control-Allow-Methods "GET, POST, PUT, DELETE, OPTIONS"
+    Header always set Access-Control-Allow-Headers "Content-Type, Authorization, X-CSRF-Token"
+    Header always set Access-Control-Allow-Credentials "true"
 </IfModule>
 
-# ВАЖНО: index.html первым (старый React интерфейс)
-DirectoryIndex index.html index.php
+# CORS Preflight
+RewriteCond %{REQUEST_METHOD} OPTIONS
+RewriteRule ^(.*)$ $1 [R=200,L]
 
-# БЕЗОПАСНОСТЬ: Закрываем доступ к JSON файлам
-<FilesMatch "\.(json)$">
-    <IfModule mod_authz_core.c>
-        Require all denied
-    </IfModule>
-    <IfModule !mod_authz_core.c>
-        Order allow,deny
-        Deny from all
-    </IfModule>
+# Force HTTPS
+RewriteCond %{HTTPS} off
+RewriteRule ^(.*)$ https://%{HTTP_HOST}%{REQUEST_URI} [L,R=301]
+
+# Remove www
+RewriteCond %{HTTP_HOST} ^www\.(.*)$ [NC]
+RewriteRule ^(.*)$ https://%1/$1 [R=301,L]
+
+# API Routes
+RewriteRule ^api/health/?$ api/health.php [L]
+RewriteRule ^api/auth/login/?$ api/auth/login.php [L]
+RewriteRule ^api/auth/me/?$ api/auth/me.php [L]
+RewriteRule ^api/users/?$ api/users.php [L]
+RewriteRule ^api/users/create/?$ api/users/create.php [L]
+RewriteRule ^api/users/([0-9]+)/verify/?$ api/users/verify.php [L]
+RewriteRule ^api/users/([0-9]+)/delete/?$ api/users/delete.php [L]
+RewriteRule ^api/menu/?$ api/menu.php [L]
+RewriteRule ^api/menu/add/?$ api/menu/add.php [L]
+RewriteRule ^api/menu/upload/?$ api/menu/upload.php [L]
+RewriteRule ^api/menu/clear/?$ api/menu/clear.php [L]
+RewriteRule ^api/menu/([0-9]+)/delete/?$ api/menu/delete.php [L]
+RewriteRule ^api/orders/?$ api/orders.php [L]
+RewriteRule ^api/orders/index/?$ api/orders/index.php [L]
+RewriteRule ^api/school/([0-9]+)/?$ api/school/$1.php [L]
+
+# React Router - SPA Support
+RewriteCond %{REQUEST_FILENAME} !-f
+RewriteCond %{REQUEST_FILENAME} !-d
+RewriteCond %{REQUEST_URI} !^/api/
+RewriteRule ^.*$ index.html [L]
+
+# Cache Control
+<IfModule mod_expires.c>
+    ExpiresActive On
+    
+    # Images
+    ExpiresByType image/jpg "access plus 1 month"
+    ExpiresByType image/jpeg "access plus 1 month"
+    ExpiresByType image/gif "access plus 1 month"
+    ExpiresByType image/png "access plus 1 month"
+    ExpiresByType image/svg+xml "access plus 1 month"
+    ExpiresByType image/webp "access plus 1 month"
+    
+    # CSS and JavaScript
+    ExpiresByType text/css "access plus 1 month"
+    ExpiresByType application/javascript "access plus 1 month"
+    ExpiresByType text/javascript "access plus 1 month"
+    
+    # Fonts
+    ExpiresByType font/woff "access plus 1 year"
+    ExpiresByType font/woff2 "access plus 1 year"
+    ExpiresByType application/font-woff "access plus 1 year"
+    ExpiresByType application/font-woff2 "access plus 1 year"
+    
+    # HTML
+    ExpiresByType text/html "access plus 1 hour"
+    
+    # JSON
+    ExpiresByType application/json "access plus 1 hour"
+</IfModule>
+
+# Compression
+<IfModule mod_deflate.c>
+    AddOutputFilterByType DEFLATE text/plain
+    AddOutputFilterByType DEFLATE text/html
+    AddOutputFilterByType DEFLATE text/xml
+    AddOutputFilterByType DEFLATE text/css
+    AddOutputFilterByType DEFLATE application/xml
+    AddOutputFilterByType DEFLATE application/xhtml+xml
+    AddOutputFilterByType DEFLATE application/rss+xml
+    AddOutputFilterByType DEFLATE application/javascript
+    AddOutputFilterByType DEFLATE application/x-javascript
+    AddOutputFilterByType DEFLATE application/json
+</IfModule>
+
+# Security - Deny access to sensitive files
+<FilesMatch "\.(htaccess|htpasswd|ini|log|sh|sql|conf)$">
+    Order Allow,Deny
+    Deny from all
 </FilesMatch>
 
-# API routing - только если mod_rewrite доступен
-<IfModule mod_rewrite.c>
-    # Не трогаем существующие файлы и папки
-    RewriteCond %{REQUEST_FILENAME} -f [OR]
-    RewriteCond %{REQUEST_FILENAME} -d
-    RewriteRule ^ - [L]
-    
-    # API endpoints перенаправляем на соответствующие PHP файлы
-    RewriteRule ^api/users$ api/users.php [L]
-    RewriteRule ^api/menu$ api/menu.php [L]
-    RewriteRule ^api/orders$ api/orders/index.php [L]
+# Deny access to data files
+<FilesMatch "\.(json|db|sqlite)$">
+    Order Allow,Deny
+    Deny from all
+</FilesMatch>
+
+# Deny access to source files
+<FilesMatch "\.(ts|tsx|jsx|scss|sass|less)$">
+    Order Allow,Deny
+    Deny from all
+</FilesMatch>
+
+# Deny access to config files
+<FilesMatch "\.(env|config|yaml|yml|toml)$">
+    Order Allow,Deny
+    Deny from all
+</FilesMatch>
+
+# Error Pages
+ErrorDocument 404 /index.html
+ErrorDocument 500 /index.html
+
+# MIME Types
+<IfModule mod_mime.c>
+    AddType application/javascript .js
+    AddType text/css .css
+    AddType image/svg+xml .svg
+    AddType application/json .json
+    AddType application/font-woff .woff
+    AddType application/font-woff2 .woff2
 </IfModule>
 
-# CORS headers для API
-<IfModule mod_headers.c>
-    <FilesMatch "\.php$">
-        Header set Access-Control-Allow-Origin "*"
-        Header set Access-Control-Allow-Methods "GET, POST, PUT, DELETE, OPTIONS"
-        Header set Access-Control-Allow-Headers "Content-Type, Authorization"
-    </FilesMatch>
+# PHP Settings
+<IfModule mod_php.c>
+    php_value upload_max_filesize 10M
+    php_value post_max_size 10M
+    php_value max_execution_time 300
+    php_value memory_limit 256M
+    php_flag display_errors Off
+    php_flag log_errors On
+    php_value error_log /var/log/php_errors.log
+</IfModule>
+
+# Prevent access to version control
+<IfModule mod_rewrite.c>
+    RewriteRule ^\.git - [F,L]
+    RewriteRule ^\.svn - [F,L]
+    RewriteRule ^\.hg - [F,L]
+    RewriteRule ^\.bzr - [F,L]
 </IfModule>

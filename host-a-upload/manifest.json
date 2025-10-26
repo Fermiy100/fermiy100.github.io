@@ -1,0 +1,82 @@
+{
+  "name": "Школьное питание",
+  "short_name": "Школьное питание",
+  "description": "Современная система заказа школьного питания с удобным интерфейсом для родителей и директоров",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#f8f9fa",
+  "theme_color": "#007bff",
+  "orientation": "portrait-primary",
+  "scope": "/",
+  "lang": "ru",
+  "dir": "ltr",
+  "categories": ["education", "food", "productivity"],
+  "icons": [
+    {
+      "src": "/assets/logo-bf48ba68-4d32ac02-4d32ac02.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/assets/logo-bf48ba68-4d32ac02-4d32ac02.svg",
+      "sizes": "192x192",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    },
+    {
+      "src": "/assets/logo-bf48ba68-4d32ac02-4d32ac02.svg",
+      "sizes": "512x512",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    }
+  ],
+  "screenshots": [
+    {
+      "src": "/assets/screenshot-mobile.png",
+      "sizes": "390x844",
+      "type": "image/png",
+      "form_factor": "narrow"
+    },
+    {
+      "src": "/assets/screenshot-desktop.png",
+      "sizes": "1280x720",
+      "type": "image/png",
+      "form_factor": "wide"
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "Заказ питания",
+      "short_name": "Заказ",
+      "description": "Быстрый доступ к заказу питания",
+      "url": "/?view=parent",
+      "icons": [
+        {
+          "src": "/assets/logo-bf48ba68-4d32ac02-4d32ac02.svg",
+          "sizes": "96x96"
+        }
+      ]
+    },
+    {
+      "name": "Панель директора",
+      "short_name": "Директор",
+      "description": "Управление меню и пользователями",
+      "url": "/?view=director",
+      "icons": [
+        {
+          "src": "/assets/logo-bf48ba68-4d32ac02-4d32ac02.svg",
+          "sizes": "96x96"
+        }
+      ]
+    }
+  ],
+  "related_applications": [],
+  "prefer_related_applications": false,
+  "edge_side_panel": {
+    "preferred_width": 400
+  },
+  "launch_handler": {
+    "client_mode": "focus-existing"
+  }
+}
